@@ -1,0 +1,366 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import {
+    Box,
+    Card,
+    CardContent,
+    TextField,
+    Button,
+    Typography,
+    Alert,
+    InputAdornment,
+    MenuItem,
+    Autocomplete,
+    CircularProgress
+} from '@mui/material';
+import {
+    Category as CategoryIcon,
+    Description as DescriptionIcon,
+    AttachMoney as MoneyIcon,
+    Person as PersonIcon,
+    Store as StoreIcon,
+    Business as BusinessIcon
+} from '@mui/icons-material';
+import { styled } from '@mui/material/styles';
+
+const FormContainer = styled(Box)(({ theme }) => ({
+    padding: theme.spacing(4),
+    maxWidth: 600,
+    margin: 'auto',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+}));
+
+const Header = styled(Box)(({ theme }) => ({
+    backgroundColor: theme.palette.primary.main,
+    color: '#fff',
+    padding: theme.spacing(2),
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+}));
+
+const ButtonContainer = styled(Box)(({ theme }) => ({
+    display: 'flex',
+    gap: theme.spacing(2),
+    justifyContent: 'flex-end',
+    marginTop: theme.spacing(2),
+}));
+
+const SubmitButton = styled(Button)(({ theme }) => ({
+    backgroundColor: theme.palette.primary.main,
+    color: '#fff',
+    '&:hover': {
+        backgroundColor: theme.palette.primary.dark,
+    },
+}));
+
+const CancelButton = styled(Button)(({ theme }) => ({
+    color: theme.palette.primary.main,
+}));
+
+const PROPOSAL_STATUS = ['Pending', 'Approved', 'Rejected'];
+const PROCUREMENT_CATEGORIES = ['Equipment', 'Supplies', 'Services', 'Food', 'Software', 'Other'];
+
+const ProposalForm = () => {
+    const { proposalId } = useParams();
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [approvers, setApprovers] = useState([]);
+    const [selectedApprover, setSelectedApprover] = useState(null);
+    const [formData, setFormData] = useState({
+        itemName: '',
+        category: '',
+        description: '',
+        quantity: 1,
+        estimatedCost: '',
+        vendorInfo: '',
+        businessPurpose: '',
+        status: 'Pending',
+        proposalDate: new Date().toISOString(),
+        userId: null
+    });
+
+    useEffect(() => {
+        const initializeData = async () => {
+            await fetchApprovers();
+            if (proposalId) {
+                await fetchExistingProposal();
+            }
+        };
+
+        initializeData();
+    }, [proposalId]);
+
+    const fetchExistingProposal = async () => {
+        try {
+            const response = await axios.get(`http://174.129.138.174:8080/api/proposals/${proposalId}`);
+            if (response.data) {
+                setFormData({
+                    ...response.data,
+                    proposalDate: response.data.proposalDate
+                });
+
+                const approver = approvers.find(a => a.userId === response.data.userId);
+                setSelectedApprover(approver);
+            }
+        } catch (err) {
+            console.error('Error fetching existing proposal:', err);
+            setError('Error fetching proposal details');
+        }
+    };
+
+    const fetchApprovers = async () => {
+        try {
+            const response = await axios.get('http://174.129.138.174:8080/api/users');
+            const approversList = response.data.filter(user => user.roleName === 'Approver');
+            setApprovers(approversList);
+        } catch (err) {
+            setError('Error fetching approvers');
+            console.error('Error fetching approvers:', err);
+        }
+    };
+
+    const handleChange = (field) => (event) => {
+        setFormData(prev => ({
+            ...prev,
+            [field]: event.target.value
+        }));
+    };
+
+    const handleApproverChange = (event, value) => {
+        setSelectedApprover(value);
+        setFormData(prev => ({
+            ...prev,
+            userId: value ? value.userId : null
+        }));
+    };
+
+    const validateForm = () => {
+        if (!formData.itemName.trim()) {
+            setError('Item name is required');
+            return false;
+        }
+        if (!formData.category) {
+            setError('Category is required');
+            return false;
+        }
+        if (!formData.description.trim()) {
+            setError('Description is required');
+            return false;
+        }
+        if (!formData.quantity || formData.quantity <= 0) {
+            setError('Please enter a valid quantity');
+            return false;
+        }
+        if (!formData.estimatedCost || formData.estimatedCost <= 0) {
+            setError('Please enter a valid estimated cost');
+            return false;
+        }
+        if (!formData.businessPurpose.trim()) {
+            setError('Business purpose is required');
+            return false;
+        }
+        if (!formData.userId) {
+            setError('Please select an approver');
+            return false;
+        }
+        return true;
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!validateForm()) {
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+
+        try {
+            let response;
+            if (formData.proposalId) {
+                response = await axios.put(
+                    `http://174.129.138.174:8080/api/proposals/${formData.proposalId}`,
+                    formData
+                );
+            } else {
+                response = await axios.post(
+                    'http://174.129.138.174:8080/api/proposals',
+                    formData
+                );
+            }
+
+            if (response.data) {
+                console.log('Proposal saved:', response.data);
+                navigate('/proposals');
+            } else {
+                setError('Failed to save proposal');
+            }
+        } catch (err) {
+            console.error('Error saving proposal:', err);
+            setError(err.response?.data?.message || 'Error saving proposal. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <FormContainer>
+            <Header>
+                <Typography variant="h5" gutterBottom>
+                    {formData.proposalId
+                        ? `Edit Procurement Proposal`
+                        : `New Procurement Proposal`}
+                </Typography>
+            </Header>
+            <Card>
+                <CardContent>
+                    {error && (
+                        <Alert severity="error" sx={{ mb: 2 }}>
+                            {error}
+                        </Alert>
+                    )}
+
+                    <form onSubmit={handleSubmit}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                            <TextField
+                                label="Item Name"
+                                value={formData.itemName}
+                                onChange={handleChange('itemName')}
+                                required
+                                fullWidth
+                            />
+
+                            <TextField
+                                select
+                                label="Category"
+                                value={formData.category}
+                                onChange={handleChange('category')}
+                                required
+                                fullWidth
+                            >
+                                {PROCUREMENT_CATEGORIES.map((category) => (
+                                    <MenuItem key={category} value={category}>
+                                        {category}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+
+                            <TextField
+                                label="Description"
+                                value={formData.description}
+                                onChange={handleChange('description')}
+                                required
+                                multiline
+                                rows={4}
+                                fullWidth
+                            />
+
+                            <TextField
+                                label="Quantity"
+                                type="number"
+                                value={formData.quantity}
+                                onChange={handleChange('quantity')}
+                                required
+                                fullWidth
+                                InputProps={{
+                                    inputProps: { min: 1 }
+                                }}
+                            />
+
+                            <TextField
+                                label="Estimated Cost"
+                                type="number"
+                                value={formData.estimatedCost}
+                                onChange={handleChange('estimatedCost')}
+                                required
+                                fullWidth
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <MoneyIcon />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
+
+                            <TextField
+                                label="Vendor Information"
+                                value={formData.vendorInfo}
+                                onChange={handleChange('vendorInfo')}
+                                fullWidth
+                            />
+
+                            <TextField
+                                label="Business Purpose"
+                                value={formData.businessPurpose}
+                                onChange={handleChange('businessPurpose')}
+                                required
+                                multiline
+                                rows={3}
+                                fullWidth
+                            />
+
+                            <Autocomplete
+                                options={approvers}
+                                value={selectedApprover}
+                                getOptionLabel={(option) => `${option.email} (${option.firstName} ${option.lastName})`}
+                                onChange={handleApproverChange}
+                                isOptionEqualToValue={(option, value) => option?.userId === value?.userId}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Select Approver"
+                                        required
+                                    />
+                                )}
+                            />
+
+                            <TextField
+                                select
+                                label="Status"
+                                value={formData.status}
+                                onChange={handleChange('status')}
+                                fullWidth
+                            >
+                                {PROPOSAL_STATUS.map((status) => (
+                                    <MenuItem key={status} value={status}>
+                                        {status}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+
+                            <ButtonContainer>
+                                <CancelButton
+                                    onClick={() => navigate('/proposals')}
+                                >
+                                    Cancel
+                                </CancelButton>
+                                <SubmitButton
+                                    type="submit"
+                                    variant="contained"
+                                    disabled={loading || !formData.userId}
+                                >
+                                    {loading ? (
+                                        <>
+                                            <CircularProgress size={20} sx={{ mr: 1 }} />
+                                            {formData.proposalId ? 'Updating...' : 'Submitting...'}
+                                        </>
+                                    ) : (
+                                        formData.proposalId ? 'Update Proposal' : 'Submit Proposal'
+                                    )}
+                                </SubmitButton>
+                            </ButtonContainer>
+                        </Box>
+                    </form>
+                </CardContent>
+            </Card>
+        </FormContainer>
+    );
+};
+
+export default ProposalForm;
