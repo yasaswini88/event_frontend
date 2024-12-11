@@ -20,6 +20,8 @@ import {
     Snackbar,
     TextField,
     MenuItem,
+    Autocomplete,
+    TablePagination
 
 
 } from '@mui/material';
@@ -31,7 +33,16 @@ const PurchaserDashboard = () => {
     const [openDialog, setOpenDialog] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const deliveryStatusOptions = ['Processing', 'Shipped', 'Delivered'];
+    const [selectedDepartment, setSelectedDepartment] = useState('all');
+    const [approvedProposals, setApprovedProposals] = useState([]);
     const [error, setError] = useState('');
+    const [departments, setDepartments] = useState([]);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+
+
+    
+
     const [snackbar, setSnackbar] = useState({
         open: false,
         message: '',
@@ -43,30 +54,109 @@ const PurchaserDashboard = () => {
         fetchPurchaseOrders();
     }, []);
 
+    // const fetchPurchaseOrders = async () => {
+    //     try {
+    //         const response = await axios.get('/api/purchase-orders');
+    //         setPurchaseOrders(response.data);
+    //     } catch (err) {
+    //         console.error('Error fetching purchase orders:', err);
+    //         setError('Error fetching purchase orders');
+    //         setSnackbar({
+    //             open: true,
+    //             message: 'Error fetching purchase orders',
+    //             severity: 'error'
+    //         });
+    //     }
+    // };
     const fetchPurchaseOrders = async () => {
         try {
-            const response = await axios.get('/api/purchase-orders');
-            setPurchaseOrders(response.data);
+            // Get all approved proposals
+            const proposalsResponse = await axios.get('/api/proposals/status/APPROVED');
+            const approvedProposals = proposalsResponse.data;
+
+            // Get existing purchase orders
+            const ordersResponse = await axios.get('/api/purchase-orders');
+            const existingOrders = ordersResponse.data;
+
+            // Get departments
+            const departmentsResponse = await axios.get('/api/departments');
+            const departments = departmentsResponse.data;
+            setDepartments(departments);
+
+            // Combine the data - create a merged view of proposals and their purchase orders
+            const combinedData = approvedProposals.map(proposal => {
+                const matchingOrder = existingOrders.find(
+                    order => order.proposalId === proposal.proposalId
+                );
+
+                // Find the department name
+                const department = departments.find(dept => dept.deptId === proposal.departmentId);
+
+                return {
+                    proposalId: proposal.proposalId,
+                    orderId: matchingOrder?.orderId,
+                    itemName: proposal.itemName,
+                    department: department?.deptName || 'Unknown Department',
+                    quantity: proposal.quantity,
+                    finalCost: proposal.estimatedCost,
+                    orderStatus: matchingOrder ? 'ORDERED' : 'PENDING',
+                    deliveryStatus: matchingOrder?.deliveryStatus || 'Not Started',
+                    expectedDeliveryDate: matchingOrder?.expectedDeliveryDate,
+                    purchaseOrderNumber: matchingOrder?.purchaseOrderNumber || 'Not Generated',
+                    // Add any other fields you need
+                };
+            });
+
+            setPurchaseOrders(combinedData);
         } catch (err) {
-            console.error('Error fetching purchase orders:', err);
-            setError('Error fetching purchase orders');
+            console.error('Error fetching data:', err);
+            setError('Error fetching procurement data');
             setSnackbar({
                 open: true,
-                message: 'Error fetching purchase orders',
+                message: 'Error fetching procurement data',
                 severity: 'error'
             });
         }
     };
 
+    // Move this function outside fetchPurchaseOrders
+    const getFilteredPurchaseOrders = () => {
+        if (selectedDepartment === 'all' || selectedDepartment === 'All Departments') {
+            return purchaseOrders;
+        }
+        return purchaseOrders.filter(order => order.department === selectedDepartment);
+    };
+
+    const paginatedPurchaseOrders = getFilteredPurchaseOrders().slice(
+        page * rowsPerPage,
+        page * rowsPerPage + rowsPerPage
+    );
+
     const handleCreatePurchaseOrder = async (proposalId) => {
         try {
             const response = await axios.post(`/api/purchase-orders/create/${proposalId}`);
+
+            // Update the local state immediately
+            setPurchaseOrders(prevOrders =>
+                prevOrders.map(order => {
+                    if (order.proposalId === proposalId) {
+                        return {
+                            ...order,
+                            purchaseOrderNumber: response.data.purchaseOrderNumber,
+                            orderId: response.data.orderId, // Make sure to update orderId if needed
+                            orderStatus: 'ORDERED', // Update order status
+                            deliveryStatus: 'Not Started'
+                        };
+                    }
+                    return order;
+                })
+            );
+
             setSnackbar({
                 open: true,
                 message: 'Purchase order created successfully',
                 severity: 'success'
             });
-            fetchPurchaseOrders();
         } catch (err) {
             console.error('Error creating purchase order:', err);
             setSnackbar({
@@ -76,7 +166,6 @@ const PurchaserDashboard = () => {
             });
         }
     };
-
     const handleUpdateOrderStatus = async (orderId, newStatus) => {
         try {
             await axios.put(`/api/purchase-orders/${orderId}/order-status`, null, {
@@ -170,7 +259,39 @@ const PurchaserDashboard = () => {
                         {error}
                     </Alert>
                 )}
-
+                <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'center' }}>
+                    <Autocomplete
+                        id="department-filter"
+                        options={[{ deptId: 'all', deptName: 'All Departments' }, ...departments]}
+                        getOptionLabel={(option) => option.deptName || ''}
+                        value={departments.find(d => d.deptName === selectedDepartment) ||
+                            { deptId: 'all', deptName: 'All Departments' }}
+                        onChange={(event, newValue) => {
+                            setSelectedDepartment(newValue ? newValue.deptName : 'all');
+                        }}
+                        sx={{
+                            minWidth: 300,
+                            '& .MuiOutlinedInput-root': {
+                                '& fieldset': {
+                                    borderColor: '#1a237e',
+                                },
+                                '&:hover fieldset': {
+                                    borderColor: '#1a237e',
+                                },
+                                '&.Mui-focused fieldset': {
+                                    borderColor: '#1a237e',
+                                },
+                            },
+                        }}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Filter by Department"
+                                variant="outlined"
+                            />
+                        )}
+                    />
+                </Box>
                 <TableContainer component={Paper} sx={{ mb: 4, boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
                     <Table>
                         <TableHead>
@@ -182,70 +303,67 @@ const PurchaserDashboard = () => {
                                 <TableCell sx={{ color: 'white' }}>Cost</TableCell>
                                 <TableCell sx={{ color: 'white' }}>Order Status</TableCell>
                                 <TableCell sx={{ color: 'white' }}>Delivery Status</TableCell>
+                                <TableCell sx={{ color: 'white' }}>Tracking Number</TableCell>
                                 <TableCell sx={{ color: 'white' }}>Expected Delivery</TableCell>
                                 <TableCell sx={{ color: 'white' }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {purchaseOrders.map((order) => (
-                                <TableRow key={order.orderId} sx={{ backgroundColor: '#F7F6FE' }}>
-                                    <TableCell>{order.orderId}</TableCell>
-                                    <TableCell>{order.itemName}</TableCell>
-                                    <TableCell>{order.department}</TableCell>
-                                    <TableCell>{order.quantity}</TableCell>
-                                    <TableCell>${order.finalCost.toFixed(2)}</TableCell>
+                            {paginatedPurchaseOrders.map((item) => (
+                                <TableRow key={item.proposalId} sx={{ backgroundColor: '#F7F6FE' }}>
+                                    {/* Changed order to match header */}
+                                    <TableCell>{item.orderId || item.proposalId}</TableCell>
+                                    <TableCell>{item.itemName}</TableCell>
+                                    <TableCell>{item.department}</TableCell>
+                                    <TableCell>{item.quantity}</TableCell>
+                                    <TableCell>${item.finalCost.toFixed(2)}</TableCell>
                                     <TableCell>
-                                        <Box
-                                            sx={{
-                                                backgroundColor: order.orderStatus === 'ORDERED' ? '#e8f5e9' : '#fff3e0',
-                                                color: order.orderStatus === 'ORDERED' ? '#2e7d32' : '#e65100',
-                                                p: 1,
-                                                borderRadius: 1,
-                                                textAlign: 'center'
-                                            }}
-                                        >
-                                            {order.orderStatus}
+                                        <Box sx={{
+                                            backgroundColor: item.orderStatus === 'ORDERED' ? '#e8f5e9' : '#fff3e0',
+                                            color: item.orderStatus === 'ORDERED' ? '#2e7d32' : '#e65100',
+                                            p: 1,
+                                            borderRadius: 1,
+                                            textAlign: 'center'
+                                        }}>
+                                            {item.orderStatus}
                                         </Box>
                                     </TableCell>
                                     <TableCell>
-                                        <Box
-                                            sx={{
-                                                backgroundColor:
-                                                    order.deliveryStatus === 'Delivered' ? '#e8f5e9' :
-                                                        order.deliveryStatus === 'Shipped' ? '#e3f2fd' :
-                                                            '#fff3e0',
-                                                color:
-                                                    order.deliveryStatus === 'Delivered' ? '#2e7d32' :
-                                                        order.deliveryStatus === 'Shipped' ? '#1565c0' :
-                                                            '#e65100',
-                                                p: 1,
-                                                borderRadius: 1,
-                                                textAlign: 'center'
-                                            }}
-                                        >
-                                            {order.deliveryStatus}
+                                        <Box sx={{
+                                            backgroundColor:
+                                                item.deliveryStatus === 'Delivered' ? '#e8f5e9' :
+                                                    item.deliveryStatus === 'Shipped' ? '#e3f2fd' :
+                                                        '#fff3e0',
+                                            color:
+                                                item.deliveryStatus === 'Delivered' ? '#2e7d32' :
+                                                    item.deliveryStatus === 'Shipped' ? '#1565c0' :
+                                                        '#e65100',
+                                            p: 1,
+                                            borderRadius: 1,
+                                            textAlign: 'center'
+                                        }}>
+                                            {item.deliveryStatus || 'Not Started'}
                                         </Box>
                                     </TableCell>
-                                    <TableCell>
-                                        {order.expectedDeliveryDate ? formatDate(order.expectedDeliveryDate) : '-'}
-                                    </TableCell>
+                                    <TableCell>{item.purchaseOrderNumber || 'Not Generated'}</TableCell>
+                                    <TableCell>{item.expectedDeliveryDate ? formatDate(item.expectedDeliveryDate) : '-'}</TableCell>
                                     <TableCell>
                                         <Box sx={{ display: 'flex', gap: 1 }}>
-                                            {order.orderStatus === 'PENDING' && (
+                                            {item.orderStatus === 'PENDING' && (
                                                 <Button
                                                     variant="contained"
                                                     size="small"
-                                                    onClick={() => handleUpdateOrderStatus(order.orderId, 'ORDERED')}
+                                                    onClick={() => handleCreatePurchaseOrder(item.proposalId)}
                                                     sx={{ backgroundColor: '#1a237e' }}
                                                 >
                                                     Place Order
                                                 </Button>
                                             )}
-                                            {order.orderStatus === 'ORDERED' && (
+                                            {item.orderStatus === 'ORDERED' && (
                                                 <Button
                                                     variant="contained"
                                                     size="small"
-                                                    onClick={() => handleOpenDialog(order)}
+                                                    onClick={() => handleOpenDialog(item)}
                                                     sx={{ backgroundColor: '#1565c0' }}
                                                 >
                                                     Update Delivery
@@ -258,6 +376,20 @@ const PurchaserDashboard = () => {
                         </TableBody>
                     </Table>
                 </TableContainer>
+
+                <TablePagination
+                    component="div"
+                    count={getFilteredPurchaseOrders().length}
+                    page={page}
+                    onPageChange={(event, newPage) => setPage(newPage)}
+                    rowsPerPage={rowsPerPage}
+                    onRowsPerPageChange={(event) => {
+                        setRowsPerPage(parseInt(event.target.value, 10));
+                        setPage(0); // Reset to first page
+                    }}
+                    rowsPerPageOptions={[5, 10, 15]}
+                />
+
 
                 <Dialog open={openDialog} onClose={handleCloseDialog}>
                     <DialogTitle>Update Delivery Status</DialogTitle>
