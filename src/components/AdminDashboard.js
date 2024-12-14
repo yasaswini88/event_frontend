@@ -27,6 +27,9 @@ import {
 import { TablePagination } from '@mui/material';
 import { Close as CloseIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import UserEditDialog from './UserEditDialog';
+import Layout from './Layout';
+import MenuIcon from '@mui/icons-material/Menu';
+
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -53,6 +56,11 @@ const AdminDashboard = () => {
 
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
+    const [drawerOpen, setDrawerOpen] = useState(false);
+
+    const toggleDrawer = () => {
+        setDrawerOpen(!drawerOpen);
+    };
 
     useEffect(() => {
         fetchUsers();
@@ -214,14 +222,50 @@ const AdminDashboard = () => {
     };
 
     return (
+
         <Box sx={{ p: 3, minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+            <IconButton
+                color="inherit"
+                aria-label="open drawer"
+                onClick={toggleDrawer}
+                edge="start"
+                sx={{
+                    position: 'fixed',
+                    left: 16,
+                    top: 80,
+                    zIndex: 1200,
+                    backgroundColor: '#1a237e',
+                    color: '#fff',
+                    '&:hover': {
+                        backgroundColor: '#0d1b5e',
+                    }
+                }}
+            >
+                <MenuIcon />
+            </IconButton>
+
+            <Layout open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+
+
             <Box sx={{ maxWidth: 1200, margin: '0 auto' }}>
                 {/* Header */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Box
+        component="main"
+        sx={{
+            flexGrow: 1,
+            p: 3,
+            mt: 8,
+            ml: drawerOpen ? '240px' : 0,
+            transition: theme => theme.transitions.create('margin', {
+                easing: theme.transitions.easing.sharp,
+                duration: theme.transitions.duration.leavingScreen,
+            }),
+        }}
+    >
                     <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#333' }}>
                         User Management Dashboard
                     </Typography>
-                    <Button
+                    {/* <Button
                         variant="contained"
                         onClick={() => navigate('/signup')}
                         sx={{
@@ -232,7 +276,7 @@ const AdminDashboard = () => {
                         }}
                     >
                         Create New User
-                    </Button>
+                    </Button> */}
                 </Box>
 
                 {/* Filters */}

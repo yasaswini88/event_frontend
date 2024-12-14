@@ -27,10 +27,13 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
     },
     logout: (state) => {
-      state.user = null;
-      state.isAuthenticated = false;
-      state.error = null;
-      localStorage.removeItem('user');
+      localStorage.clear(); // Clear localStorage first
+      return { // Return a completely new state object
+        user: null,
+        isAuthenticated: false,
+        error: null,
+        loading: false
+      }
     }
   }
 });

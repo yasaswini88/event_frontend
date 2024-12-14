@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Fab, Dialog, DialogContent, Avatar } from '@mui/material';  // Import Avatar
 import Chatbot from './Chatbot';  // Make sure this points to your actual Chatbot component
+import { useSelector } from 'react-redux';
 
 const FloatingChatButton = ({ userDetails }) => {
   const [chatOpen, setChatOpen] = useState(false);
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
 
   const handleChatOpen = () => {
     setChatOpen(true);
@@ -12,6 +14,10 @@ const FloatingChatButton = ({ userDetails }) => {
   const handleChatClose = () => {
     setChatOpen(false);
   };
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <>

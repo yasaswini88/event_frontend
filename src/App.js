@@ -21,7 +21,8 @@ import ProtectedPurchaserRoute from './components/ProtectedPurchaserRoute';
 import FloatingChatButton from './components/FloatingChatButton';
 import ProtectedAdminRoute from './components/ProtectedAdminRoute';
 import AdminDashboard from './components/AdminDashboard';
-
+import Procurements from './components/Procurements';
+import AdminApprover from './components/AdminApprover';
 import './App.css';
 
 // Set axios default base URL
@@ -30,6 +31,7 @@ axios.defaults.baseURL = `http://174.129.138.174:8080`;
 function App() {
   // Replace localStorage with Redux state
   const user = useSelector((state) => state.auth.user);
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
 
   return (
     <Router>
@@ -137,6 +139,25 @@ function App() {
             }
           />
 
+          <Route
+            path="/admin/procurements"
+            element={
+              <ProtectedLayout requiredRole="Admin">
+                <Procurements />
+              </ProtectedLayout>
+            }
+          />
+
+          <Route
+            path="/admin/approvers"
+            element={
+              <ProtectedLayout requiredRole="Admin">
+                <AdminApprover />
+              </ProtectedLayout>
+            }
+          />
+
+
           {/* Catch all route */}
           <Route
             path="*"
@@ -154,7 +175,9 @@ function App() {
 
         </Routes>
         {/* Add FloatingChatButton after login */}
-        {user && <FloatingChatButton userDetails={user} />}
+        {user && isAuthenticated && (
+          <FloatingChatButton userDetails={user} />
+        )}
 
       </div>
     </Router>

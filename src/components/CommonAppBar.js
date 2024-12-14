@@ -11,6 +11,7 @@ const CommonAppBar = ({ showLogout = true }) => {
     localStorage.removeItem('user');
     // navigate('/login');
     navigate('/');
+    window.location.href = '/';
   };
 
   const getUserName = () => {
