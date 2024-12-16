@@ -26,6 +26,7 @@ import {
     TablePagination
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Link } from 'react-router-dom';
 
 const Procurements = () => {
     const [procurements, setProcurements] = useState([]);
@@ -135,9 +136,15 @@ const Procurements = () => {
     return (
         <Box sx={{ p: 3, minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
             <Box sx={{ maxWidth: 1200, margin: '0 auto' }}>
-                <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#333', mb: 3 }}>
-                    Procurement Management
-                </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+    <Link to="/admin-dashboard" style={{ textDecoration: 'none', color: '#1a73e8', fontWeight: 'bold' }}>
+        &larr; Admin Dashboard
+    </Link>
+    <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#333', textAlign: 'center', flexGrow: 1 }}>
+        Procurement Management
+    </Typography>
+</Box>
+
 
                 {error && (
                     <Alert severity="error" sx={{ mb: 2 }}>
@@ -146,7 +153,7 @@ const Procurements = () => {
                 )}
 
                 {/* Status Filter */}
-                <FormControl sx={{ mb: 3, minWidth: 200 }}>
+                {/* <FormControl sx={{ mb: 3, minWidth: 200 }}>
                     <InputLabel>Filter by Status</InputLabel>
                     <Select
                         value={filterStatus}
@@ -158,7 +165,7 @@ const Procurements = () => {
                         <MenuItem value="APPROVED">Approved</MenuItem>
                         <MenuItem value="REJECTED">Rejected</MenuItem>
                     </Select>
-                </FormControl>
+                </FormControl> */}
 
                 <TableContainer component={Paper} sx={{ mb: 4, boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
                     <Table>

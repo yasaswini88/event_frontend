@@ -36,6 +36,7 @@ import {
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import AdminApproverDialog from './AdminApproverDialog';
+import { Link } from 'react-router-dom';
 
 const StyledChip = styled(Chip)(({ theme, status }) => ({
     borderRadius: '16px',
@@ -208,9 +209,15 @@ const AdminApprover = () => {
     return (
         <Container maxWidth="xl">
             <Box sx={{ p: 3, mt: 8 }}>
-                <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', color: '#1a237e' }}>
-                    Admin Approver Dashboard
-                </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+    <Link to="/admin-dashboard" style={{ textDecoration: 'none', color: '#1a73e8', fontWeight: 'bold' }}>
+        &larr;  Admin Dashboard
+    </Link>
+    <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#333', textAlign: 'center', flexGrow: 1 }}>
+        Approver Management
+    </Typography>
+</Box>
+
 
                 <TextField
                     fullWidth
