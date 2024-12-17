@@ -1,16 +1,17 @@
-import React ,{ useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Button, Typography } from '@mui/material';
-import Login from './Login'; 
+import { Box, Button, Typography, useMediaQuery, useTheme } from '@mui/material';
+import Login from './Login';
+
+
 
 const Begin = () => {
   const navigate = useNavigate();
   const [showLoginForm, setShowLoginForm] = useState(false);
 
-  // const handleLoginClick = () => {
-  //   console.log('Login button clicked');
-  //   navigate('/login-proxy');
-  // };
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const handleLoginClick = () => {
     setShowLoginForm(true); // Change this from navigate()
   };
@@ -35,8 +36,8 @@ const Begin = () => {
       />
 
       {/* Header Content */}
-      <Box 
-        sx={{ 
+      <Box
+        sx={{
           position: 'relative',
           zIndex: 2,
           width: '100%',
@@ -46,9 +47,11 @@ const Begin = () => {
         {/* Logo Section */}
         <Box
           sx={{
-            position: 'absolute',
-            top: '0.8rem',
+            position: isMobile ? 'relative' : 'absolute',
+            top: isMobile ? '1rem' : '0.8rem',
+
             left: 0,
+            width: isMobile ? '100%' : '300px',
             zIndex: 3
           }}
         >
@@ -73,7 +76,7 @@ const Begin = () => {
               sx={{
                 position: 'relative',
                 height: '48px',
-                marginLeft: '1rem',
+                marginLeft: isMobile ? '0' : '1rem',
                 marginTop: '0.8rem',
                 zIndex: 2
               }}
@@ -84,10 +87,14 @@ const Begin = () => {
         {/* Right Header Section */}
         <Box
           sx={{
-            position: 'absolute',
-            top: '0.8rem',
-            right: '0.8rem',
-            zIndex: 3
+            position: isMobile ? 'relative' : 'absolute',
+            top: isMobile ? '1rem' : '0.8rem',
+            right: isMobile ? '0' : '0.8rem',
+            width: isMobile ? '100%' : '330px',
+            display: 'flex',
+            justifyContent: isMobile ? 'center' : 'flex-end',
+            zIndex: 3,
+            mt: isMobile ? '1rem' : '0',
           }}
         >
           <Box
@@ -198,26 +205,29 @@ const Begin = () => {
             Streamlining university procurement with efficiency, transparency, and ease.
           </Typography>
 
-          {/* {showLoginForm && (
-    <Box
-      sx={{
-        width: '500px',  
-        height: '500px', 
-        mt: 4,
-        backgroundColor: 'white',
-        borderRadius: '8px',
-        p: 3,
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-      }}
-    >
-      <Login />
-    </Box>
-  )} */}
-  {showLoginForm && <Login />}
+
+          {showLoginForm && (
+            <Login
+              style={{
+                width: isMobile ? '100%' : '500px', // Full width on mobile
+                margin: isMobile ? '1rem auto' : '4rem auto',
+                padding: '1rem',
+                backgroundColor: 'white',
+                borderRadius: '8px',
+                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                maxHeight: '90vh', // Set max height relative to viewport
+                overflowY: 'auto', // Add vertical scrolling
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            />
+          )}
+
+
 
         </Box>
       </Box>
-      
+
     </Box>
   );
 };
