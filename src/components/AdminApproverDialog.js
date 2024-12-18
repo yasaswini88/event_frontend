@@ -19,7 +19,7 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 
-const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate }) => {
+const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status }) => {
     const [proposal, setProposal] = useState(null);
     const [comment, setComment] = useState('');
     const [approvalHistory, setApprovalHistory] = useState([]);
@@ -28,29 +28,86 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate }) => {
     const [fundingSources, setFundingSources] = useState([]);
     const [fundingSourceId, setFundingSourceId] = useState('');
     const [editedProposal, setEditedProposal] = useState(null);
+    const [fundingSourceLoading, setFundingSourceLoading] = useState(true);
+    const [fundingSourceError, setFundingSourceError] = useState(null);
+    
+
+    // useEffect(() => {
+    //     if (open && proposalId) {
+    //         fetchProposalDetails();
+    //         fetchApprovalHistory();
+    //         fetchFundingSources();
+    //     }
+    // }, [open, proposalId]);
 
     useEffect(() => {
         if (open && proposalId) {
-            fetchProposalDetails();
-            fetchApprovalHistory();
-            fetchFundingSources();
+            const loadData = async () => {
+                try {
+                    // Load funding sources first
+                    await fetchFundingSources();
+                    // Then load proposal details and history
+                    await fetchProposalDetails();
+                    // await fetchApprovalHistory();
+                } catch (err) {
+                    console.error('Error loading dialog data:', err);
+                }
+            };
+            loadData();
         }
     }, [open, proposalId]);
 
+
+    // const fetchProposalDetails = async () => {
+    //     try {
+    //         const response = await axios.get(`http://174.129.138.174:8080/api/proposals/${proposalId}`);
+    //         const proposalData = response.data;
+    //         setProposal(proposalData);
+    //         setEditedProposal(proposalData);
+    //         // Set initial status from the existing proposal
+    //         if (proposalData.fundingSourceId) {
+    //             setFundingSourceId(proposalData.fundingSourceId);
+    //         } else {
+    //             setFundingSourceId(52); // Default to 'None' if not set
+    //         }
+    //         setLoading(false);
+    //     } catch (err) {
+    //         setError('Error fetching proposal details');
+    //         setLoading(false);
+    //     }
+    // };
+
+    // In the fetchProposalDetails function, update it to properly set the initial funding source:
     const fetchProposalDetails = async () => {
         try {
-            const response = await axios.get(`http://174.129.138.174:8080/api/proposals/${proposalId}`);
-            const proposalData = response.data;
+            // First get the proposal details
+            const proposalResponse = await axios.get(`http://174.129.138.174:8080/api/proposals/${proposalId}`);
+            const proposalData = proposalResponse.data;
+
+            let historyData = [];
+            // Then get the approval history
+            if(typeof proposalData.status === 'string' && proposalData.status.toLowerCase() != 'pending'){
+            const historyResponse = await axios.get(`http://174.129.138.174:8080/api/proposals/${proposalId}/history`);
+            historyData = historyResponse.data;
+            setApprovalHistory(historyData);
+             
+            }
+            
+            
+
+            // Get the most recent funding source from history
+            const mostRecentHistory = historyData[0]; // Assuming history is ordered by date desc
+            const currentFundingSourceId = mostRecentHistory ? mostRecentHistory.fundingSourceId : 52; // Default to 52 (None) if no history
+
             setProposal(proposalData);
             setEditedProposal(proposalData);
-            // Set initial status from the existing proposal
-            if (proposalData.fundingSourceId) {
-                setFundingSourceId(proposalData.fundingSourceId);
-            } else {
-                setFundingSourceId(52); // Default to 'None' if not set
-            }
+            setFundingSourceId(currentFundingSourceId);
             setLoading(false);
+
+            console.log('Current funding source ID:', currentFundingSourceId);
+
         } catch (err) {
+            console.error('Error fetching proposal details:', err);
             setError('Error fetching proposal details');
             setLoading(false);
         }
@@ -67,10 +124,15 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate }) => {
 
     const fetchFundingSources = async () => {
         try {
+            setFundingSourceLoading(true);
+            setFundingSourceError(null);
             const response = await axios.get(`http://174.129.138.174:8080/api/funding-sources`);
             setFundingSources(response.data);
         } catch (err) {
             console.error('Error fetching funding sources:', err);
+            setFundingSourceError('Failed to load funding sources');
+        } finally {
+            setFundingSourceLoading(false);
         }
     };
 
@@ -100,27 +162,85 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate }) => {
         }
     };
 
+    // const handleSaveChanges = async () => {
+    //     try {
+
+    //         // Create an updated proposal object with all changes
+    //         const updatedProposal = {
+    //             ...editedProposal,
+    //             fundingSourceId: fundingSourceId,
+    //             status: editedProposal.status
+    //         };
+
+    //         // First update the basic proposal details
+    //         await axios.put(`http://174.129.138.174:8080/api/proposals/${proposalId}`, editedProposal);
+
+    //         // Then update the status if there's a comment
+    //         if (comment.trim()) {
+    //             await handleStatusUpdate(editedProposal.status);
+    //         }
+
+    //         onStatusUpdate(editedProposal);
+    //     } catch (err) {
+    //         console.error('Error saving changes:', err);
+    //     }
+    // };
+
+    const handleClose = () => {
+        onClose();
+        setProposal(null);
+        setComment('');
+        setApprovalHistory([]);
+        setLoading(true);
+        setError(null);
+        setFundingSources([]);
+        setFundingSourceId('');
+        setEditedProposal(null);
+        setFundingSourceLoading(true);
+        setFundingSourceError(null);
+
+        
+    };
+
     const handleSaveChanges = async () => {
         try {
+            const user = JSON.parse(localStorage.getItem('user'));
 
-            // Create an updated proposal object with all changes
-            const updatedProposal = {
-                ...editedProposal,
-                fundingSourceId: fundingSourceId,
-                status: editedProposal.status
-            };
-
-            // First update the basic proposal details
-            await axios.put(`http://174.129.138.174:8080/api/proposals/${proposalId}`, editedProposal);
-
-            // Then update the status if there's a comment
-            if (comment.trim()) {
-                await handleStatusUpdate(editedProposal.status);
+            if (!fundingSourceId || !editedProposal.status) {
+                throw new Error('Please select both a funding source and status');
             }
 
-            onStatusUpdate(editedProposal);
+            // First update the proposal status with funding source
+            const statusResponse = await axios.put(
+                `http://174.129.138.174:8080/api/proposals/${proposalId}/status`,
+                null,
+                {
+                    params: {
+                        newStatus: editedProposal.status,
+                        approverId: user.userId,
+                        fundingSourceId: fundingSourceId,
+                        comments: comment.trim() || null
+                    },
+                }
+            );
+
+            if (statusResponse.data) {
+                // Then update other proposal details
+                const proposalResponse = await axios.put(
+                    `http://174.129.138.174:8080/api/proposals/${proposalId}`,
+                    editedProposal
+                );
+
+                if (proposalResponse.data) {
+                    await fetchProposalDetails();
+                    await fetchApprovalHistory();
+                    onStatusUpdate(proposalResponse.data);
+                    handleClose();
+                }
+            }
         } catch (err) {
             console.error('Error saving changes:', err);
+            setError(err.message || 'Error saving changes');
         }
     };
 
@@ -141,7 +261,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate }) => {
     return (
         <Dialog
             open={open}
-            onClose={onClose}
+            onClose={handleClose}
             maxWidth="md"
             fullWidth
         >
@@ -153,7 +273,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate }) => {
                 color: 'white'
             }}>
                 <Typography variant="h6">Proposal Details (Admin View)</Typography>
-                <IconButton onClick={onClose} size="small" sx={{ color: 'white' }}>
+                <IconButton onClick={handleClose} size="small" sx={{ color: 'white' }}>
                     <CloseIcon />
                 </IconButton>
             </DialogTitle>
@@ -174,7 +294,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate }) => {
                             <Typography variant="subtitle2" color="textSecondary">
                                 Current Funding Source
                             </Typography>
-                            <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                            <Typography variant="body1" sx={{ fontWeight: 'bold', color: fundingSourceId ? 'inherit' : 'text.secondary' }}>
                                 {fundingSources.find(f => f.sourceId === fundingSourceId)?.sourceName || 'Not assigned'}
                             </Typography>
                         </Grid>
@@ -239,10 +359,24 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate }) => {
                     </Grid>
 
                     <Grid item xs={6}>
-                        <FormControl fullWidth>
+                        {/* <FormControl fullWidth>
                             <InputLabel>Funding Source</InputLabel>
                             <Select
                                 value={fundingSourceId || ''}
+                                label="Funding Source"
+                                onChange={(e) => setFundingSourceId(e.target.value)}
+                            >
+                                {fundingSources.map((source) => (
+                                    <MenuItem key={source.sourceId} value={source.sourceId}>
+                                        {source.sourceName}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl> */}
+                        <FormControl fullWidth>
+                            <InputLabel>Funding Source</InputLabel>
+                            <Select
+                                value={fundingSourceId}
                                 label="Funding Source"
                                 onChange={(e) => setFundingSourceId(e.target.value)}
                             >
@@ -275,7 +409,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate }) => {
                         />
                     </Grid>
 
-                    {approvalHistory.length > 0 && (
+                    {/* {approvalHistory.length > 0 && (
                         <Grid item xs={12}>
                             <Divider sx={{ my: 2 }} />
                             <Typography variant="h6" sx={{ mb: 2 }}>Approval History</Typography>
@@ -295,12 +429,37 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate }) => {
                                 </Box>
                             ))}
                         </Grid>
+                    )} */}
+
+                    {approvalHistory.length > 0 && (
+                        <Grid item xs={12}>
+                            <Divider sx={{ my: 2 }} />
+                            <Typography variant="h6" sx={{ mb: 2 }}>Approval History</Typography>
+                            {approvalHistory.map((history, index) => (
+                                <Box key={index} sx={{ mb: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                                    <Typography variant="body2">
+                                        Status changed from {history.oldStatus} to {history.newStatus}
+                                    </Typography>
+                                    <Typography variant="body2">
+                                        Funding Source: {fundingSources.find(f => f.sourceId === history.fundingSourceId)?.sourceName || 'Unknown'}
+                                    </Typography>
+                                    <Typography variant="caption" color="textSecondary">
+                                        {formatDateTime(history.actionDate)}
+                                    </Typography>
+                                    {history.comments && (
+                                        <Typography variant="body2" sx={{ mt: 1 }}>
+                                            Comment: {history.comments}
+                                        </Typography>
+                                    )}
+                                </Box>
+                            ))}
+                        </Grid>
                     )}
                 </Grid>
             </DialogContent>
 
             <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5' }}>
-                <Button onClick={onClose}>Cancel</Button>
+                <Button onClick={handleClose}>Cancel</Button>
                 <Button onClick={handleSaveChanges} variant="contained" color="primary">
                     Save Changes
                 </Button>

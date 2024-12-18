@@ -22,6 +22,8 @@ import {
 import { TablePagination } from '@mui/material';
 import { Close as CloseIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import ProposalForm from './ProposalForm';
+import { useTheme } from '@mui/material/styles';
+import { useMediaQuery } from '@mui/material';
 
 const ProposalsList = () => {
     const [proposals, setProposals] = useState([]); // Store proposals in state
@@ -38,6 +40,9 @@ const ProposalsList = () => {
     }); //Stores the snackbar message to be displayed. //severity is used to set the color of the snackbar.//open is used to control the visibility of the snackbar.//message is used to set the message to be displayed in the snackbar.
     const [page, setPage] = useState(0); // Current page
     const [rowsPerPage, setRowsPerPage] = useState(5); // Rows per page
+
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -155,11 +160,21 @@ const ProposalsList = () => {
     return (
         <Box sx={{ p: 3, minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
             <Box sx={{ maxWidth: 1200, margin: '0 auto' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                    <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#333' }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        flexDirection: isMobile ? 'column' : 'row',
+                        gap: isMobile ? 2 : 0,
+                        justifyContent: 'space-between',
+                        alignItems: isMobile ? 'stretch' : 'center',
+                        mb: 3
+                    }}>
+                    <Typography variant={isMobile ? 'h5' : 'h4'}
+                        sx={{ fontWeight: 'bold', color: '#333' }}>
                         My Procurement Proposals
                     </Typography>
                     <Button
+                        fullWidth={isMobile}
                         variant="contained"
                         onClick={() => handleOpenDialog()}
                         sx={{
@@ -253,15 +268,14 @@ const ProposalsList = () => {
                         </TableBody>
                     </Table>
                     <TablePagination
-
-                        rowsPerPageOptions={[5, 10, 25]}
+                        rowsPerPageOptions={isMobile ? [5, 10] : [5, 10, 25]}
                         component="div"
-
                         count={proposals.length}
                         rowsPerPage={rowsPerPage}
                         page={page}
                         onPageChange={handleChangePage}
                         onRowsPerPageChange={handleChangeRowsPerPage}
+                        labelRowsPerPage={isMobile ? "Rows:" : "Rows per page:"}
                     />
                 </TableContainer>
 
@@ -270,6 +284,7 @@ const ProposalsList = () => {
                     onClose={handleCloseDialog}
                     maxWidth="md"
                     fullWidth
+                    fullScreen={isMobile}
                 >
                     <DialogTitle>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

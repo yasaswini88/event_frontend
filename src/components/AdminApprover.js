@@ -73,6 +73,7 @@ const AdminApprover = () => {
     // View Dialog States (Add these)
     const [viewDialogOpen, setViewDialogOpen] = useState(false);
     const [selectedProposalId, setSelectedProposalId] = useState(null);
+    const [status, setStatus] = useState(null);
 
     const handleViewProposal = (proposalId) => {
         setSelectedProposalId(proposalId);
@@ -165,6 +166,7 @@ const AdminApprover = () => {
 
     const handleTabChange = (event, newValue) => {
         setTabValue(newValue);
+
     };
 
     const getFilteredProposals = () => {
@@ -180,7 +182,7 @@ const AdminApprover = () => {
 
         switch (tabValue) {
             case 1:
-                return filtered.filter((proposal) => proposal.status === 'PENDING');
+                return filtered.filter((proposal) => proposal.status.toLowerCase() === 'PENDING'.toLowerCase()); 
             case 2:
                 return filtered.filter((proposal) => proposal.status === 'APPROVED');
             case 3:
@@ -206,17 +208,19 @@ const AdminApprover = () => {
         }).format(amount);
     };
 
+    console.log({viewDialogOpen});
+
     return (
         <Container maxWidth="xl">
             <Box sx={{ p: 3, mt: 8 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-    <Link to="/admin-dashboard" style={{ textDecoration: 'none', color: '#1a73e8', fontWeight: 'bold' }}>
-        &larr;  Admin Dashboard
-    </Link>
-    <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#333', textAlign: 'center', flexGrow: 1 }}>
-        Approver Management
-    </Typography>
-</Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                    <Link to="/admin-dashboard" style={{ textDecoration: 'none', color: '#1a73e8', fontWeight: 'bold' }}>
+                        &larr;  Admin Dashboard
+                    </Link>
+                    <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#333', textAlign: 'center', flexGrow: 1 }}>
+                        Approver Management
+                    </Typography>
+                </Box>
 
 
                 <TextField
@@ -235,7 +239,7 @@ const AdminApprover = () => {
                     TabIndicatorProps={{ sx: { backgroundColor: '#1a237e' } }}
                 >
                     <Tab label={`All(${proposals.length})`} />
-                    <Tab label={`Pending(${proposals.filter((p) => p.status === 'PENDING').length})`} />
+                    <Tab label={`Pending(${proposals.filter((p) => p.status.toLowerCase() === 'PENDING'.toLowerCase()).length})`} />
                     <Tab label={`Approved(${proposals.filter((p) => p.status === 'APPROVED').length})`} />
                     <Tab label={`Rejected(${proposals.filter((p) => p.status === 'REJECTED').length})`} />
                 </Tabs>
@@ -272,7 +276,7 @@ const AdminApprover = () => {
                                         <TableCell>
                                             <StyledChip
                                                 label={proposal.status.toLowerCase()}
-                                                status={proposal.status}
+                                                status={proposal.status.toUpperCase()}
                                                 size="small"
                                             />
                                         </TableCell>
@@ -313,8 +317,10 @@ const AdminApprover = () => {
                 {/* Edit Dialog */}
                 <AdminApproverDialog
                     open={viewDialogOpen}
+                    
                     onClose={() => setViewDialogOpen(false)}
                     proposalId={selectedProposalId}
+                   
                     onStatusUpdate={(updatedProposal) => {
                         fetchProposals();
                         setViewDialogOpen(false);

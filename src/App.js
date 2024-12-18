@@ -24,7 +24,8 @@ import AdminDashboard from './components/AdminDashboard';
 import Procurements from './components/Procurements';
 import AdminApprover from './components/AdminApprover';
 import './App.css';
-
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 // Set axios default base URL
 axios.defaults.baseURL = `http://174.129.138.174:8080`;
 
@@ -32,6 +33,8 @@ function App() {
   // Replace localStorage with Redux state
   const user = useSelector((state) => state.auth.user);
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
     <Router>
@@ -176,7 +179,15 @@ function App() {
         </Routes>
         {/* Add FloatingChatButton after login */}
         {user && isAuthenticated && (
-          <FloatingChatButton userDetails={user} />
+          <FloatingChatButton
+            userDetails={user}
+            sx={{
+              position: 'fixed',
+              bottom: isMobile ? '16px' : '24px',
+              right: isMobile ? '16px' : '24px',
+              zIndex: 1000
+            }}
+          />
         )}
 
       </div>

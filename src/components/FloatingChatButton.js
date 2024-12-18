@@ -45,7 +45,8 @@ const FloatingChatButton = ({ userDetails }) => {
            bottom: 80,  // Adjust to place the dialog above the FAB
            right: 16,   // Aligns with the FAB's right position
            m: 0,        // No margin
-           width: '800px',  // Adjust the width as per your needs
+           width: 'auto',  // Adjust the width as per your needs
+           maxWidth: '800px',  // Adjust the maximum width as per your needs
            borderRadius: '16px',
          },
        }}>

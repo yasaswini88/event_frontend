@@ -7,6 +7,8 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import SendIcon from '@mui/icons-material/Send';
 import IconButton from '@mui/material/IconButton';
 import axios from 'axios';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 const Chatbot = ({ userDetails }) => {
 
@@ -18,6 +20,9 @@ const Chatbot = ({ userDetails }) => {
   const [loading, setLoading] = useState(false);
   const [typing, setTyping] = useState(false);
   const [error, setError] = useState(null);
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // Function to dynamically handle API calls
   const handleApiCall = async (url) => {
@@ -89,28 +94,29 @@ const Chatbot = ({ userDetails }) => {
   return (
     <div
       style={{
-        maxWidth: 900,
+        maxWidth: isMobile ? '95%' : 800, // Full width on mobile
         margin: '0 auto',
         textAlign: 'center',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        // backgroundColor: '#f9f9f9',
-        padding: '16px',
+        padding: isMobile ? '8px' : '16px', // Reduce padding for mobile
         borderRadius: '16px',
+        boxSizing: 'border-box',
       }}
     >
+
       {/* Chatbot Header */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: 2,
-          marginBottom: 2,
+          gap: isMobile ? 1 : 2,
+          marginBottom: isMobile ? 1 : 2,
         }}
       >
-        <AutoAwesomeIcon sx={{ fontSize: 40, color: "#388e3c" }} />
-        <Typography variant="h6" sx={{ color: "#388e3c" }}>
+        <AutoAwesomeIcon sx={{ fontSize: isMobile ? 30 : 40, color: "#388e3c" }} />
+        <Typography variant={isMobile ? "subtitle1" : "h6"} sx={{ color: "#388e3c" }}>
           UniProcure Assistant
         </Typography>
       </Box>
@@ -119,15 +125,19 @@ const Chatbot = ({ userDetails }) => {
       <Paper
         elevation={3}
         sx={{
-          width: '100%',
-          maxHeight: 400,
+          width: isMobile ? '90%' : '100%', // Reduce width for mobile
+          maxHeight: isMobile ? 250 : 400, // Limit height for smaller screens
           overflowY: 'auto',
-          padding: 2,
-          marginBottom: 2,
+          padding: isMobile ? 0.5 : 2, // Reduce padding for mobile
+          marginBottom: isMobile ? 1 : 2,
           backgroundColor: '#f9f9f9',
           borderRadius: '8px',
+          boxShadow: isMobile ? '0 2px 5px rgba(0,0,0,0.2)' : '0 4px 8px rgba(0,0,0,0.2)',
         }}
       >
+
+
+
         {chatHistory.map((chat, index) => (
           <Box key={index} sx={{ marginBottom: 2 }}>
             {/* User Message */}
@@ -141,20 +151,22 @@ const Chatbot = ({ userDetails }) => {
                   marginBottom: 1,
                 }}
               >
-                <Person4Icon sx={{ color: '#1976d2' }} />
+                <Person4Icon sx={{ color: '#1976d2', fontSize: isMobile ? 20 : 24 }} />
                 <Box
                   sx={{
-                    maxWidth: '75%',
-                    padding: 1.5,
+                    maxWidth: isMobile ? '90%' : '75%',
+
+                    padding: isMobile ? 1 : 1.5,
                     borderRadius: 3,
                     backgroundColor: '#1a237e',
                     color: '#fff',
                     textAlign: 'right',
                   }}
                 >
-                  <Typography variant="body1">{chat.user}</Typography>
+                  <Typography variant={isMobile ? "body2" : "body1"}>{chat.user}</Typography>
                 </Box>
               </Box>
+
             )}
             {/* Bot Message */}
             {chat.bot && (
@@ -169,7 +181,8 @@ const Chatbot = ({ userDetails }) => {
                 <SmartToyIcon sx={{ color: '#555' }} />
 
                 <Typography variant="body1" sx={{
-                  maxWidth: '75%',
+                  maxWidth: isMobile ? '90%' : '75%',
+
                   padding: 1.5,
                   borderRadius: 3,
                   backgroundColor: '#e0e0e0',
@@ -193,7 +206,12 @@ const Chatbot = ({ userDetails }) => {
       {error && <Typography color="error" variant="body2">{error}</Typography>}
 
       {/* Input Field and Send Button */}
-      <Box display="flex" width="100%" gap={2}>
+      <Box
+        display="flex"
+        width={isMobile ? "95%" : "100%"} // Adjust width for mobile
+        gap={isMobile ? 1 : 2} // Reduce gap on smaller screens
+      >
+
         <TextField
           label="Type your message"
           variant="outlined"

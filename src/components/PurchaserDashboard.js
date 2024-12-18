@@ -26,6 +26,8 @@ import {
 
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 const PurchaserDashboard = () => {
     const [purchaseOrders, setPurchaseOrders] = useState([]);
@@ -39,9 +41,10 @@ const PurchaserDashboard = () => {
     const [departments, setDepartments] = useState([]);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
 
-    
 
     const [snackbar, setSnackbar] = useState({
         open: false,
@@ -248,210 +251,234 @@ const PurchaserDashboard = () => {
     };
 
     return (
-        <Box sx={{ p: 3, minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-            <Box sx={{ maxWidth: 1200, margin: '0 auto' }}>
-                <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#333', mb: 3 }}>
-                    Purchase Order Management
-                </Typography>
+        <Box sx={{
+            p: isMobile ? 1 : 3,
+            minHeight: '100vh',
+            backgroundColor: '#f5f5f5'
+        }}>
+            <Typography
+                variant={isMobile ? "h6" : "h5"}
+                sx={{ fontWeight: 'bold', color: '#333', mb: 3 }}
+            >
+                Purchase Order Management
+            </Typography>
 
-                {error && (
-                    <Alert severity="error" sx={{ mb: 2 }}>
-                        {error}
-                    </Alert>
-                )}
-                <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'center' }}>
-                    <Autocomplete
-                        id="department-filter"
-                        options={[{ deptId: 'all', deptName: 'All Departments' }, ...departments]}
-                        getOptionLabel={(option) => option.deptName || ''}
-                        value={departments.find(d => d.deptName === selectedDepartment) ||
-                            { deptId: 'all', deptName: 'All Departments' }}
-                        onChange={(event, newValue) => {
-                            setSelectedDepartment(newValue ? newValue.deptName : 'all');
-                        }}
-                        sx={{
-                            minWidth: 300,
-                            '& .MuiOutlinedInput-root': {
-                                '& fieldset': {
-                                    borderColor: '#1a237e',
-                                },
-                                '&:hover fieldset': {
-                                    borderColor: '#1a237e',
-                                },
-                                '&.Mui-focused fieldset': {
-                                    borderColor: '#1a237e',
-                                },
-                            },
-                        }}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Filter by Department"
-                                variant="outlined"
-                            />
-                        )}
-                    />
-                </Box>
-                <TableContainer component={Paper} sx={{ mb: 4, boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
-                    <Table>
-                        <TableHead>
-                            <TableRow sx={{ backgroundColor: '#1a237e' }}>
-                                <TableCell sx={{ color: 'white' }}>Order ID</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Item</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Department</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Quantity</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Cost</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Order Status</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Delivery Status</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Tracking Number</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Expected Delivery</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Actions</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {paginatedPurchaseOrders.map((item) => (
-                                <TableRow key={item.proposalId} sx={{ backgroundColor: '#F7F6FE' }}>
-                                    {/* Changed order to match header */}
-                                    <TableCell>{item.orderId || item.proposalId}</TableCell>
-                                    <TableCell>{item.itemName}</TableCell>
-                                    <TableCell>{item.department}</TableCell>
-                                    <TableCell>{item.quantity}</TableCell>
-                                    <TableCell>${item.finalCost.toFixed(2)}</TableCell>
-                                    <TableCell>
-                                        <Box sx={{
-                                            backgroundColor: item.orderStatus === 'ORDERED' ? '#e8f5e9' : '#fff3e0',
-                                            color: item.orderStatus === 'ORDERED' ? '#2e7d32' : '#e65100',
-                                            p: 1,
-                                            borderRadius: 1,
-                                            textAlign: 'center'
-                                        }}>
-                                            {item.orderStatus}
-                                        </Box>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Box sx={{
-                                            backgroundColor:
-                                                item.deliveryStatus === 'Delivered' ? '#e8f5e9' :
-                                                    item.deliveryStatus === 'Shipped' ? '#e3f2fd' :
-                                                        '#fff3e0',
-                                            color:
-                                                item.deliveryStatus === 'Delivered' ? '#2e7d32' :
-                                                    item.deliveryStatus === 'Shipped' ? '#1565c0' :
-                                                        '#e65100',
-                                            p: 1,
-                                            borderRadius: 1,
-                                            textAlign: 'center'
-                                        }}>
-                                            {item.deliveryStatus || 'Not Started'}
-                                        </Box>
-                                    </TableCell>
-                                    <TableCell>{item.purchaseOrderNumber || 'Not Generated'}</TableCell>
-                                    <TableCell>{item.expectedDeliveryDate ? formatDate(item.expectedDeliveryDate) : '-'}</TableCell>
-                                    <TableCell>
-                                        <Box sx={{ display: 'flex', gap: 1 }}>
-                                            {item.orderStatus === 'PENDING' && (
-                                                <Button
-                                                    variant="contained"
-                                                    size="small"
-                                                    onClick={() => handleCreatePurchaseOrder(item.proposalId)}
-                                                    sx={{ backgroundColor: '#1a237e' }}
-                                                >
-                                                    Place Order
-                                                </Button>
-                                            )}
-                                            {item.orderStatus === 'ORDERED' && (
-                                                <Button
-                                                    variant="contained"
-                                                    size="small"
-                                                    onClick={() => handleOpenDialog(item)}
-                                                    sx={{ backgroundColor: '#1565c0' }}
-                                                >
-                                                    Update Delivery
-                                                </Button>
-                                            )}
-                                        </Box>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-
-                <TablePagination
-                    component="div"
-                    count={getFilteredPurchaseOrders().length}
-                    page={page}
-                    onPageChange={(event, newPage) => setPage(newPage)}
-                    rowsPerPage={rowsPerPage}
-                    onRowsPerPageChange={(event) => {
-                        setRowsPerPage(parseInt(event.target.value, 10));
-                        setPage(0); // Reset to first page
+            {error && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                    {error}
+                </Alert>
+            )}
+            <Box sx={{
+                display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
+                gap: 2,
+                mb: 3,
+                alignItems: isMobile ? 'stretch' : 'center'
+            }}>
+                <Autocomplete
+                    id="department-filter"
+                    options={[{ deptId: 'all', deptName: 'All Departments' }, ...departments]}
+                    getOptionLabel={(option) => option.deptName || ''}
+                    value={departments.find(d => d.deptName === selectedDepartment) ||
+                        { deptId: 'all', deptName: 'All Departments' }}
+                    onChange={(event, newValue) => {
+                        setSelectedDepartment(newValue ? newValue.deptName : 'all');
                     }}
-                    rowsPerPageOptions={[5, 10, 15]}
+                    sx={{
+                        minWidth: 300,
+                        '& .MuiOutlinedInput-root': {
+                            '& fieldset': {
+                                borderColor: '#1a237e',
+                            },
+                            '&:hover fieldset': {
+                                borderColor: '#1a237e',
+                            },
+                            '&.Mui-focused fieldset': {
+                                borderColor: '#1a237e',
+                            },
+                        },
+                    }}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Filter by Department"
+                            variant="outlined"
+                        />
+                    )}
                 />
-
-
-                <Dialog open={openDialog} onClose={handleCloseDialog}>
-                    <DialogTitle>Update Delivery Status</DialogTitle>
-                    <DialogContent>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: '300px', mt: 2 }}>
-                            {/* Delivery Status Dropdown */}
-                            <TextField
-                                select
-                                label="Delivery Status"
-                                value={newDeliveryStatus}
-                                onChange={(e) => setNewDeliveryStatus(e.target.value)}
-                                fullWidth
-                            >
-                                {deliveryStatusOptions.map((status) => (
-                                    <MenuItem key={status} value={status}>
-                                        {status}
-                                    </MenuItem>
-                                ))}
-                            </TextField>
-
-                            {/* Expected Delivery Date Input */}
-                            <TextField
-                                label="Expected Delivery Date"
-                                type="datetime-local"
-                                value={expectedDeliveryDate}
-                                onChange={(e) => setExpectedDeliveryDate(e.target.value)}
-                                fullWidth
-                                InputLabelProps={{
-                                    shrink: true,
-                                }}
-                            />
-                        </Box>
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={handleCloseDialog}>Cancel</Button>
-                        <Button
-                            onClick={handleUpdateDeliveryStatus}
-                            variant="contained"
-                            disabled={!newDeliveryStatus || !expectedDeliveryDate}
-                        >
-                            Update
-                        </Button>
-                    </DialogActions>
-                </Dialog>
-
-
-                <Snackbar
-                    open={snackbar.open}
-                    autoHideDuration={6000}
-                    onClose={handleCloseSnackbar}
-                    anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-                >
-                    <Alert
-                        onClose={handleCloseSnackbar}
-                        severity={snackbar.severity}
-                        sx={{ width: '100%' }}
-                    >
-                        {snackbar.message}
-                    </Alert>
-                </Snackbar>
             </Box>
+            <TableContainer component={Paper} sx={{ mb: 4, boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
+                <Table>
+                    <TableHead>
+                        <TableRow sx={{ backgroundColor: '#1a237e' }}>
+                            <TableCell sx={{ color: 'white' }}>Order ID</TableCell>
+                            <TableCell sx={{ color: 'white' }}>Item</TableCell>
+                            <TableCell sx={{ color: 'white' }}>Department</TableCell>
+                            <TableCell sx={{ color: 'white' }}>Quantity</TableCell>
+                            <TableCell sx={{ color: 'white' }}>Cost</TableCell>
+                            <TableCell sx={{ color: 'white' }}>Order Status</TableCell>
+                            <TableCell sx={{ color: 'white' }}>Delivery Status</TableCell>
+                            <TableCell sx={{ color: 'white' }}>Tracking Number</TableCell>
+                            <TableCell sx={{ color: 'white' }}>Expected Delivery</TableCell>
+                            <TableCell sx={{ color: 'white' }}>Actions</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    
+                    <TableBody>
+                        {paginatedPurchaseOrders.map((item) => (
+                            <TableRow key={item.proposalId} sx={{ backgroundColor: '#F7F6FE' }}>
+                                {/* Changed order to match header */}
+                                <TableCell>{item.orderId || item.proposalId}</TableCell>
+                                <TableCell>{item.itemName}</TableCell>
+                                <TableCell>{item.department}</TableCell>
+                                <TableCell>{item.quantity}</TableCell>
+                                <TableCell>${item.finalCost.toFixed(2)}</TableCell>
+                                <TableCell>
+                                    <Box sx={{
+                                        backgroundColor: item.orderStatus === 'ORDERED' ? '#e8f5e9' : '#fff3e0',
+                                        color: item.orderStatus === 'ORDERED' ? '#2e7d32' : '#e65100',
+                                        p: 1,
+                                        borderRadius: 1,
+                                        textAlign: 'center'
+                                    }}>
+                                        {item.orderStatus}
+                                    </Box>
+                                </TableCell>
+                                <TableCell>
+                                    <Box sx={{
+                                        backgroundColor:
+                                            item.deliveryStatus === 'Delivered' ? '#e8f5e9' :
+                                                item.deliveryStatus === 'Shipped' ? '#e3f2fd' :
+                                                    '#fff3e0',
+                                        color:
+                                            item.deliveryStatus === 'Delivered' ? '#2e7d32' :
+                                                item.deliveryStatus === 'Shipped' ? '#1565c0' :
+                                                    '#e65100',
+                                        p: 1,
+                                        borderRadius: 1,
+                                        textAlign: 'center'
+                                    }}>
+                                        {item.deliveryStatus || 'Not Started'}
+                                    </Box>
+                                </TableCell>
+                                <TableCell>{item.purchaseOrderNumber || 'Not Generated'}</TableCell>
+                                <TableCell>{item.expectedDeliveryDate ? formatDate(item.expectedDeliveryDate) : '-'}</TableCell>
+                                <TableCell>
+                                    <Box sx={{ display: 'flex', gap: 1 }}>
+                                        {item.orderStatus === 'PENDING' && (
+                                            <Button
+                                                variant="contained"
+                                                size="small"
+                                                onClick={() => handleCreatePurchaseOrder(item.proposalId)}
+                                                sx={{ backgroundColor: '#1a237e' }}
+                                            >
+                                                Place Order
+                                            </Button>
+                                        )}
+                                        {item.orderStatus === 'ORDERED' && (
+                                            <Button
+                                                variant="contained"
+                                                size="small"
+                                                onClick={() => handleOpenDialog(item)}
+                                                sx={{ backgroundColor: '#1565c0' }}
+                                            >
+                                                Update Delivery
+                                            </Button>
+                                        )}
+                                    </Box>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+
+            <TablePagination
+                component="div"
+                count={getFilteredPurchaseOrders().length}
+                page={page}
+                onPageChange={(event, newPage) => setPage(newPage)}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={(event) => {
+                    setRowsPerPage(parseInt(event.target.value, 10));
+                    setPage(0);
+                }}
+                rowsPerPageOptions={isMobile ? [5, 10] : [5, 10, 15]}
+                labelRowsPerPage={isMobile ? "Rows:" : "Rows per page:"}
+            />
+
+
+            <Dialog
+                open={openDialog}
+                onClose={handleCloseDialog}
+                fullScreen={isMobile}
+                PaperProps={{
+                    sx: {
+                        width: isMobile ? '100%' : '400px',
+                        margin: isMobile ? 0 : 2
+                    }
+                }}
+            >
+                <DialogTitle>Update Delivery Status</DialogTitle>
+                <DialogContent>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: '300px', mt: 2 }}>
+                        {/* Delivery Status Dropdown */}
+                        <TextField
+                            select
+                            label="Delivery Status"
+                            value={newDeliveryStatus}
+                            onChange={(e) => setNewDeliveryStatus(e.target.value)}
+                            fullWidth
+                        >
+                            {deliveryStatusOptions.map((status) => (
+                                <MenuItem key={status} value={status}>
+                                    {status}
+                                </MenuItem>
+                            ))}
+                        </TextField>
+
+                        {/* Expected Delivery Date Input */}
+                        <TextField
+                            label="Expected Delivery Date"
+                            type="datetime-local"
+                            value={expectedDeliveryDate}
+                            onChange={(e) => setExpectedDeliveryDate(e.target.value)}
+                            fullWidth
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                        />
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseDialog}>Cancel</Button>
+                    <Button
+                        onClick={handleUpdateDeliveryStatus}
+                        variant="contained"
+                        disabled={!newDeliveryStatus || !expectedDeliveryDate}
+                    >
+                        Update
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={6000}
+                onClose={handleCloseSnackbar}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+                <Alert
+                    onClose={handleCloseSnackbar}
+                    severity={snackbar.severity}
+                    sx={{ width: '100%' }}
+                >
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </Box>
+      
     );
 };
 

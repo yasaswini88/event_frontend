@@ -23,7 +23,7 @@ import {
     FormControl,
     InputLabel,
     Select,
-    TablePagination
+    TablePagination, Tab, Tabs
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
@@ -38,6 +38,8 @@ const Procurements = () => {
     const [selectedProposal, setSelectedProposal] = useState(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [proposalToDelete, setProposalToDelete] = useState(null);
+    const [tabValue, setTabValue] = useState(0);
+
     const [snackbar, setSnackbar] = useState({
         open: false,
         message: '',
@@ -69,6 +71,11 @@ const Procurements = () => {
         setFilterStatus(event.target.value);
         setPage(0);
     };
+
+    const handleTabChange = (event, newValue) => {
+        setTabValue(newValue);
+    };
+
 
     const handleEdit = (proposal) => {
         setSelectedProposal(proposal);
@@ -129,21 +136,33 @@ const Procurements = () => {
         });
     };
 
-    const filteredProcurements = procurements.filter(proc => 
-        filterStatus ? proc.status === filterStatus : true
-    );
+    const getFilteredProcurements = () => {
+        let filtered = procurements;
+
+        switch (tabValue) {
+            case 1:
+                return filtered.filter((proc) => proc.status.toLowerCase() === 'PENDING'.toLowerCase());
+            case 2:
+                return filtered.filter((proc) => proc.status === 'APPROVED');
+            case 3:
+                return filtered.filter((proc) => proc.status === 'REJECTED');
+            default:
+                return filtered; // All statuses
+        }
+    };
+
 
     return (
         <Box sx={{ p: 3, minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
             <Box sx={{ maxWidth: 1200, margin: '0 auto' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-    <Link to="/admin-dashboard" style={{ textDecoration: 'none', color: '#1a73e8', fontWeight: 'bold' }}>
-        &larr; Admin Dashboard
-    </Link>
-    <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#333', textAlign: 'center', flexGrow: 1 }}>
-        Procurement Management
-    </Typography>
-</Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                    <Link to="/admin-dashboard" style={{ textDecoration: 'none', color: '#1a73e8', fontWeight: 'bold' }}>
+                        &larr; Admin Dashboard
+                    </Link>
+                    <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#333', textAlign: 'center', flexGrow: 1 }}>
+                        Procurement Management
+                    </Typography>
+                </Box>
 
 
                 {error && (
@@ -167,6 +186,19 @@ const Procurements = () => {
                     </Select>
                 </FormControl> */}
 
+                <Tabs
+                    value={tabValue}
+                    onChange={handleTabChange}
+                    sx={{ mb: 3 }}
+                    TabIndicatorProps={{ sx: { backgroundColor: '#1a237e' } }}
+                >
+                    <Tab label={`All (${procurements.length})`} />
+                    <Tab label={`Pending (${procurements.filter((p) => p.status.toLowerCase() === 'PENDING'.toLowerCase()).length})`} />
+                    <Tab label={`Approved (${procurements.filter((p) => p.status === 'APPROVED').length})`} />
+                    <Tab label={`Rejected (${procurements.filter((p) => p.status === 'REJECTED').length})`} />
+                </Tabs>
+
+
                 <TableContainer component={Paper} sx={{ mb: 4, boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
                     <Table>
                         <TableHead>
@@ -182,8 +214,10 @@ const Procurements = () => {
                                 <TableCell sx={{ color: 'white' }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
+
+
                         <TableBody>
-                            {filteredProcurements
+                            {getFilteredProcurements()
                                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                 .map((proposal) => (
                                     <TableRow key={proposal.proposalId} sx={{ backgroundColor: '#F7F6FE' }}>
@@ -194,29 +228,25 @@ const Procurements = () => {
                                         <TableCell>{proposal.quantity}</TableCell>
                                         <TableCell>${proposal.estimatedCost.toFixed(2)}</TableCell>
                                         <TableCell>
-                                            <Box sx={{
-                                                backgroundColor: statusColors[proposal.status]?.bg || '#f5f5f5',
-                                                color: statusColors[proposal.status]?.text || '#000',
-                                                p: 1,
-                                                borderRadius: 1,
-                                                textAlign: 'center'
-                                            }}>
-                                                {proposal.status}
+                                            <Box
+                                                sx={{
+                                                    backgroundColor: statusColors[proposal.status]?.bg || '#f5f5f5',
+                                                    color: statusColors[proposal.status]?.text || '#000',
+                                                    p: 1,
+                                                    borderRadius: 1,
+                                                    textAlign: 'center',
+                                                }}
+                                            >
+                                                {proposal.status.toUpperCase()}
                                             </Box>
                                         </TableCell>
                                         <TableCell>{formatDate(proposal.proposalDate)}</TableCell>
                                         <TableCell>
                                             <Box sx={{ display: 'flex', gap: 1 }}>
-                                                <IconButton
-                                                    color="primary"
-                                                    onClick={() => handleEdit(proposal)}
-                                                >
+                                                <IconButton color="primary" onClick={() => handleEdit(proposal)}>
                                                     <EditIcon />
                                                 </IconButton>
-                                                <IconButton
-                                                    color="error"
-                                                    onClick={() => handleDelete(proposal.proposalId)}
-                                                >
+                                                <IconButton color="error" onClick={() => handleDelete(proposal.proposalId)}>
                                                     <DeleteIcon />
                                                 </IconButton>
                                             </Box>
@@ -224,11 +254,12 @@ const Procurements = () => {
                                     </TableRow>
                                 ))}
                         </TableBody>
+
                     </Table>
                     <TablePagination
                         rowsPerPageOptions={[5, 10, 25]}
                         component="div"
-                        count={filteredProcurements.length}
+                        count={getFilteredProcurements().length} // Fixed this line
                         rowsPerPage={rowsPerPage}
                         page={page}
                         onPageChange={(event, newPage) => setPage(newPage)}
@@ -237,6 +268,7 @@ const Procurements = () => {
                             setPage(0);
                         }}
                     />
+
                 </TableContainer>
 
                 {/* Edit Dialog */}
