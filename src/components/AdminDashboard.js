@@ -73,22 +73,16 @@ import {
 } from '@mui/material';
 import { TablePagination } from '@mui/material';
 import { Close as CloseIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import UserEditDialog from './UserEditDialog';
+import UserEditDialog from './UserEditDialog';   // Make sure the path is correct
 import Layout from './Layout';
 import MenuIcon from '@mui/icons-material/Menu';
 import { sortData } from '../utils/utilities';
-
-
-
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
     const [users, setUsers] = useState([]);
     const [filteredUsers, setFilteredUsers] = useState([]);
-    // const [departments, setDepartments] = useState([]);
     const [roles, setRoles] = useState([]);
-    // const [openDialog, setOpenDialog] = useState(false);
-    const [editingUser, setEditingUser] = useState(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [userToDelete, setUserToDelete] = useState(null);
     const [error, setError] = useState('');
@@ -99,27 +93,25 @@ const AdminDashboard = () => {
         message: '',
         severity: 'success'
     });
-    const [filters, setFilters] = useState({
-        role: '',
-        department: ''
-    });
-
+    const [filters, setFilters] = useState({ role: '', department: '' });
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [sortConfig, setSortConfig] = useState({ key: 'userId', order: 'asc' });
 
-
+    // Toggle the drawer open/close
     const toggleDrawer = () => {
         setDrawerOpen(!drawerOpen);
     };
 
+    // Load initial data (users + roles)
     useEffect(() => {
         fetchUsers();
-        // fetchDepartments();
         fetchRoles();
+        // fetchDepartments(); // if needed
     }, []);
 
+    // Re-filter users whenever filters or the users array changes
     useEffect(() => {
         filterUsers();
     }, [filters, users]);
@@ -127,9 +119,8 @@ const AdminDashboard = () => {
     const fetchUsers = async () => {
         try {
             const response = await axios.get('/api/users');
-
             setUsers(response.data);
-            setFilteredUsers(response.data);
+            setFilteredUsers(response.data); // initially, no filter is applied
         } catch (err) {
             console.error('Error fetching users:', err);
             setError('Error fetching users');
@@ -140,20 +131,6 @@ const AdminDashboard = () => {
             });
         }
     };
-
-    // const fetchDepartments = async () => {
-    //     try {
-    //         const response = await axios.get('/api/departments');
-    //         setDepartments(response.data);
-    //     } catch (err) {
-    //         console.error('Error fetching departments:', err);
-    //         setSnackbar({
-    //             open: true,
-    //             message: 'Error fetching departments',
-    //             severity: 'error'
-    //         });
-    //     }
-    // };
 
     const fetchRoles = async () => {
         try {
@@ -169,14 +146,20 @@ const AdminDashboard = () => {
         }
     };
 
+    // Example: fetchDepartments if needed
+    // const fetchDepartments = async () => {
+    //   ...
+    // };
+
+    // Filter the users array based on selected role (and optionally department)
     const filterUsers = () => {
         let filtered = [...users];
+
         if (filters.role) {
-            filtered = filtered.filter(user => user.roles.roleName === filters.role);
+            filtered = filtered.filter(user => user.roles?.roleName === filters.role);
         }
-        // if (filters.department) {
-        //     filtered = filtered.filter(user => user.departmentName === filters.department);
-        // }
+        // if (filters.department) { ... }
+
         setFilteredUsers(filtered);
     };
 
@@ -188,6 +171,7 @@ const AdminDashboard = () => {
         setRowsPerPage(parseInt(event.target.value, 10));
         setPage(0);
     };
+
     const handleSort = (key) => {
         setSortConfig((prevConfig) => ({
             key,
@@ -204,15 +188,20 @@ const AdminDashboard = () => {
         setPage(0); // Reset to first page when filter changes
     };
 
+    /**
+     * Edit user: fetch user details from server, set selectedUser, open the dialog
+     */
     const handleEditUser = async (user) => {
         try {
             const response = await axios.get(`/api/users/${user.userId}`);
-            console.log('User response data:', response.data); // Debug log
+            console.log('User response data:', response.data);
+
+            // Flatten or adapt the user if needed
             setSelectedUser({
                 ...response.data,
                 roles: {
-                    roleId: response.data.roles?.roleId || response.data.roleId,
-                    roleName: response.data.roles?.roleName || response.data.roleName
+                    roleId: response.data.roles?.roleId || '',
+                    roleName: response.data.roles?.roleName || ''
                 }
             });
             setEditDialogOpen(true);
@@ -226,28 +215,22 @@ const AdminDashboard = () => {
         }
     };
 
-    // Add handleEditDialogClose:
     const handleEditDialogClose = () => {
         setEditDialogOpen(false);
         setSelectedUser(null);
     };
 
-    // Add handleUpdateSuccess:
+    // Called by UserEditDialog on a successful update
     const handleUpdateSuccess = () => {
         setSnackbar({
             open: true,
             message: 'User updated successfully',
             severity: 'success'
         });
-        fetchUsers();
+        fetchUsers(); // reload user list
     };
 
-    const handleCloseDialog = () => {
-        // setOpenDialog(false);
-        setEditingUser(null);
-        fetchUsers();
-    };
-
+    // For the delete confirmation
     const handleDelete = (userId) => {
         setUserToDelete(userId);
         setDeleteDialogOpen(true);
@@ -280,8 +263,8 @@ const AdminDashboard = () => {
     };
 
     return (
-
         <Box sx={{ p: 3, minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+            {/* Drawer Toggle Button */}
             <IconButton
                 color="inherit"
                 aria-label="open drawer"
@@ -304,7 +287,6 @@ const AdminDashboard = () => {
 
             <Layout open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
-
             <Box sx={{ maxWidth: 1200, margin: '0 auto' }}>
                 {/* Header */}
                 <Box
@@ -323,18 +305,6 @@ const AdminDashboard = () => {
                     <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#333' }}>
                         User Management Dashboard
                     </Typography>
-                    {/* <Button
-                        variant="contained"
-                        onClick={() => navigate('/signup')}
-                        sx={{
-                            backgroundColor: '#1a237e',
-                            '&:hover': {
-                                backgroundColor: '#0d1b5e',
-                            }
-                        }}
-                    >
-                        Create New User
-                    </Button> */}
                 </Box>
 
                 {/* Filters */}
@@ -374,6 +344,7 @@ const AdminDashboard = () => {
                     </FormControl> */}
                 </Box>
 
+                {/* Error Alert */}
                 {error && (
                     <Alert severity="error" sx={{ mb: 2 }}>
                         {error}
@@ -405,11 +376,10 @@ const AdminDashboard = () => {
                                 <TableCell sx={{ color: 'white' }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
-
                         <TableBody>
                             {sortData(filteredUsers, sortConfig.key, sortConfig.order)
                                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                .map((user) => (
+                                .map(user => (
                                     <TableRow key={user.userId} sx={{ backgroundColor: '#F7F6FE' }}>
                                         <TableCell>{user.userId}</TableCell>
                                         <TableCell>{user.firstName}</TableCell>
@@ -433,25 +403,22 @@ const AdminDashboard = () => {
 
                                         <TableCell>
                                             <Box sx={{ display: 'flex', gap: 1 }}>
-                                                <IconButton
-                                                    color="primary"
-                                                    onClick={() => handleEditUser(user)}
-                                                >
+                                                <IconButton color="primary" onClick={() => handleEditUser(user)}>
                                                     <EditIcon />
                                                 </IconButton>
                                                 {/* <IconButton
-                        color="error"
-                        onClick={() => handleDelete(user.userId)}
-                    >
-                        <DeleteIcon />
-                    </IconButton> */}
+                                                    color="error"
+                                                    onClick={() => handleDelete(user.userId)}
+                                                >
+                                                    <DeleteIcon />
+                                                </IconButton> */}
                                             </Box>
                                         </TableCell>
                                     </TableRow>
                                 ))}
-
                         </TableBody>
                     </Table>
+                    {/* Pagination */}
                     <TablePagination
                         rowsPerPageOptions={[5, 10, 25]}
                         component="div"
@@ -464,10 +431,7 @@ const AdminDashboard = () => {
                 </TableContainer>
 
                 {/* Delete Confirmation Dialog */}
-                <Dialog
-                    open={deleteDialogOpen}
-                    onClose={() => setDeleteDialogOpen(false)}
-                >
+                <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
                     <DialogTitle>Confirm Delete</DialogTitle>
                     <DialogContent>
                         <Typography>Are you sure you want to delete this user?</Typography>
@@ -489,23 +453,21 @@ const AdminDashboard = () => {
                     onClose={handleCloseSnackbar}
                     anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
                 >
-                    <Alert
-                        onClose={handleCloseSnackbar}
-                        severity={snackbar.severity}
-                        sx={{ width: '100%' }}
-                    >
+                    <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
                         {snackbar.message}
                     </Alert>
                 </Snackbar>
             </Box>
+
+            {/* The Edit Dialog: pass the roles array */}
             <UserEditDialog
                 open={editDialogOpen}
                 onClose={handleEditDialogClose}
                 user={selectedUser}
                 onUpdateSuccess={handleUpdateSuccess}
+                roles={roles}
             />
         </Box>
-
     );
 };
 

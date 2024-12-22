@@ -449,13 +449,13 @@ const AdminApprover = () => {
                     >
                         <VisibilityIcon />
                     </IconButton>
-                    <IconButton
+                    {/* <IconButton
                         size="small"
                         color="error"
                         onClick={() => handleDeleteProposal(proposal.proposalId)}
                     >
                         <DeleteIcon />
-                    </IconButton>
+                    </IconButton> */}
                 </TableCell>
             </TableRow>
         ))}

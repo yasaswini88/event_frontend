@@ -312,9 +312,9 @@ const Procurements = () => {
                                                 <IconButton color="primary" onClick={() => handleEdit(proposal)}>
                                                     <EditIcon />
                                                 </IconButton>
-                                                <IconButton color="error" onClick={() => handleDelete(proposal.proposalId)}>
+                                                {/* <IconButton color="error" onClick={() => handleDelete(proposal.proposalId)}>
                                                     <DeleteIcon />
-                                                </IconButton>
+                                                </IconButton> */}
                                             </Box>
                                         </TableCell>
                                     </TableRow>
