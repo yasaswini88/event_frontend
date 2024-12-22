@@ -47,7 +47,7 @@ const DepartmentManagement = () => {
 
     const fetchDepartments = async () => {
         try {
-            const response = await axios.get('http://174.129.138.174:8080/api/departments');
+            const response = await axios.get('/api/departments');
             setDepartments(response.data);
         } catch (error) {
             showSnackbar('Error fetching departments', 'error');
@@ -67,7 +67,7 @@ const DepartmentManagement = () => {
     const handleEditSave = async () => {
         try {
             await axios.put(
-                `http://174.129.138.174:8080/api/departments/${editDepartment.deptId}`, 
+                `/api/departments/${editDepartment.deptId}`, 
                 editDepartment
             );
             showSnackbar('Department updated successfully', 'success');
@@ -85,7 +85,7 @@ const DepartmentManagement = () => {
 
     const handleDeleteConfirm = async () => {
         try {
-            await axios.delete(`http://174.129.138.174:8080/api/departments/${departmentToDelete.deptId}`);
+            await axios.delete(`/api/departments/${departmentToDelete.deptId}`);
             showSnackbar('Department deleted successfully', 'success');
             fetchDepartments();
         } catch (error) {
@@ -102,7 +102,7 @@ const DepartmentManagement = () => {
 
     const handleAddSave = async () => {
         try {
-            await axios.post('http://174.129.138.174:8080/api/departments', newDepartment);
+            await axios.post('/api/departments', newDepartment);
             showSnackbar('Department added successfully', 'success');
             fetchDepartments();
             setAddDialogOpen(false);
@@ -159,12 +159,12 @@ const DepartmentManagement = () => {
                                     >
                                         <EditIcon />
                                     </IconButton>
-                                    <IconButton 
+                                    {/* <IconButton 
                                         color="error" 
                                         onClick={() => handleDeleteClick(department)}
                                     >
                                         <DeleteIcon />
-                                    </IconButton>
+                                    </IconButton> */}
                                 </TableCell>
                             </TableRow>
                         ))}

@@ -1,3 +1,50 @@
+/**
+ * AdminDashboard component for managing users.
+ *
+ * @component
+ * @returns {JSX.Element} The rendered component.
+ *
+ * @example
+ * return <AdminDashboard />
+ *
+ * @description
+ * This component fetches and displays a list of users, allowing for filtering by role,
+ * sorting, pagination, and editing user details. It also includes a snackbar for notifications
+ * and a dialog for confirming user deletions.
+ *
+ * @function
+ * @name AdminDashboard
+ *
+ * @property {function} toggleDrawer - Toggles the state of the drawer.
+ * @property {function} fetchUsers - Fetches the list of users from the API.
+ * @property {function} fetchRoles - Fetches the list of roles from the API.
+ * @property {function} filterUsers - Filters the list of users based on selected filters.
+ * @property {function} handleChangePage - Handles the change of the current page in pagination.
+ * @property {function} handleChangeRowsPerPage - Handles the change of rows per page in pagination.
+ * @property {function} handleSort - Handles sorting of the user list based on a key.
+ * @property {function} handleFilterChange - Handles the change of filter values.
+ * @property {function} handleEditUser - Fetches user details and opens the edit dialog.
+ * @property {function} handleEditDialogClose - Closes the edit dialog.
+ * @property {function} handleUpdateSuccess - Handles successful user update.
+ * @property {function} handleCloseDialog - Closes the delete confirmation dialog.
+ * @property {function} handleDelete - Opens the delete confirmation dialog for a user.
+ * @property {function} handleConfirmDelete - Confirms and deletes a user.
+ * @property {function} handleCloseSnackbar - Closes the snackbar notification.
+ *
+ * @property {Array} users - The list of users.
+ * @property {Array} filteredUsers - The filtered list of users.
+ * @property {Array} roles - The list of roles.
+ * @property {Object} filters - The current filter values.
+ * @property {Object} sortConfig - The current sorting configuration.
+ * @property {Object} snackbar - The snackbar notification state.
+ * @property {boolean} editDialogOpen - The state of the edit dialog.
+ * @property {Object} selectedUser - The currently selected user for editing.
+ * @property {boolean} drawerOpen - The state of the drawer.
+ * @property {boolean} deleteDialogOpen - The state of the delete confirmation dialog.
+ * @property {number} page - The current page in pagination.
+ * @property {number} rowsPerPage - The number of rows per page in pagination.
+ * @property {string} error - The error message, if any.
+ */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -29,6 +76,8 @@ import { Close as CloseIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui
 import UserEditDialog from './UserEditDialog';
 import Layout from './Layout';
 import MenuIcon from '@mui/icons-material/Menu';
+import { sortData } from '../utils/utilities';
+
 
 
 
@@ -58,6 +107,8 @@ const AdminDashboard = () => {
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [sortConfig, setSortConfig] = useState({ key: 'userId', order: 'asc' });
+
 
     const toggleDrawer = () => {
         setDrawerOpen(!drawerOpen);
@@ -75,7 +126,7 @@ const AdminDashboard = () => {
 
     const fetchUsers = async () => {
         try {
-            const response = await axios.get('http://174.129.138.174:8080/api/users');
+            const response = await axios.get('/api/users');
 
             setUsers(response.data);
             setFilteredUsers(response.data);
@@ -92,7 +143,7 @@ const AdminDashboard = () => {
 
     // const fetchDepartments = async () => {
     //     try {
-    //         const response = await axios.get('http://174.129.138.174:8080/api/departments');
+    //         const response = await axios.get('/api/departments');
     //         setDepartments(response.data);
     //     } catch (err) {
     //         console.error('Error fetching departments:', err);
@@ -106,7 +157,7 @@ const AdminDashboard = () => {
 
     const fetchRoles = async () => {
         try {
-            const response = await axios.get('http://174.129.138.174:8080/api/roles');
+            const response = await axios.get('/api/roles');
             setRoles(response.data);
         } catch (err) {
             console.error('Error fetching roles:', err);
@@ -121,7 +172,7 @@ const AdminDashboard = () => {
     const filterUsers = () => {
         let filtered = [...users];
         if (filters.role) {
-            filtered = filtered.filter(user => user.roleName === filters.role);
+            filtered = filtered.filter(user => user.roles.roleName === filters.role);
         }
         // if (filters.department) {
         //     filtered = filtered.filter(user => user.departmentName === filters.department);
@@ -137,6 +188,12 @@ const AdminDashboard = () => {
         setRowsPerPage(parseInt(event.target.value, 10));
         setPage(0);
     };
+    const handleSort = (key) => {
+        setSortConfig((prevConfig) => ({
+            key,
+            order: prevConfig.key === key && prevConfig.order === 'asc' ? 'desc' : 'asc'
+        }));
+    };
 
     const handleFilterChange = (event) => {
         const { name, value } = event.target;
@@ -149,7 +206,7 @@ const AdminDashboard = () => {
 
     const handleEditUser = async (user) => {
         try {
-            const response = await axios.get(`http://174.129.138.174:8080/api/users/${user.userId}`);
+            const response = await axios.get(`/api/users/${user.userId}`);
             console.log('User response data:', response.data); // Debug log
             setSelectedUser({
                 ...response.data,
@@ -198,7 +255,7 @@ const AdminDashboard = () => {
 
     const handleConfirmDelete = async () => {
         try {
-            await axios.delete(`http://174.129.138.174:8080/api/users/${userToDelete}`);
+            await axios.delete(`/api/users/${userToDelete}`);
             setSnackbar({
                 open: true,
                 message: 'User deleted successfully',
@@ -251,18 +308,18 @@ const AdminDashboard = () => {
             <Box sx={{ maxWidth: 1200, margin: '0 auto' }}>
                 {/* Header */}
                 <Box
-        component="main"
-        sx={{
-            flexGrow: 1,
-            p: 3,
-            mt: 8,
-            ml: drawerOpen ? '240px' : 0,
-            transition: theme => theme.transitions.create('margin', {
-                easing: theme.transitions.easing.sharp,
-                duration: theme.transitions.duration.leavingScreen,
-            }),
-        }}
-    >
+                    component="main"
+                    sx={{
+                        flexGrow: 1,
+                        p: 3,
+                        mt: 8,
+                        ml: drawerOpen ? '240px' : 0,
+                        transition: theme => theme.transitions.create('margin', {
+                            easing: theme.transitions.easing.sharp,
+                            duration: theme.transitions.duration.leavingScreen,
+                        }),
+                    }}
+                >
                     <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#333' }}>
                         User Management Dashboard
                     </Typography>
@@ -328,19 +385,29 @@ const AdminDashboard = () => {
                     <Table>
                         <TableHead>
                             <TableRow sx={{ backgroundColor: '#1a237e' }}>
-                                <TableCell sx={{ color: 'white' }}>User ID</TableCell>
-                                <TableCell sx={{ color: 'white' }}>First Name</TableCell>
+                                <TableCell
+                                    onClick={() => handleSort('userId')}
+                                    sx={{ color: 'white', cursor: 'pointer' }}
+                                >
+                                    User ID {sortConfig.key === 'userId' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                </TableCell>
+                                <TableCell
+                                    onClick={() => handleSort('firstName')}
+                                    sx={{ color: 'white', cursor: 'pointer' }}
+                                >
+                                    First Name {sortConfig.key === 'firstName' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                </TableCell>
                                 <TableCell sx={{ color: 'white' }}>Last Name</TableCell>
                                 <TableCell sx={{ color: 'white' }}>Gender</TableCell>
                                 <TableCell sx={{ color: 'white' }}>Email</TableCell>
                                 <TableCell sx={{ color: 'white' }}>Phone Number</TableCell>
                                 <TableCell sx={{ color: 'white' }}>Role</TableCell>
-                                {/* <TableCell sx={{ color: 'white' }}>Department</TableCell> */}
                                 <TableCell sx={{ color: 'white' }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
+
                         <TableBody>
-                            {filteredUsers
+                            {sortData(filteredUsers, sortConfig.key, sortConfig.order)
                                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                 .map((user) => (
                                     <TableRow key={user.userId} sx={{ backgroundColor: '#F7F6FE' }}>
@@ -353,17 +420,17 @@ const AdminDashboard = () => {
                                         <TableCell>
                                             <Box
                                                 sx={{
-                                                    backgroundColor: user.roleName === 'Admin' ? '#e8f5e9' : '#fff3e0',
-                                                    color: user.roleName === 'Admin' ? '#2e7d32' : '#e65100',
+                                                    backgroundColor: user.roles?.roleName === 'Admin' ? '#e8f5e9' : '#fff3e0',
+                                                    color: user.roles?.roleName === 'Admin' ? '#2e7d32' : '#e65100',
                                                     p: 1,
                                                     borderRadius: 1,
-                                                    textAlign: 'center'
+                                                    textAlign: 'center',
                                                 }}
                                             >
-                                                {user.roleName}
+                                                {user.roles?.roleName}
                                             </Box>
                                         </TableCell>
-                                        {/* <TableCell>{user.departmentName}</TableCell> */}
+
                                         <TableCell>
                                             <Box sx={{ display: 'flex', gap: 1 }}>
                                                 <IconButton
@@ -372,17 +439,17 @@ const AdminDashboard = () => {
                                                 >
                                                     <EditIcon />
                                                 </IconButton>
-                                                <IconButton
-                                                    color="error"
-                                                    onClick={() => handleDelete(user.userId)}
-                                                >
-                                                    <DeleteIcon />
-                                                </IconButton>
+                                                {/* <IconButton
+                        color="error"
+                        onClick={() => handleDelete(user.userId)}
+                    >
+                        <DeleteIcon />
+                    </IconButton> */}
                                             </Box>
-
                                         </TableCell>
                                     </TableRow>
                                 ))}
+
                         </TableBody>
                     </Table>
                     <TablePagination

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Box } from '@mui/material';
 import CommonAppBar from './CommonAppBar';
 
-const ProtectedLayout = ({ children, requiredRole = null }) => {
+const ProtectedLayout = ({ children, requiredRoleId = null }) => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user'));
 
@@ -13,23 +13,23 @@ const ProtectedLayout = ({ children, requiredRole = null }) => {
       return;
     }
   
-    if (requiredRole && user.roles?.roleName !== requiredRole) {
+    if (requiredRoleId && user.roles?.roleId !== requiredRoleId) {
       // Redirect based on role if they're accessing the wrong area
-      switch (user.roles?.roleName) {
-        case 'Admin':
+      switch (user.roles?.roleId) {
+        case 1:
           navigate('/admin-dashboard');
           break;
-        case 'Approver':
+        case 3:
           navigate('/approver-dashboard');
           break;
-        case 'Purchaser':
+        case 4:
           navigate('/purchaser-dashboard');
           break;
         default:
           navigate('/proposal');
       }
     }
-  }, [navigate, requiredRole, user]);
+  }, [navigate, requiredRoleId, user]);
   
 
   if (!user) return null;

@@ -58,7 +58,7 @@ const UserEditDialog = ({ open, onClose, user, onUpdateSuccess }) => {
 
     const fetchRoles = async () => {
         try {
-            const response = await axios.get('http://174.129.138.174:8080/api/roles');
+            const response = await axios.get('/api/roles');
             setRoles(response.data);
         } catch (error) {
             console.error('Error fetching roles:', error);
@@ -93,7 +93,7 @@ const UserEditDialog = ({ open, onClose, user, onUpdateSuccess }) => {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await axios.put(`http://174.129.138.174:8080/api/users/${user.userId}`, formData);
+            const response = await axios.put(`/api/users/${user.userId}`, formData);
             console.log('User update response:', response.data);
             if (response.data) {
                 onUpdateSuccess();

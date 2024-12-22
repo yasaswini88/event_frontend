@@ -27,7 +27,9 @@ import './App.css';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 // Set axios default base URL
-axios.defaults.baseURL = `http://174.129.138.174:8080`;
+
+axios.defaults.baseURL = `http://35.153.179.66:8080`;
+
 
 function App() {
   // Replace localStorage with Redux state
@@ -77,7 +79,7 @@ function App() {
           <Route
             path="/approver-dashboard"
             element={
-              <ProtectedLayout requiredRole="Approver">
+              <ProtectedLayout requiredRoleId={3}>
                 <ApproverDashboard />
               </ProtectedLayout>
             }
@@ -85,7 +87,7 @@ function App() {
           <Route
             path="/purchaser-dashboard"
             element={
-              <ProtectedLayout requiredRole="Purchaser">
+              <ProtectedLayout requiredRoleId={4}>
                 <PurchaserDashboard />
               </ProtectedLayout>
             }
@@ -136,7 +138,7 @@ function App() {
           <Route
             path="/admin-dashboard"
             element={
-              <ProtectedLayout requiredRole="Admin">
+              <ProtectedLayout requiredRoleId={1}>
                 <AdminDashboard />
               </ProtectedLayout>
             }
@@ -145,7 +147,7 @@ function App() {
           <Route
             path="/admin/procurements"
             element={
-              <ProtectedLayout requiredRole="Admin">
+              <ProtectedLayout requiredRoleId={1}>
                 <Procurements />
               </ProtectedLayout>
             }
@@ -154,7 +156,7 @@ function App() {
           <Route
             path="/admin/approvers"
             element={
-              <ProtectedLayout requiredRole="Admin">
+              <ProtectedLayout requiredRoleId={1}>
                 <AdminApprover />
               </ProtectedLayout>
             }
@@ -162,7 +164,7 @@ function App() {
 
 
           {/* Catch all route */}
-          <Route
+          {/* <Route
             path="*"
             element={
               <Navigate
@@ -174,7 +176,29 @@ function App() {
                   : '/login'}
               />
             }
+          /> */}
+
+          <Route
+            path="*"
+            element={
+              <Navigate
+                to={
+                  user
+                    ? (
+                      user.roleId === 1
+                        ? '/admin-dashboard'
+                        : user.roleId === 3
+                          ? '/approver-dashboard'
+                          : user.roleId === 4
+                            ? '/purchaser-dashboard'
+                            : '/proposal' // e.g. faculty or default route
+                    )
+                    : '/login'
+                }
+              />
+            }
           />
+
 
         </Routes>
         {/* Add FloatingChatButton after login */}

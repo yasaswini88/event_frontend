@@ -28,13 +28,14 @@ import {
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import { sortData } from '../utils/utilities';
 
 const PurchaserDashboard = () => {
     const [purchaseOrders, setPurchaseOrders] = useState([]);
     const [newDeliveryStatus, setNewDeliveryStatus] = useState('');
     const [openDialog, setOpenDialog] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
-    const deliveryStatusOptions = ['Processing', 'Shipped', 'Delivered'];
+
     const [selectedDepartment, setSelectedDepartment] = useState('all');
     const [approvedProposals, setApprovedProposals] = useState([]);
     const [error, setError] = useState('');
@@ -43,6 +44,14 @@ const PurchaserDashboard = () => {
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const [sortConfig, setSortConfig] = useState({ key: 'proposalId', order: 'asc' });
+
+    const [selectedOrderStatus, setSelectedOrderStatus] = useState('all');
+    const [selectedDeliveryStatus, setSelectedDeliveryStatus] = useState('all');
+
+    const orderStatusOptions = ['all', 'PENDING', 'ORDERED'];
+    const deliveryStatusOptions = ['all', 'Not Started', 'Processing', 'Shipped', 'Delivered'];
+
 
 
 
@@ -57,28 +66,27 @@ const PurchaserDashboard = () => {
         fetchPurchaseOrders();
     }, []);
 
-    // const fetchPurchaseOrders = async () => {
-    //     try {
-    //         const response = await axios.get('/api/purchase-orders');
-    //         setPurchaseOrders(response.data);
-    //     } catch (err) {
-    //         console.error('Error fetching purchase orders:', err);
-    //         setError('Error fetching purchase orders');
-    //         setSnackbar({
-    //             open: true,
-    //             message: 'Error fetching purchase orders',
-    //             severity: 'error'
-    //         });
-    //     }
-    // };
+    const handleSort = (key) => {
+        setSortConfig((prevConfig) => ({
+            key,
+            order: prevConfig.key === key && prevConfig.order === 'asc' ? 'desc' : 'asc'
+        }));
+    };
+
+
+
+
+
     const fetchPurchaseOrders = async () => {
         try {
             // Get all approved proposals
             const proposalsResponse = await axios.get('/api/proposals/status/APPROVED');
+            console.log("Approved Proposals:", proposalsResponse.data);
             const approvedProposals = proposalsResponse.data;
 
             // Get existing purchase orders
             const ordersResponse = await axios.get('/api/purchase-orders');
+            console.log("Existing Orders:", ordersResponse.data);
             const existingOrders = ordersResponse.data;
 
             // Get departments
@@ -91,6 +99,7 @@ const PurchaserDashboard = () => {
                 const matchingOrder = existingOrders.find(
                     order => order.proposalId === proposal.proposalId
                 );
+
 
                 // Find the department name
                 const department = departments.find(dept => dept.deptId === proposal.departmentId);
@@ -109,6 +118,7 @@ const PurchaserDashboard = () => {
                     // Add any other fields you need
                 };
             });
+            console.log("Combined Data:", combinedData);
 
             setPurchaseOrders(combinedData);
         } catch (err) {
@@ -122,18 +132,38 @@ const PurchaserDashboard = () => {
         }
     };
 
-    // Move this function outside fetchPurchaseOrders
     const getFilteredPurchaseOrders = () => {
-        if (selectedDepartment === 'all' || selectedDepartment === 'All Departments') {
-            return purchaseOrders;
-        }
-        return purchaseOrders.filter(order => order.department === selectedDepartment);
+        return purchaseOrders.filter(order => {
+            const departmentMatch =
+                selectedDepartment === 'all' ||
+                selectedDepartment === 'All Departments' ||
+                order.department === selectedDepartment;
+
+            const orderStatusMatch =
+                selectedOrderStatus === 'all' ||
+                order.orderStatus === selectedOrderStatus;
+
+            const deliveryStatusMatch =
+                selectedDeliveryStatus === 'all' ||
+                order.deliveryStatus === selectedDeliveryStatus;
+
+            return departmentMatch && orderStatusMatch && deliveryStatusMatch;
+        });
     };
 
-    const paginatedPurchaseOrders = getFilteredPurchaseOrders().slice(
+
+    const sortedPurchaseOrders = sortData(
+        getFilteredPurchaseOrders(),
+        sortConfig.key,
+        sortConfig.order
+    );
+
+    const paginatedPurchaseOrders = sortedPurchaseOrders.slice(
         page * rowsPerPage,
         page * rowsPerPage + rowsPerPage
     );
+
+
 
     const handleCreatePurchaseOrder = async (proposalId) => {
         try {
@@ -226,8 +256,8 @@ const PurchaserDashboard = () => {
 
     const handleOpenDialog = (order) => {
         setSelectedOrder(order);
-        setExpectedDeliveryDate('');
-        setNewDeliveryStatus('');
+        setExpectedDeliveryDate(order.expectedDeliveryDate || '');
+        setNewDeliveryStatus(order.deliveryStatus || '');
         setOpenDialog(true);
     };
 
@@ -248,6 +278,13 @@ const PurchaserDashboard = () => {
             month: 'short',
             day: 'numeric'
         });
+    };
+
+    const formatDateForInput = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        // Format: YYYY-MM-DDThh:mm
+        return date.toISOString().slice(0, 16);
     };
 
     return (
@@ -284,38 +321,73 @@ const PurchaserDashboard = () => {
                     onChange={(event, newValue) => {
                         setSelectedDepartment(newValue ? newValue.deptName : 'all');
                     }}
-                    sx={{
-                        minWidth: 300,
-                        '& .MuiOutlinedInput-root': {
-                            '& fieldset': {
-                                borderColor: '#1a237e',
-                            },
-                            '&:hover fieldset': {
-                                borderColor: '#1a237e',
-                            },
-                            '&.Mui-focused fieldset': {
-                                borderColor: '#1a237e',
-                            },
-                        },
-                    }}
+                    sx={{ minWidth: 300 }}
                     renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="Filter by Department"
-                            variant="outlined"
-                        />
+                        <TextField {...params} label="Filter by Department" variant="outlined" />
                     )}
                 />
+
+                <TextField
+                    select
+                    label="Order Status"
+                    value={selectedOrderStatus}
+                    onChange={(e) => setSelectedOrderStatus(e.target.value)}
+                    sx={{ minWidth: isMobile ? '100%' : 200 }}
+                >
+                    <MenuItem value="all">All Order Status</MenuItem>
+                    <MenuItem value="PENDING">Pending</MenuItem>
+                    <MenuItem value="ORDERED">Ordered</MenuItem>
+                </TextField>
+
+                <TextField
+                    select
+                    label="Delivery Status"
+                    value={selectedDeliveryStatus}
+                    onChange={(e) => setSelectedDeliveryStatus(e.target.value)}
+                    sx={{ minWidth: isMobile ? '100%' : 200 }}
+                >
+                    <MenuItem value="all">All Delivery Status</MenuItem>
+                    {deliveryStatusOptions.filter(status => status !== 'all').map((status) => (
+                        <MenuItem key={status} value={status}>
+                            {status}
+                        </MenuItem>
+                    ))}
+                </TextField>
             </Box>
             <TableContainer component={Paper} sx={{ mb: 4, boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
                 <Table>
                     <TableHead>
                         <TableRow sx={{ backgroundColor: '#1a237e' }}>
-                            <TableCell sx={{ color: 'white' }}>Order ID</TableCell>
-                            <TableCell sx={{ color: 'white' }}>Item</TableCell>
-                            <TableCell sx={{ color: 'white' }}>Department</TableCell>
-                            <TableCell sx={{ color: 'white' }}>Quantity</TableCell>
-                            <TableCell sx={{ color: 'white' }}>Cost</TableCell>
+                            {/* <TableCell
+            sx={{ color: 'white', cursor: 'pointer' }}
+            onClick={() => handleSort('orderId')}
+        >
+            Order ID {sortConfig.key === 'orderId' && (sortConfig.order === 'asc' ? '↑' : '↓')}
+        </TableCell> */}
+                            <TableCell
+                                sx={{ color: 'white', cursor: 'pointer' }}
+                                onClick={() => handleSort('itemName')}
+                            >
+                                Item {sortConfig.key === 'itemName' && (sortConfig.order === 'asc' ? '↑' : '↓')}
+                            </TableCell>
+                            <TableCell
+                                sx={{ color: 'white', cursor: 'pointer' }}
+                                onClick={() => handleSort('department')}
+                            >
+                                Department {sortConfig.key === 'department' && (sortConfig.order === 'asc' ? '↑' : '↓')}
+                            </TableCell>
+                            <TableCell
+                                sx={{ color: 'white', cursor: 'pointer' }}
+                                onClick={() => handleSort('quantity')}
+                            >
+                                Quantity {sortConfig.key === 'quantity' && (sortConfig.order === 'asc' ? '↑' : '↓')}
+                            </TableCell>
+                            <TableCell
+                                sx={{ color: 'white', cursor: 'pointer' }}
+                                onClick={() => handleSort('finalCost')}
+                            >
+                                Cost {sortConfig.key === 'finalCost' && (sortConfig.order === 'asc' ? '↑' : '↓')}
+                            </TableCell>
                             <TableCell sx={{ color: 'white' }}>Order Status</TableCell>
                             <TableCell sx={{ color: 'white' }}>Delivery Status</TableCell>
                             <TableCell sx={{ color: 'white' }}>Tracking Number</TableCell>
@@ -323,12 +395,13 @@ const PurchaserDashboard = () => {
                             <TableCell sx={{ color: 'white' }}>Actions</TableCell>
                         </TableRow>
                     </TableHead>
-                    
+
+
                     <TableBody>
                         {paginatedPurchaseOrders.map((item) => (
                             <TableRow key={item.proposalId} sx={{ backgroundColor: '#F7F6FE' }}>
                                 {/* Changed order to match header */}
-                                <TableCell>{item.orderId || item.proposalId}</TableCell>
+                                {/* <TableCell>{item.orderId || item.proposalId}</TableCell> */}
                                 <TableCell>{item.itemName}</TableCell>
                                 <TableCell>{item.department}</TableCell>
                                 <TableCell>{item.quantity}</TableCell>
@@ -422,7 +495,6 @@ const PurchaserDashboard = () => {
                 <DialogTitle>Update Delivery Status</DialogTitle>
                 <DialogContent>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: '300px', mt: 2 }}>
-                        {/* Delivery Status Dropdown */}
                         <TextField
                             select
                             label="Delivery Status"
@@ -437,11 +509,10 @@ const PurchaserDashboard = () => {
                             ))}
                         </TextField>
 
-                        {/* Expected Delivery Date Input */}
                         <TextField
                             label="Expected Delivery Date"
                             type="datetime-local"
-                            value={expectedDeliveryDate}
+                            value={formatDateForInput(expectedDeliveryDate)}
                             onChange={(e) => setExpectedDeliveryDate(e.target.value)}
                             fullWidth
                             InputLabelProps={{
@@ -478,7 +549,7 @@ const PurchaserDashboard = () => {
                 </Alert>
             </Snackbar>
         </Box>
-      
+
     );
 };
 

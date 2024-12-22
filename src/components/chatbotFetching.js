@@ -36,6 +36,23 @@ export const fetchChatbotResponse = async (userMessage, role) => {
      - Where can I see pending proposals?
      - What is the significance of the "Funding Source" field?
 
+     Now if the approver approves the proposal then the proposal will be sent to the purchaser for further process.
+
+     If A user who is a Approver and he want to fetch the live data of the proposals , and if he asks any question related to proposals like this 
+     For example :
+      User Query: "How many proposals are pending for approval?"
+      Response:
+      {
+  "category": "Proposals",
+  "message": "You can retrieve all proposals associated with your account using the following API: /api/proposals/approver/{approverId}/status/PENDING",
+  "metadata": {
+   "query": "How many proposals are pending for approval?",
+    "apiURL": "/api/proposals/approver/{approverId}/status/pending"
+     "ApproverId":{userId}
+  }
+}
+
+
 3. **Purchaser Role**:
    - Purchasers handle approved proposals and are responsible for placing orders and managing delivery status.
    - They can view orders with details like cost, order status (Ordered, Pending), and expected delivery date.

@@ -38,7 +38,7 @@ const RolesManagement = () => {
 
     const fetchRoles = async () => {
         try {
-            const response = await axios.get('http://174.129.138.174:8080/api/roles');
+            const response = await axios.get('/api/roles');
             setRoles(response.data);
         } catch (error) {
             showSnackbar('Error fetching roles', 'error');
@@ -58,7 +58,7 @@ const RolesManagement = () => {
     const handleEditSave = async () => {
         try {
             await axios.put(
-                `http://174.129.138.174:8080/api/roles/${editRole.roleId}`,
+                `/api/roles/${editRole.roleId}`,
                 editRole
             );
             showSnackbar('Role updated successfully', 'success');

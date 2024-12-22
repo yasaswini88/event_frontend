@@ -6,11 +6,11 @@ import ProtectedLayout from './ProtectedLayout';
 const ProtectedPurchaserRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem('user'));
 
-  if (!user || user.roles?.roleName !== 'Purchaser') {
+  if (!user || user.roles?.roleId !== 4) {
     return <Navigate to="/login" />;
   }
 
-  return <ProtectedLayout requiredRole="Purchaser">{children}</ProtectedLayout>;
+  return <ProtectedLayout requiredRoleId={4}>{children}</ProtectedLayout>;
 };
 
 export default ProtectedPurchaserRoute;

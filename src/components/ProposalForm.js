@@ -75,12 +75,12 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
         const fetchData = async () => {
             try {
                 // Fetch approvers
-                const usersResponse = await axios.get('http://174.129.138.174:8080/api/users');
-                const approversList = usersResponse.data.filter(user => user.roleName === 'Approver');
+                const usersResponse = await axios.get('/api/users');
+                const approversList = usersResponse.data.filter(user => user.roles?.roleId === 3);
                 setApprovers(approversList);
 
                 // Fetch departments
-                const departmentsResponse = await axios.get('http://174.129.138.174:8080/api/departments');
+                const departmentsResponse = await axios.get('/api/departments');
                 setDepartments(departmentsResponse.data);
             } catch (error) {
                 console.error('Error fetching approvers or departments:', error);
@@ -115,7 +115,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
 
     const fetchUsers = async () => {
         try {
-            const response = await axios.get('http://174.129.138.174:8080/api/users');
+            const response = await axios.get('/api/users');
             setUsers(response.data);
         } catch (error) {
             console.error('Error fetching users:', error);
@@ -130,7 +130,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
 
     const fetchExistingProposal = async () => {
         try {
-            const response = await axios.get(`http://174.129.138.174:8080/api/proposals/${proposalId}`);
+            const response = await axios.get(`/api/proposals/${proposalId}`);
             if (response.data) {
                 setFormData({
                     ...response.data,
@@ -159,8 +159,8 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
 
     const fetchApprovers = async () => {
         try {
-            const response = await axios.get('http://174.129.138.174:8080/api/users');
-            const approversList = response.data.filter(user => user.roleName === 'Approver');
+            const response = await axios.get('/api/users');
+            const approversList = response.data.filter(user => user.roles.roleName === 'Approver');
             setApprovers(approversList);
         } catch (err) {
             setSnackbar({
@@ -174,7 +174,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
 
     const fetchDepartments = async () => {
         try {
-            const response = await axios.get('http://174.129.138.174:8080/api/departments');
+            const response = await axios.get('/api/departments');
             setDepartments(response.data);
         } catch (err) {
             console.error('Error fetching departments:', err);
@@ -188,7 +188,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
 
     const fetchLoggedInUser = async () => {
         try {
-            const response = await axios.get('http://174.129.138.174:8080/api/loggedinuser');
+            const response = await axios.get('/api/loggedinuser');
             setLoggedInUser(response.data.username); // Assuming the API returns an object with a username field
         } catch (err) {
             console.error('Error fetching logged-in user:', err);
@@ -313,7 +313,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
     //         let response;
     //         if (proposalPayload.proposalId) {
     //             response = await axios.put(
-    //                 `http://174.129.138.174:8080/api/proposals/${proposalPayload.proposalId}`,
+    //                 `/api/proposals/${proposalPayload.proposalId}`,
     //                 proposalPayload
     //             );
     //             setSnackbar({
@@ -323,7 +323,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
     //             });
     //         } else {
     //             response = await axios.post(
-    //                 'http://174.129.138.174:8080/api/proposals',
+    //                 '/api/proposals',
     //                 proposalPayload
     //             );
     //             setSnackbar({

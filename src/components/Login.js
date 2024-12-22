@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
+import useEffect from 'react';
 import {
   Box,
   Container,
@@ -14,6 +15,7 @@ import {
   CircularProgress,
   InputAdornment,
   IconButton,
+  useMediaQuery, useTheme
 } from '@mui/material';
 import {
   Visibility,
@@ -21,6 +23,7 @@ import {
   LockOutlined as LockIcon,
 } from '@mui/icons-material';
 import { loginStart, loginSuccess, loginFailure } from '../redux/authSlice';
+
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -30,28 +33,88 @@ const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   
+  
   const error = useSelector(state => state.auth.error);
   const isLoading = useSelector(state => state.auth.loading);
+
+  // const handleLoginSuccess = async (response) => {
+  //   try {
+  //     dispatch(loginStart());
+  //     const credential = response.credential;
+      
+  //     const backendResponse = await axios.post('/api/google-login', {
+  //       credential: credential
+  //     });
+  
+  //     if (backendResponse.data) {
+  //       const user = backendResponse.data;
+  //       localStorage.setItem('user', JSON.stringify(user));
+  //       dispatch(loginSuccess(user));
+  //       navigate('/proposal');
+  //     }
+  //   } catch (error) {
+  //     console.error('Google Login Error:', error);
+  //     let errorMessage = 'An error occurred during login. Please try again.';
+      
+  //     if (error.response) {
+  //       switch (error.response.status) {
+  //         case 404:
+  //           errorMessage = 'User not found. Please register first.';
+  //           break;
+  //         case 401:
+  //           errorMessage = 'Invalid credentials.';
+  //           break;
+  //         default:
+  //           errorMessage = 'An error occurred during login. Please try again.';
+  //       }
+  //     } else {
+  //       errorMessage = 'Network error. Please check your connection.';
+  //     }
+  //     dispatch(loginFailure(errorMessage));
+  //   }
+  // };
+
 
   const handleLoginSuccess = async (response) => {
     try {
       dispatch(loginStart());
       const credential = response.credential;
-      
+  
+      // Call the backend API
       const backendResponse = await axios.post('/api/google-login', {
-        credential: credential
+        credential: credential,
       });
   
       if (backendResponse.data) {
         const user = backendResponse.data;
+        console.log('Google Login User:', user);
+        // Save user details in localStorage
         localStorage.setItem('user', JSON.stringify(user));
         dispatch(loginSuccess(user));
-        navigate('/proposal');
+
+        console.log('User roleId is:', user.roleId);
+switch (user.roles?.roleId) {
+  case 1: // Administrator
+    window.location.href = '/admin-dashboard';
+    break;
+          case 3: // Approver
+            navigate('/approver-dashboard');
+            break;
+          case 4: // Purchaser
+            navigate('/purchaser-dashboard');
+            break;
+          default:
+            navigate('/proposal');
+            break;
+        }
+        
+        
+        
       }
     } catch (error) {
       console.error('Google Login Error:', error);
       let errorMessage = 'An error occurred during login. Please try again.';
-      
+  
       if (error.response) {
         switch (error.response.status) {
           case 404:
@@ -69,7 +132,8 @@ const Login = () => {
       dispatch(loginFailure(errorMessage));
     }
   };
-
+  
+  
   const handleLoginFailure = (error) => {
     console.log('Login Failed:', error);
     dispatch(loginFailure('Google login failed'));
@@ -78,31 +142,36 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     dispatch(loginStart());
-
+  
     try {
       const response = await axios.post('/api/login', { email, password });
-
+  
       if (response.data) {
         const user = response.data;
         localStorage.setItem('user', JSON.stringify(user));
         dispatch(loginSuccess(user));
-        
-        if (user.roles.roleName === 'Approver') {
-          navigate('/approver-dashboard');
-        } else if (user.roles.roleName === 'Admin') {  
-          navigate('/admin-dashboard');
-        } else if (user.roles.roleName === 'Faculty') {
-          navigate('/proposal');
-        } else if (user.roles.roleName === 'Purchaser') {
-          navigate('/purchaser-dashboard');
-        } else {
-          navigate('/proposal');
+  
+        // Redirect based on roleId
+        switch (user.roles?.roleId) {
+          case 1: // Admin
+            navigate('/admin-dashboard');
+            break;
+          case 3: // Approver
+            navigate('/approver-dashboard');
+            break;
+          case 4: // Purchaser
+            navigate('/purchaser-dashboard');
+            break;
+          default: // Faculty or others
+            navigate('/proposal');
         }
       }
     } catch (error) {
       dispatch(loginFailure('Invalid email or password'));
     }
   };
+  
+
 
   return (
     <GoogleOAuthProvider clientId="475963270470-8t95utndvds4sqjjcup7bmeca0ld8o7e.apps.googleusercontent.com">
@@ -114,17 +183,23 @@ const Login = () => {
           px: 2,
         }}
       > */}
-        <Container maxWidth="sm">
-          <Paper
-            elevation={4}
-            sx={{
-              p: 4,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              borderRadius: 2,
-            }}
-          >
+       <Container
+  maxWidth="sm"
+  sx={{
+    maxHeight: '90vh', // Limit height to viewport
+    overflowY: 'auto', // Add scrolling for overflow
+  }}
+>
+  <Paper
+    elevation={4}
+    sx={{
+      p: 4,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      borderRadius: 2,
+    }}
+  >
             <Box
               sx={{
                 width: 40,

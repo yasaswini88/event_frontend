@@ -5,11 +5,11 @@ import ProtectedLayout from './ProtectedLayout';
 const ProtectedApproverRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem('user'));
 
-  if (!user || user.roles?.roleName !== 'Approver') {
+  if (!user || user.roles?.roleId !== 3) {
     return <Navigate to="/login" />;
   }
 
-  return <ProtectedLayout requiredRole="Approver">{children}</ProtectedLayout>;
+  return <ProtectedLayout requiredRoleIdId={3}>{children}</ProtectedLayout>;
 };
 
 export default ProtectedApproverRoute;

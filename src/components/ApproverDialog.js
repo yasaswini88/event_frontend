@@ -35,7 +35,7 @@ const [fundingSourceId, setFundingSourceId] = useState('');
 
   const fetchProposalDetails = async () => {
     try {
-      const response = await axios.get(`http://174.129.138.174:8080/api/proposals/${proposalId}`);
+      const response = await axios.get(`/api/proposals/${proposalId}`);
       setProposal(response.data);
       setLoading(false);
     } catch (err) {
@@ -46,7 +46,7 @@ const [fundingSourceId, setFundingSourceId] = useState('');
 
   const fetchApprovalHistory = async () => {
     try {
-      const response = await axios.get(`http://174.129.138.174:8080/api/proposals/${proposalId}/history`);
+      const response = await axios.get(`/api/proposals/${proposalId}/history`);
       // Remove duplicate status changes by keeping only unique combinations of oldStatus and newStatus
       const uniqueHistory = response.data.filter((item, index, self) =>
         index === self.findIndex((t) => (
@@ -61,7 +61,7 @@ const [fundingSourceId, setFundingSourceId] = useState('');
 
   const fetchFundingSources = async () => {
     try {
-      const response = await axios.get(`http://174.129.138.174:8080/api/funding-sources`); // Replace with your funding sources endpoint
+      const response = await axios.get(`/api/funding-sources`); // Replace with your funding sources endpoint
       setFundingSources(response.data);
     } catch (err) {
       console.error('Error fetching funding sources:', err);
@@ -76,7 +76,7 @@ const [fundingSourceId, setFundingSourceId] = useState('');
       }
   
       const user = JSON.parse(localStorage.getItem('user'));
-      const response = await axios.put(`http://174.129.138.174:8080/api/proposals/${proposalId}/status`, null, {
+      const response = await axios.put(`/api/proposals/${proposalId}/status`, null, {
         params: {
           newStatus: newStatus,
           approverId: user.userId,
@@ -209,7 +209,7 @@ const [fundingSourceId, setFundingSourceId] = useState('');
   </>
 )}
 
-          {approvalHistory.length > 0 && (
+          {approvalHistory.length > 0 && proposal?.status?.toLowerCase() !== 'pending' &&(
             <Grid item xs={12}>
               <Divider className="my-4" />
               <Typography variant="h6" className="mb-3">Approval History</Typography>

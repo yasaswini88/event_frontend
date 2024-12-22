@@ -24,6 +24,10 @@ import { Close as CloseIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui
 import ProposalForm from './ProposalForm';
 import { useTheme } from '@mui/material/styles';
 import { useMediaQuery } from '@mui/material';
+import { sortData } from '../utils/utilities';
+import { Tabs, Tab } from '@mui/material';
+import FacultyMetrics from './FacultyMetrics';
+
 
 const ProposalsList = () => {
     const [proposals, setProposals] = useState([]); // Store proposals in state
@@ -43,6 +47,11 @@ const ProposalsList = () => {
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const [sortConfig, setSortConfig] = useState({ key: 'proposalId', order: 'asc' });
+
+    const [tabValue, setTabValue] = useState(0);
+
+
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -52,6 +61,40 @@ const ProposalsList = () => {
         setRowsPerPage(parseInt(event.target.value, 10));
         setPage(0);
     };
+
+    const handleTabChange = (event, newValue) => {
+        setTabValue(newValue);
+    };
+
+    const handleSort = (key) => {
+        setSortConfig((prevConfig) => {
+            const newConfig = {
+                key,
+                order: prevConfig.key === key && prevConfig.order === 'asc' ? 'desc' : 'asc'
+            };
+            console.log("Sorting key:", key, "Order:", newConfig.order); // Debug log
+            return newConfig;
+        });
+    };
+
+
+    const getFilteredProposals = () => {
+        let filtered = proposals;
+
+        switch (tabValue) {
+            case 1: // Pending
+                return filtered.filter((proposal) => proposal.status.toLowerCase() === 'pending');
+            case 2: // Approved 
+                return filtered.filter((proposal) => proposal.status.toLowerCase() === 'approved');
+            case 3: // Rejected
+                return filtered.filter((proposal) => proposal.status.toLowerCase() === 'rejected');
+            default: // All
+                return filtered;
+        }
+    };
+
+    const sortedProposals = sortData(getFilteredProposals(), sortConfig.key, sortConfig.order);
+
 
 
     useEffect(() => {
@@ -159,34 +202,40 @@ const ProposalsList = () => {
 
     return (
         <Box sx={{ p: 3, minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-            <Box sx={{ maxWidth: 1200, margin: '0 auto' }}>
-                <Box
+        <Box sx={{ maxWidth: 1200, margin: '0 auto' }}>
+            {/* Header Section */}
+            <Box
+                sx={{
+                    display: 'flex',
+                    flexDirection: isMobile ? 'column' : 'row',
+                    gap: isMobile ? 2 : 0,
+                    justifyContent: 'space-between',
+                    alignItems: isMobile ? 'stretch' : 'center',
+                    mb: 3
+                }}>
+                <Typography variant={isMobile ? 'h5' : 'h4'}
+                    sx={{ fontWeight: 'bold', color: '#333' }}>
+                    My Procurement Proposals
+                </Typography>
+                <Button
+                    fullWidth={isMobile}
+                    variant="contained"
+                    onClick={() => handleOpenDialog()}
                     sx={{
-                        display: 'flex',
-                        flexDirection: isMobile ? 'column' : 'row',
-                        gap: isMobile ? 2 : 0,
-                        justifyContent: 'space-between',
-                        alignItems: isMobile ? 'stretch' : 'center',
-                        mb: 3
-                    }}>
-                    <Typography variant={isMobile ? 'h5' : 'h4'}
-                        sx={{ fontWeight: 'bold', color: '#333' }}>
-                        My Procurement Proposals
-                    </Typography>
-                    <Button
-                        fullWidth={isMobile}
-                        variant="contained"
-                        onClick={() => handleOpenDialog()}
-                        sx={{
-                            backgroundColor: '#1a237e',
-                            '&:hover': {
-                                backgroundColor: '#0d1b5e',
-                            }
-                        }}
-                    >
-                        Submit New Proposal
-                    </Button>
-                </Box>
+                        backgroundColor: '#1a237e',
+                        '&:hover': {
+                            backgroundColor: '#0d1b5e',
+                        }
+                    }}
+                >
+                    Submit New Proposal
+                </Button>
+            </Box>
+
+            {/* Metrics Dashboard */}
+            <Box sx={{ mb: 4 }}>
+                <FacultyMetrics proposals={proposals} />
+            </Box>
 
                 {error && (
                     <Alert severity="error" sx={{ mb: 2 }}>
@@ -194,23 +243,64 @@ const ProposalsList = () => {
                     </Alert>
                 )}
 
-                <TableContainer component={Paper} sx={{ mb: 4, boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
-                    <Table>
+                <Tabs
+                    value={tabValue}
+                    onChange={handleTabChange}
+                    sx={{
+                        mb: 3,
+                        borderBottom: '1px solid #e0e0e0',
+                    }}
+                    TabIndicatorProps={{
+                        sx: { backgroundColor: '#1a237e' }, // Set the indicator color
+                    }}
+                    variant={isMobile ? 'scrollable' : 'fullWidth'} // Make tabs scrollable on mobile
+                    scrollButtons={isMobile ? 'auto' : false} // Show scroll buttons only on mobile
+                    allowScrollButtonsMobile
+                >
+                    <Tab label={`All (${proposals.length})`} />
+                    <Tab label={`Pending (${proposals.filter(p => p.status.toLowerCase() === 'pending').length})`} />
+                    <Tab label={`Approved (${proposals.filter(p => p.status.toLowerCase() === 'approved').length})`} />
+                    <Tab label={`Rejected (${proposals.filter(p => p.status.toLowerCase() === 'rejected').length})`} />
+                </Tabs>
+                <TableContainer
+                    component={Paper}
+                    sx={{
+                        mb: 4,
+                        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                        overflowX: 'auto', // Allow horizontal scrolling if needed
+                        maxWidth: '100%', // Make the table span full width
+                    }}>
+                    <Table
+                        sx={{
+                            minWidth: 1500, // Adjusted minWidth for better alignment
+                        }}
+                    >
                         <TableHead>
                             <TableRow sx={{ backgroundColor: '#1a237e' }}>
-                                <TableCell sx={{ color: 'white' }}>Proposal ID</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Item Name</TableCell>
+                                <TableCell onClick={() => handleSort('proposalId')} sx={{ color: 'white', cursor: 'pointer' }}>
+                                    Proposal ID {sortConfig.key === 'proposalId' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                </TableCell>
+                                <TableCell onClick={() => handleSort('itemName')} sx={{ color: 'white', cursor: 'pointer' }}>
+                                    Item Name {sortConfig.key === 'itemName' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                </TableCell>
                                 <TableCell sx={{ color: 'white' }}>Category</TableCell>
                                 <TableCell sx={{ color: 'white' }}>Description</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Quantity</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Estimated Cost</TableCell>
+                                <TableCell onClick={() => handleSort('quantity')} sx={{ color: 'white', cursor: 'pointer' }}>
+                                    Quantity {sortConfig.key === 'quantity' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                </TableCell>
+                                <TableCell onClick={() => handleSort('estimatedCost')} sx={{ color: 'white', cursor: 'pointer' }}>
+                                    Estimated Cost {sortConfig.key === 'estimatedCost' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                </TableCell>
                                 <TableCell sx={{ color: 'white' }}>Status</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Proposal Date</TableCell>
+                                <TableCell onClick={() => handleSort('proposalDate')} sx={{ color: 'white', cursor: 'pointer' }}>
+                                    Proposal Date {sortConfig.key === 'proposalDate' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                </TableCell>
                                 <TableCell sx={{ color: 'white' }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
+
                         <TableBody>
-                            {proposals.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((proposal) => (
+                            {sortedProposals.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((proposal) => (
                                 <TableRow key={proposal.proposalId} sx={{ backgroundColor: '#F7F6FE' }}>
                                     <TableCell>{proposal.proposalId}</TableCell>
                                     <TableCell>{proposal.itemName}</TableCell>
@@ -222,13 +312,13 @@ const ProposalsList = () => {
                                         <Box
                                             sx={{
                                                 backgroundColor:
-                                                    proposal.status === 'APPROVED' ? '#e8f5e9' :
-                                                        proposal.status === 'Pending' ? '#fff3e0' :
-                                                            proposal.status === 'REJECTED' ? '#ffebee' : '#f5f5f5',
+                                                    proposal.status.toLowerCase() === 'approved' ? '#e8f5e9' :
+                                                        proposal.status.toLowerCase() === 'pending' ? '#fff3e0' :
+                                                            proposal.status.toLowerCase() === 'rejected' ? '#ffebee' : '#f5f5f5',
                                                 color:
-                                                    proposal.status === 'APPROVED' ? '#2e7d32' :
-                                                        proposal.status === 'Pending' ? '#e65100' :
-                                                            proposal.status === 'REJECTED' ? '#c62828' : '#333',
+                                                    proposal.status.toLowerCase() === 'approved' ? '#2e7d32' :
+                                                        proposal.status.toLowerCase() === 'pending' ? '#e65100' :
+                                                            proposal.status.toLowerCase() === 'rejected' ? '#c62828' : '#333',
                                                 p: 1,
                                                 borderRadius: 1,
                                                 textAlign: 'center'
@@ -253,13 +343,13 @@ const ProposalsList = () => {
                                             >
                                                 <EditIcon />
                                             </IconButton>
-                                            <IconButton
+                                            {/* <IconButton
                                                 color="error"
                                                 onClick={() => handleDelete(proposal.proposalId)}
                                                 disabled={proposal.status !== 'Pending'}
                                             >
                                                 <DeleteIcon />
-                                            </IconButton>
+                                            </IconButton> */}
 
                                         </Box>
                                     </TableCell>
@@ -270,7 +360,7 @@ const ProposalsList = () => {
                     <TablePagination
                         rowsPerPageOptions={isMobile ? [5, 10] : [5, 10, 25]}
                         component="div"
-                        count={proposals.length}
+                        count={getFilteredProposals().length}  // Updated this line
                         rowsPerPage={rowsPerPage}
                         page={page}
                         onPageChange={handleChangePage}

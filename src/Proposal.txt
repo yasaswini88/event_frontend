@@ -74,7 +74,7 @@ const ProposalForm = () => {
 
     const fetchUsers = async () => {
         try {
-            const response = await axios.get('http://174.129.138.174:8080/api/users');
+            const response = await axios.get('/api/users');
             setUsers(response.data);
         } catch (error) {
             console.error('Error fetching users:', error);
@@ -89,7 +89,7 @@ const ProposalForm = () => {
 
     const fetchExistingProposal = async () => {
         try {
-            const response = await axios.get(`http://174.129.138.174:8080/api/proposals/${proposalId}`);
+            const response = await axios.get(`/api/proposals/${proposalId}`);
             if (response.data) {
                 setFormData({
                     ...response.data,
@@ -118,7 +118,7 @@ const ProposalForm = () => {
 
     const fetchApprovers = async () => {
         try {
-            const response = await axios.get('http://174.129.138.174:8080/api/users');
+            const response = await axios.get('/api/users');
             const approversList = response.data.filter(user => user.roleName === 'Approver');
             setApprovers(approversList);
         } catch (err) {
@@ -133,7 +133,7 @@ const ProposalForm = () => {
 
     const fetchDepartments = async () => {
         try {
-            const response = await axios.get('http://174.129.138.174:8080/api/departments');
+            const response = await axios.get('/api/departments');
             setDepartments(response.data);
         } catch (err) {
             console.error('Error fetching departments:', err);
@@ -147,7 +147,7 @@ const ProposalForm = () => {
 
     const fetchLoggedInUser = async () => {
         try {
-            const response = await axios.get('http://174.129.138.174:8080/api/loggedinuser');
+            const response = await axios.get('/api/loggedinuser');
             setLoggedInUser(response.data.username); // Assuming the API returns an object with a username field
         } catch (err) {
             console.error('Error fetching logged-in user:', err);
@@ -278,7 +278,7 @@ const handleCurrentApproverChange = (event, value) => {
             let response;
             if (proposalPayload.proposalId) {
                 response = await axios.put(
-                    `http://174.129.138.174:8080/api/proposals/${proposalPayload.proposalId}`,
+                    `/api/proposals/${proposalPayload.proposalId}`,
                     proposalPayload
                 );
                 setSnackbar({
@@ -288,7 +288,7 @@ const handleCurrentApproverChange = (event, value) => {
                 });
             } else {
                 response = await axios.post(
-                    'http://174.129.138.174:8080/api/proposals',
+                    '/api/proposals',
                     proposalPayload
                 );
                 setSnackbar({

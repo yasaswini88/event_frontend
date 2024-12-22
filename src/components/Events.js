@@ -39,7 +39,7 @@ const Events = () => {
 
     const fetchEvents = async () => {
         try {
-            const response = await axios.get('http://174.129.138.174:8080/api/events');
+            const response = await axios.get('/api/events');
             setEvents(response.data);
         } catch (error) {
             console.error('Error fetching events:', error);

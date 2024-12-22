@@ -1,3 +1,15 @@
+/**
+ * AdminApproverDialog component for displaying and managing proposal details.
+ *
+ * @component
+ * @param {Object} props - The component props.
+ * @param {boolean} props.open - Whether the dialog is open.
+ * @param {function} props.onClose - Function to call when the dialog is closed.
+ * @param {number} props.proposalId - The ID of the proposal to display.
+ * @param {function} props.onStatusUpdate - Function to call when the proposal status is updated.
+ * @param {string} props.status - The current status of the proposal.
+ * @returns {JSX.Element|null} The rendered component.
+ */
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
@@ -60,7 +72,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
 
     // const fetchProposalDetails = async () => {
     //     try {
-    //         const response = await axios.get(`http://174.129.138.174:8080/api/proposals/${proposalId}`);
+    //         const response = await axios.get(`/api/proposals/${proposalId}`);
     //         const proposalData = response.data;
     //         setProposal(proposalData);
     //         setEditedProposal(proposalData);
@@ -81,13 +93,13 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
     const fetchProposalDetails = async () => {
         try {
             // First get the proposal details
-            const proposalResponse = await axios.get(`http://174.129.138.174:8080/api/proposals/${proposalId}`);
+            const proposalResponse = await axios.get(`/api/proposals/${proposalId}`);
             const proposalData = proposalResponse.data;
 
             let historyData = [];
             // Then get the approval history
             if(typeof proposalData.status === 'string' && proposalData.status.toLowerCase() != 'pending'){
-            const historyResponse = await axios.get(`http://174.129.138.174:8080/api/proposals/${proposalId}/history`);
+            const historyResponse = await axios.get(`/api/proposals/${proposalId}/history`);
             historyData = historyResponse.data;
             setApprovalHistory(historyData);
              
@@ -115,7 +127,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
 
     const fetchApprovalHistory = async () => {
         try {
-            const response = await axios.get(`http://174.129.138.174:8080/api/proposals/${proposalId}/history`);
+            const response = await axios.get(`/api/proposals/${proposalId}/history`);
             setApprovalHistory(response.data);
         } catch (err) {
             console.error('Error fetching approval history:', err);
@@ -126,7 +138,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
         try {
             setFundingSourceLoading(true);
             setFundingSourceError(null);
-            const response = await axios.get(`http://174.129.138.174:8080/api/funding-sources`);
+            const response = await axios.get(`/api/funding-sources`);
             setFundingSources(response.data);
         } catch (err) {
             console.error('Error fetching funding sources:', err);
@@ -140,7 +152,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
         try {
             const user = JSON.parse(localStorage.getItem('user'));
             const response = await axios.put(
-                `http://174.129.138.174:8080/api/proposals/${proposalId}/status`,
+                `/api/proposals/${proposalId}/status`,
                 null,
                 {
                     params: {
@@ -173,7 +185,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
     //         };
 
     //         // First update the basic proposal details
-    //         await axios.put(`http://174.129.138.174:8080/api/proposals/${proposalId}`, editedProposal);
+    //         await axios.put(`/api/proposals/${proposalId}`, editedProposal);
 
     //         // Then update the status if there's a comment
     //         if (comment.trim()) {
@@ -212,7 +224,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
 
             // First update the proposal status with funding source
             const statusResponse = await axios.put(
-                `http://174.129.138.174:8080/api/proposals/${proposalId}/status`,
+                `/api/proposals/${proposalId}/status`,
                 null,
                 {
                     params: {
@@ -227,7 +239,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
             if (statusResponse.data) {
                 // Then update other proposal details
                 const proposalResponse = await axios.put(
-                    `http://174.129.138.174:8080/api/proposals/${proposalId}`,
+                    `/api/proposals/${proposalId}`,
                     editedProposal
                 );
 

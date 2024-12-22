@@ -46,7 +46,7 @@ const FundingSourceManagement = () => {
 
     const fetchFundingSources = async () => {
         try {
-            const response = await axios.get('http://174.129.138.174:8080/api/funding-sources');
+            const response = await axios.get('/api/funding-sources');
             setFundingSources(response.data);
         } catch (error) {
             showSnackbar('Error fetching funding sources', 'error');
@@ -69,7 +69,7 @@ const FundingSourceManagement = () => {
     const handleEditSave = async () => {
         try {
             await axios.put(
-                `http://174.129.138.174:8080/api/funding-sources/${editSource.sourceId}`, 
+                `/api/funding-sources/${editSource.sourceId}`, 
                 {
                     sourceId: editSource.sourceId,
                     sourceName: editSource.sourceName
@@ -90,7 +90,7 @@ const FundingSourceManagement = () => {
 
     const handleDeleteConfirm = async () => {
         try {
-            await axios.delete(`http://174.129.138.174:8080/api/funding-sources/${sourceToDelete.sourceId}`);
+            await axios.delete(`/api/funding-sources/${sourceToDelete.sourceId}`);
             showSnackbar('Funding source deleted successfully', 'success');
             fetchFundingSources();
         } catch (error) {
@@ -107,7 +107,7 @@ const FundingSourceManagement = () => {
 
     const handleAddSave = async () => {
         try {
-            await axios.post('http://174.129.138.174:8080/api/funding-sources', {
+            await axios.post('/api/funding-sources', {
                 sourceName: newSource.sourceName
             });
             showSnackbar('Funding source added successfully', 'success');
@@ -166,12 +166,12 @@ const FundingSourceManagement = () => {
                                     >
                                         <EditIcon />
                                     </IconButton>
-                                    <IconButton 
+                                    {/* <IconButton 
                                         color="error" 
                                         onClick={() => handleDeleteClick(source)}
                                     >
                                         <DeleteIcon />
-                                    </IconButton>
+                                    </IconButton> */}
                                 </TableCell>
                             </TableRow>
                         ))}

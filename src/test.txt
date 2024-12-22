@@ -96,7 +96,7 @@ const ProposalForm = () => {
 
     const fetchExistingProposal = async () => {
         try {
-            const response = await axios.get(`http://174.129.138.174:8080/api/proposals/${proposalId}`);
+            const response = await axios.get(`/api/proposals/${proposalId}`);
             if (response.data) {
                 setFormData({
                     ...response.data,
@@ -114,7 +114,7 @@ const ProposalForm = () => {
 
     const fetchApprovers = async () => {
         try {
-            const response = await axios.get('http://174.129.138.174:8080/api/users');
+            const response = await axios.get('/api/users');
             const approversList = response.data.filter(user => user.roleName === 'Approver');
             setApprovers(approversList);
         } catch (err) {
@@ -184,12 +184,12 @@ const ProposalForm = () => {
             let response;
             if (formData.proposalId) {
                 response = await axios.put(
-                    `http://174.129.138.174:8080/api/proposals/${formData.proposalId}`,
+                    `/api/proposals/${formData.proposalId}`,
                     formData
                 );
             } else {
                 response = await axios.post(
-                    'http://174.129.138.174:8080/api/proposals',
+                    '/api/proposals',
                     formData
                 );
             }

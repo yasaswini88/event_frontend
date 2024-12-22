@@ -16,7 +16,7 @@ import {
   Tab,
   Tabs,
   Container,
- 
+
 } from '@mui/material';
 import { TablePagination } from '@mui/material';
 import {
@@ -27,6 +27,8 @@ import {
 import { styled } from '@mui/material/styles';
 import ApproverDialog from './ApproverDialog';
 import AnalyticsDashboard from './AnalyticsDashboard';
+import { sortData } from '../utils/utilities';
+import { useTheme, useMediaQuery } from '@mui/material';
 
 const StyledChip = styled(Chip)(({ theme, status }) => ({
   borderRadius: '16px',
@@ -35,17 +37,21 @@ const StyledChip = styled(Chip)(({ theme, status }) => ({
     status === 'PENDING'
       ? '#FFF4D4'
       : status === 'APPROVED'
-      ? '#E6F4EA'
-      : '#FADADD',
+        ? '#E6F4EA'
+        : '#FADADD',
   color:
     status === 'PENDING'
       ? '#B7961D'
       : status === 'APPROVED'
-      ? '#34A853'
-      : '#DC3545',
-})); 
+        ? '#34A853'
+        : '#DC3545',
+}));
+
+
 
 const ApproverDashboard = () => {
+  const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [proposals, setProposals] = useState([]);
   const [users, setUsers] = useState([]);
   const [departments, setDepartments] = useState([]);
@@ -54,11 +60,13 @@ const ApproverDashboard = () => {
   // New state variables for dialog
   const [selectedProposalId, setSelectedProposalId] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const[page, setPage] = useState(0);
-  const[rowsPerPage, setRowsPerPage] = useState(10);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filteredProposals, setFilteredProposals] = useState([]);
-const [pagination, setPagination] = useState({ currentPage: 1, itemsPerPage: 6, totalItems: 0 });
- 
+  const [pagination, setPagination] = useState({ currentPage: 1, itemsPerPage: 6, totalItems: 0 });
+  const [sortConfig, setSortConfig] = useState({ key: 'proposalDate', order: 'asc' });
+
+
 
   useEffect(() => {
     fetchProposals();
@@ -70,7 +78,7 @@ const [pagination, setPagination] = useState({ currentPage: 1, itemsPerPage: 6, 
     try {
       const user = JSON.parse(localStorage.getItem('user'));
       if (user && user.userId) {
-        const response = await axios.get(`http://174.129.138.174:8080/api/proposals/approver/${user.userId}`);
+        const response = await axios.get(`/api/proposals/approver/${user.userId}`);
         setProposals(response.data);
       } else {
         console.error('User not found in local storage');
@@ -80,9 +88,20 @@ const [pagination, setPagination] = useState({ currentPage: 1, itemsPerPage: 6, 
     }
   };
 
+  const handleSort = (key) => {
+    setSortConfig((prevConfig) => ({
+      key,
+      order: prevConfig.key === key && prevConfig.order === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+
+
+
+
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('http://174.129.138.174:8080/api/users');
+      const response = await axios.get('/api/users');
       setUsers(response.data);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -91,7 +110,7 @@ const [pagination, setPagination] = useState({ currentPage: 1, itemsPerPage: 6, 
 
   const fetchDepartments = async () => {
     try {
-      const response = await axios.get('http://174.129.138.174:8080/api/departments');
+      const response = await axios.get('/api/departments');
       setDepartments(response.data);
     } catch (error) {
       console.error('Error fetching departments:', error);
@@ -122,7 +141,7 @@ const [pagination, setPagination] = useState({ currentPage: 1, itemsPerPage: 6, 
     try {
       const user = JSON.parse(localStorage.getItem('user'));
       const response = await axios.put(
-        `http://174.129.138.174:8080/api/proposals/${proposalId}/status`,
+        `/api/proposals/${proposalId}/status`,
         null,
         {
           params: {
@@ -132,10 +151,10 @@ const [pagination, setPagination] = useState({ currentPage: 1, itemsPerPage: 6, 
           },
         }
       );
-      
+
       if (response.data) {
         // Update the local proposals state
-        setProposals(proposals.map(p => 
+        setProposals(proposals.map(p =>
           p.proposalId === proposalId ? response.data : p
         ));
         // Close the dialog
@@ -167,7 +186,7 @@ const [pagination, setPagination] = useState({ currentPage: 1, itemsPerPage: 6, 
 
   const getFilteredProposals = () => {
     let filtered = proposals;
-    
+
     if (searchQuery) {
       filtered = filtered.filter(
         (proposal) =>
@@ -177,22 +196,22 @@ const [pagination, setPagination] = useState({ currentPage: 1, itemsPerPage: 6, 
     }
 
     switch (tabValue) {
-      case 1:
-        return filtered.filter((proposal) => proposal.status === 'PENDING');
-      case 2:
-        return filtered.filter((proposal) => proposal.status === 'APPROVED');
-      case 3:
-        return filtered.filter((proposal) => proposal.status === 'REJECTED');
-      default:
-        return filtered;
-    }
+      case 1: // Pending
+          return filtered.filter((proposal) => proposal.status.toLowerCase() === 'pending');
+      case 2: // Approved
+          return filtered.filter((proposal) => proposal.status.toLowerCase() === 'approved');
+      case 3: // Rejected
+          return filtered.filter((proposal) => proposal.status.toLowerCase() === 'rejected');
+      default: // All
+          return filtered;
+  }
   };
 
   // const handleTabChange = (event, newValue) => {
   //   setTabValue(newValue);
   // };
+  const sortedProposals = sortData(getFilteredProposals(), sortConfig.key, sortConfig.order);
 
- 
 
   const handlePageChange = (page) => {
     setPagination({ ...pagination, currentPage: page });
@@ -200,20 +219,25 @@ const [pagination, setPagination] = useState({ currentPage: 1, itemsPerPage: 6, 
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
-    const status = newValue === 0 ? 'ALL' : newValue === 1 ? 'PENDING' : newValue === 2 ? 'APPROVED' : 'REJECTED';
+    const status = newValue === 0 ? 'ALL' : 
+                  newValue === 1 ? 'pending' : 
+                  newValue === 2 ? 'approved' : 
+                  'rejected';
     filterProposals(status);
-  };
+};
 
 
 
   const filterProposals = (status) => {
     let filtered = proposals;
     if (status !== 'ALL') {
-      filtered = filtered.filter((proposal) => proposal.status === status);
+        filtered = filtered.filter((proposal) => 
+            proposal.status.toLowerCase() === status.toLowerCase()
+        );
     }
     setFilteredProposals(filtered);
     setPagination({ ...pagination, currentPage: 1, totalItems: filtered.length });
-  };
+};
 
   const formatDate = (dateString) => {
     return new Date(dateString).toISOString().split('T')[0];
@@ -226,18 +250,18 @@ const [pagination, setPagination] = useState({ currentPage: 1, itemsPerPage: 6, 
       minimumFractionDigits: 0,
     }).format(amount);
   };
-  
+
 
   return (
     <Container maxWidth="xl">
-      
+
       <AnalyticsDashboard proposals={proposals} />
 
       <Box sx={{ p: 3, mt: 8 }}>
         <TextField
           fullWidth
           variant="outlined"
-          placeholder="Search"
+          placeholder="Search by item name"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           sx={{ mb: 3 }}
@@ -246,32 +270,66 @@ const [pagination, setPagination] = useState({ currentPage: 1, itemsPerPage: 6, 
         <Tabs
           value={tabValue}
           onChange={handleTabChange}
-          sx={{ mb: 3 }}
-          TabIndicatorProps={{ sx: { backgroundColor: '#1a237e' } }}
+          sx={{
+            mb: 3,
+            borderBottom: '1px solid #e0e0e0',
+          }}
+          TabIndicatorProps={{
+            sx: { backgroundColor: '#1a237e' }, // Set the indicator color
+          }}
+          variant={isMobile ? 'scrollable' : 'fullWidth'} // Make tabs scrollable on mobile
+          scrollButtons={isMobile ? 'auto' : false} // Show scroll buttons only on mobile
+          allowScrollButtonsMobile
         >
-          <Tab label={`All(${proposals.length})`} />
-          <Tab label={`Pending(${proposals.filter((p) => p.status === 'PENDING').length})`} />
-          <Tab label={`Approved(${proposals.filter((p) => p.status === 'APPROVED').length})`} />
-          <Tab label={`Rejected(${proposals.filter((p) => p.status === 'REJECTED').length})`} />
+           <Tab label={`All (${proposals.length})`} />
+    <Tab label={`Pending (${proposals.filter((p) => p.status.toLowerCase() === 'pending').length})`} />
+    <Tab label={`Approved (${proposals.filter((p) => p.status.toLowerCase() === 'approved').length})`} />
+    <Tab label={`Rejected (${proposals.filter((p) => p.status.toLowerCase() === 'rejected').length})`} />
         </Tabs>
 
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
               <TableRow sx={{ backgroundColor: '#1a237e' }}>
-                <TableCell sx={{ color: 'white' }}>Requested Date</TableCell>
-                <TableCell sx={{ color: 'white' }}>Category</TableCell>
+                <TableCell
+                  onClick={() => handleSort('proposalDate')}
+                  sx={{ color: 'white', cursor: 'pointer' }}
+                >
+                  Requested Date {sortConfig.key === 'proposalDate' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                </TableCell>
+                <TableCell
+                  onClick={() => handleSort('category')}
+                  sx={{ color: 'white', cursor: 'pointer' }}
+                >
+                  Category {sortConfig.key === 'category' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                </TableCell>
                 <TableCell sx={{ color: 'white' }}>Requester</TableCell>
-                <TableCell sx={{ color: 'white' }}>Item</TableCell>
-                <TableCell sx={{ color: 'white' }}>Quantity</TableCell>
-                <TableCell sx={{ color: 'white' }}>Est. Cost ($)</TableCell>
+                <TableCell
+                  onClick={() => handleSort('itemName')}
+                  sx={{ color: 'white', cursor: 'pointer' }}
+                >
+                  Item {sortConfig.key === 'itemName' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                </TableCell>
+                <TableCell
+                  onClick={() => handleSort('quantity')}
+                  sx={{ color: 'white', cursor: 'pointer' }}
+                >
+                  Quantity {sortConfig.key === 'quantity' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                </TableCell>
+                <TableCell
+                  onClick={() => handleSort('estimatedCost')}
+                  sx={{ color: 'white', cursor: 'pointer' }}
+                >
+                  Est. Cost ($) {sortConfig.key === 'estimatedCost' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                </TableCell>
                 <TableCell sx={{ color: 'white' }}>Dept. Name</TableCell>
                 <TableCell sx={{ color: 'white' }}>Status</TableCell>
                 <TableCell sx={{ color: 'white' }}>Action</TableCell>
               </TableRow>
             </TableHead>
+
             <TableBody>
-              {getFilteredProposals().map((proposal) => (
+              {sortedProposals.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((proposal) => (
                 <TableRow key={proposal.proposalId} sx={{ backgroundColor: '#F7F6FE' }}>
                   <TableCell>{formatDate(proposal.proposalDate)}</TableCell>
                   <TableCell>{proposal.category}</TableCell>
@@ -281,42 +339,31 @@ const [pagination, setPagination] = useState({ currentPage: 1, itemsPerPage: 6, 
                   <TableCell>{formatCurrency(proposal.estimatedCost)}</TableCell>
                   <TableCell>{getDepartmentNameById(proposal.departmentId)}</TableCell>
                   <TableCell>
-                    <StyledChip
-                      label={proposal.status.toLowerCase()}
-                      status={proposal.status}
-                      size="small"
-                    />
+                  <StyledChip
+    label={proposal.status.toLowerCase()}
+    status={proposal.status.toUpperCase()}
+    size="small"
+/>
                   </TableCell>
                   <TableCell>
-                    <IconButton 
-                      size="small" 
-                      sx={{ color: 'blue' }}
-                      onClick={() => handleViewProposal(proposal.proposalId)}
-                    >
-                      <VisibilityIcon />
-                    </IconButton>
-                    {proposal.status === 'PENDING' && (
-                      <>
-                        <IconButton 
-                          size="small" 
-                          sx={{ color: 'red' }}
-                          onClick={() => handleDirectReject(proposal.proposalId)}
-                        >
-                          <CloseIcon />
-                        </IconButton>
-                        <IconButton 
-                          size="small" 
-                          sx={{ color: 'green' }}
-                          onClick={() => handleDirectApprove(proposal.proposalId)}
-                        >
-                          <CheckCircleIcon />
-                        </IconButton>
-                      </>
-                    )}
-                  </TableCell>
+    <IconButton size="small" sx={{ color: 'blue' }} onClick={() => handleViewProposal(proposal.proposalId)}>
+        <VisibilityIcon />
+    </IconButton>
+    {proposal.status.toLowerCase() === 'pending' && (
+        <>
+            <IconButton size="small" sx={{ color: 'red' }} onClick={() => handleDirectReject(proposal.proposalId)}>
+                
+            </IconButton>
+            <IconButton size="small" sx={{ color: 'green' }} onClick={() => handleDirectApprove(proposal.proposalId)}>
+              
+            </IconButton>
+        </>
+    )}
+</TableCell>
                 </TableRow>
               ))}
             </TableBody>
+
           </Table>
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
@@ -336,7 +383,7 @@ const [pagination, setPagination] = useState({ currentPage: 1, itemsPerPage: 6, 
         onClose={handleDialogClose}
         proposalId={selectedProposalId}
         onStatusUpdate={(updatedProposal) => {
-          setProposals(proposals.map(p => 
+          setProposals(proposals.map(p =>
             p.proposalId === updatedProposal.proposalId ? updatedProposal : p
           ));
           handleDialogClose();

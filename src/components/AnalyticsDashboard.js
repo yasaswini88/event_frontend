@@ -1,3 +1,13 @@
+/**
+ * AnalyticsDashboard component displays various metrics related to proposals.
+ *
+ * @param {Object} props - The component props.
+ * @param {Array} props.proposals - Array of proposal objects.
+ * @param {string} props.proposals[].status - The status of the proposal (e.g., 'pending', 'approved', 'rejected').
+ * @param {number} props.proposals[].estimatedCost - The estimated cost of the proposal.
+ *
+ * @returns {JSX.Element} The rendered component.
+ */
 import React from 'react';
 import { Box, Grid, Paper, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -22,6 +32,7 @@ const MetricCard = ({ title, value, color }) => (
         </Typography>
     </StyledPaper>
 );
+
 
 const AnalyticsDashboard = ({ proposals }) => {
     // Calculate metrics with case-insensitivity for statuses

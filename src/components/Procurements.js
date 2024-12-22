@@ -27,8 +27,12 @@ import {
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
+import { sortData } from '../utils/utilities';
+import { useTheme, useMediaQuery } from '@mui/material';
 
 const Procurements = () => {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const [procurements, setProcurements] = useState([]);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -38,6 +42,8 @@ const Procurements = () => {
     const [selectedProposal, setSelectedProposal] = useState(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [proposalToDelete, setProposalToDelete] = useState(null);
+    const [sortConfig, setSortConfig] = useState({ key: 'proposalId', order: 'asc' });
+
     const [tabValue, setTabValue] = useState(0);
 
     const [snackbar, setSnackbar] = useState({
@@ -66,6 +72,14 @@ const Procurements = () => {
             handleSnackbar('Error fetching procurements', 'error');
         }
     };
+
+    const handleSort = (key) => {
+        setSortConfig((prevConfig) => ({
+            key,
+            order: prevConfig.key === key && prevConfig.order === 'asc' ? 'desc' : 'asc'
+        }));
+    };
+
 
     const handleStatusChange = (event) => {
         setFilterStatus(event.target.value);
@@ -185,13 +199,21 @@ const Procurements = () => {
                         <MenuItem value="REJECTED">Rejected</MenuItem>
                     </Select>
                 </FormControl> */}
-
                 <Tabs
                     value={tabValue}
                     onChange={handleTabChange}
-                    sx={{ mb: 3 }}
-                    TabIndicatorProps={{ sx: { backgroundColor: '#1a237e' } }}
+                    sx={{
+                        mb: 3,
+                        borderBottom: '1px solid #e0e0e0',
+                    }}
+                    TabIndicatorProps={{
+                        sx: { backgroundColor: '#1a237e' }, // Set the indicator color
+                    }}
+                    variant={isMobile ? 'scrollable' : 'fullWidth'} // Make tabs scrollable on mobile
+                    scrollButtons={isMobile ? 'auto' : false} // Show scroll buttons only on mobile
+                    allowScrollButtonsMobile
                 >
+
                     <Tab label={`All (${procurements.length})`} />
                     <Tab label={`Pending (${procurements.filter((p) => p.status.toLowerCase() === 'PENDING'.toLowerCase()).length})`} />
                     <Tab label={`Approved (${procurements.filter((p) => p.status === 'APPROVED').length})`} />
@@ -199,27 +221,71 @@ const Procurements = () => {
                 </Tabs>
 
 
-                <TableContainer component={Paper} sx={{ mb: 4, boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
-                    <Table>
+                <TableContainer
+                    component={Paper}
+                    sx={{
+                        mb: 4,
+                        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                        overflowX: 'auto', // Allow horizontal scrolling if needed
+                        maxWidth: '100%', // Make the table span full width
+                    }}>
+                    <Table
+                        sx={{
+                            minWidth: 1500, // Adjusted minWidth for better alignment
+                        }}
+                    >
                         <TableHead>
                             <TableRow sx={{ backgroundColor: '#1a237e' }}>
-                                <TableCell sx={{ color: 'white' }}>Proposal ID</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Item Name</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Category</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Description</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Quantity</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Cost</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Status</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Date</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Actions</TableCell>
+                                <TableCell
+                                    onClick={() => handleSort('proposalId')}
+                                    sx={{ color: 'white', cursor: 'pointer', width: '10%' }} // Added width
+                                >
+                                    Proposal ID {sortConfig.key === 'proposalId' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                </TableCell>
+                                <TableCell
+                                    onClick={() => handleSort('itemName')}
+                                    sx={{ color: 'white', cursor: 'pointer', width: '15%' }} // Adjust width as needed
+                                >
+                                    Item Name {sortConfig.key === 'itemName' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                </TableCell>
+                                <TableCell
+                                    onClick={() => handleSort('category')}
+                                    sx={{ color: 'white', cursor: 'pointer', width: '15%' }}
+                                >
+                                    Category {sortConfig.key === 'category' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                </TableCell>
+                                <TableCell sx={{ color: 'white', width: '20%' }}>Description</TableCell>
+                                <TableCell
+                                    onClick={() => handleSort('quantity')}
+                                    sx={{ color: 'white', cursor: 'pointer', width: '10%' }}
+                                >
+                                    Quantity {sortConfig.key === 'quantity' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                </TableCell>
+                                <TableCell
+                                    onClick={() => handleSort('estimatedCost')}
+                                    sx={{ color: 'white', cursor: 'pointer', width: '10%' }}
+                                >
+                                    Cost {sortConfig.key === 'estimatedCost' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                </TableCell>
+                                <TableCell sx={{ color: 'white', width: '10%' }}>Status</TableCell>
+                                <TableCell
+                                    onClick={() => handleSort('proposalDate')}
+                                    sx={{ color: 'white', cursor: 'pointer', width: '10%' }}
+                                >
+                                    Date {sortConfig.key === 'proposalDate' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                </TableCell>
+                                <TableCell sx={{ color: 'white', width: '10%' }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
 
 
+
+
                         <TableBody>
-                            {getFilteredProcurements()
+                            {sortData(getFilteredProcurements(), sortConfig.key, sortConfig.order)
                                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                 .map((proposal) => (
+
                                     <TableRow key={proposal.proposalId} sx={{ backgroundColor: '#F7F6FE' }}>
                                         <TableCell>{proposal.proposalId}</TableCell>
                                         <TableCell>{proposal.itemName}</TableCell>

@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Button, Typography, useMediaQuery, useTheme } from '@mui/material';
 import Login from './Login';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 
 
 
 const Begin = () => {
   const navigate = useNavigate();
   const [showLoginForm, setShowLoginForm] = useState(false);
+  const dispatch = useDispatch();
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -15,6 +18,36 @@ const Begin = () => {
   const handleLoginClick = () => {
     setShowLoginForm(true); // Change this from navigate()
   };
+
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+
+        // Redirect based on roleId
+        switch (user.roles?.roleId) {
+          case 1: // Admin
+            navigate('/admin-dashboard');
+            break;
+          case 3: // Approver
+            navigate('/approver-dashboard');
+            break;
+          case 4: // Purchaser
+            navigate('/purchaser-dashboard');
+            break;
+          default: // Faculty or others
+            navigate('/proposal');
+        }
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        navigate('/'); // Fallback to home page
+      }
+    } else {
+      navigate('/'); // Redirect to the main page if no user data
+    }
+  }, [navigate]);
 
   return (
     <Box sx={{ position: 'relative', height: '100vh', overflow: 'hidden' }}>
@@ -101,13 +134,13 @@ const Begin = () => {
             sx={{
               position: 'relative',
               height: '50px',
-              width: '330px',
+              width: '360px',
               '&::before': {
                 content: '""',
                 position: 'absolute',
                 inset: 0,
                 backgroundColor: '#1a237e',
-                clipPath: 'polygon(15% 0, 100% 0, 85% 100%, 0 100%)',
+                clipPath: 'polygon(10% 0, 100% 0, 90% 100%, 0 100%)',
               },
             }}
           >
@@ -206,22 +239,9 @@ const Begin = () => {
           </Typography>
 
 
-          {showLoginForm && (
-            <Login
-              style={{
-                width: isMobile ? '100%' : '500px', // Full width on mobile
-                margin: isMobile ? '1rem auto' : '4rem auto',
-                padding: '1rem',
-                backgroundColor: 'white',
-                borderRadius: '8px',
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                maxHeight: '90vh', // Set max height relative to viewport
-                overflowY: 'auto', // Add vertical scrolling
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            />
-          )}
+
+          {showLoginForm && <Login />}
+
 
 
 
