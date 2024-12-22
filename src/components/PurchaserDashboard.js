@@ -502,12 +502,15 @@ const PurchaserDashboard = () => {
                             onChange={(e) => setNewDeliveryStatus(e.target.value)}
                             fullWidth
                         >
-                            {deliveryStatusOptions.map((status) => (
-                                <MenuItem key={status} value={status}>
-                                    {status}
-                                </MenuItem>
-                            ))}
+                            {deliveryStatusOptions
+                                .filter((status) => status !== 'all') // Exclude 'all' from the options
+                                .map((status) => (
+                                    <MenuItem key={status} value={status}>
+                                        {status}
+                                    </MenuItem>
+                                ))}
                         </TextField>
+
 
                         <TextField
                             label="Expected Delivery Date"
