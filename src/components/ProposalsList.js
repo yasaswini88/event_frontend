@@ -47,7 +47,7 @@ const ProposalsList = () => {
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-    const [sortConfig, setSortConfig] = useState({ key: 'proposalId', order: 'asc' });
+    const [sortConfig, setSortConfig] = useState({ key: 'proposalId', order: 'desc' });
 
     const [tabValue, setTabValue] = useState(0);
 

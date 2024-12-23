@@ -42,7 +42,7 @@ const Procurements = () => {
     const [selectedProposal, setSelectedProposal] = useState(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [proposalToDelete, setProposalToDelete] = useState(null);
-    const [sortConfig, setSortConfig] = useState({ key: 'proposalId', order: 'asc' });
+    const [sortConfig, setSortConfig] = useState({ key: 'proposalId', order: 'desc' });
 
     const [tabValue, setTabValue] = useState(0);
 

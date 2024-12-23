@@ -44,7 +44,7 @@ const PurchaserDashboard = () => {
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-    const [sortConfig, setSortConfig] = useState({ key: 'proposalId', order: 'asc' });
+    const [sortConfig, setSortConfig] = useState({ key: 'proposalId', order: 'desc' });
 
     const [selectedOrderStatus, setSelectedOrderStatus] = useState('all');
     const [selectedDeliveryStatus, setSelectedDeliveryStatus] = useState('all');

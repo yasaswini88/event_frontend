@@ -185,7 +185,7 @@ const AdminApprover = () => {
     const [viewDialogOpen, setViewDialogOpen] = useState(false);
     const [selectedProposalId, setSelectedProposalId] = useState(null);
     const [status, setStatus] = useState(null);
-    const [sortConfig, setSortConfig] = useState({ key: 'proposalId', order: 'asc' });
+    const [sortConfig, setSortConfig] = useState({ key: 'proposalId', order: 'desc' });
     const handleSort = (key) => {
         setSortConfig((prevConfig) => ({
             key,
