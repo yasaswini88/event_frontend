@@ -58,29 +58,22 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
         severity: 'success'
     });
     const [loggedInUser, setLoggedInUser] = useState(''); // Added state for logged-in user
-
-    // useEffect(() => {
-    //     const initializeData = async () => {
-    //         await fetchUsers();
-    //         await fetchApprovers();
-    //         await fetchDepartments();
-    //         if (proposalId) {
-    //             await fetchExistingProposal();
-    //         }
-    //     };
-
-    //     initializeData();
-    // }, [proposalId]);
+    const token = localStorage.getItem('token');
+  
     useEffect(() => {
         const fetchData = async () => {
             try {
                 // Fetch approvers
-                const usersResponse = await axios.get('/api/users');
+                const usersResponse = await axios.get('/api/users', {
+                    headers: { Authorization: `Bearer ${token}` }
+                  });
                 const approversList = usersResponse.data.filter(user => user.roles?.roleId === 3);
                 setApprovers(approversList);
 
                 // Fetch departments
-                const departmentsResponse = await axios.get('/api/departments');
+                const departmentsResponse = await axios.get('/api/departments', {
+                    headers: { Authorization: `Bearer ${token}` }
+                  });
                 setDepartments(departmentsResponse.data);
             } catch (error) {
                 console.error('Error fetching approvers or departments:', error);
@@ -115,7 +108,9 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
 
     const fetchUsers = async () => {
         try {
-            const response = await axios.get('/api/users');
+            const response = await axios.get('/api/users', {
+                headers: { Authorization: `Bearer ${token}` }
+              });
             setUsers(response.data);
         } catch (error) {
             console.error('Error fetching users:', error);
@@ -130,7 +125,9 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
 
     const fetchExistingProposal = async () => {
         try {
-            const response = await axios.get(`/api/proposals/${proposalId}`);
+            const response = await axios.get(`/api/proposals/${proposalId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+              });
             if (response.data) {
                 setFormData({
                     ...response.data,
@@ -159,7 +156,9 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
 
     const fetchApprovers = async () => {
         try {
-            const response = await axios.get('/api/users');
+            const response = await axios.get('/api/users', {
+                headers: { Authorization: `Bearer ${token}` }
+              });
             const approversList = response.data.filter(user => user.roles.roleName === 'Approver');
             setApprovers(approversList);
         } catch (err) {
@@ -174,7 +173,9 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
 
     const fetchDepartments = async () => {
         try {
-            const response = await axios.get('/api/departments');
+            const response = await axios.get('/api/departments', {
+                headers: { Authorization: `Bearer ${token}` }
+              });
             setDepartments(response.data);
         } catch (err) {
             console.error('Error fetching departments:', err);
@@ -188,7 +189,9 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
 
     const fetchLoggedInUser = async () => {
         try {
-            const response = await axios.get('/api/loggedinuser');
+            const response = await axios.get('/api/loggedinuser', {
+                headers: { Authorization: `Bearer ${token}` }
+              });
             setLoggedInUser(response.data.username); // Assuming the API returns an object with a username field
         } catch (err) {
             console.error('Error fetching logged-in user:', err);
@@ -273,96 +276,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
         return true;
     };
 
-    // const handleSubmit = async (e) => {
-    //     e.preventDefault();
-
-    //     if (!validateForm()) {
-    //         return;
-    //     }
-
-    //     setLoading(true);
-    //     setError('');
-
-    //     try {
-    //         // Create a new object with proper data type conversions
-    //         const loggedUser = JSON.parse(localStorage.getItem('user'));
-    //         const userId = loggedUser ? loggedUser.userId : null;
-
-    //         if (!userId) {
-    //             setSnackbar({
-    //                 open: true,
-    //                 message: 'User is not logged in.',
-    //                 severity: 'error'
-    //             });
-    //             setLoading(false);
-    //             return;
-    //         }
-
-    //         const proposalPayload = {
-    //             ...formData,
-    //             quantity: parseInt(formData.quantity, 10),
-    //             estimatedCost: parseFloat(formData.estimatedCost),
-    //             userId: parseInt(userId, 10), // Set the logged-in user's ID here
-    //             departmentId: formData.departmentId ? parseInt(formData.departmentId, 10) : null,
-    //             currentApproverId: formData.currentApproverId ? parseInt(formData.currentApproverId, 10) : null,
-    //             proposalDate: formData.proposalDate ? new Date(formData.proposalDate).toISOString() : new Date().toISOString(),
-    //             vendorInfo: formData.vendorInfo || '',
-    //             status: formData.status || 'Pending'
-    //         };
-
-    //         let response;
-    //         if (proposalPayload.proposalId) {
-    //             response = await axios.put(
-    //                 `/api/proposals/${proposalPayload.proposalId}`,
-    //                 proposalPayload
-    //             );
-    //             setSnackbar({
-    //                 open: true,
-    //                 message: 'Proposal updated successfully!',
-    //                 severity: 'success'
-    //             });
-    //         } else {
-    //             response = await axios.post(
-    //                 '/api/proposals',
-    //                 proposalPayload
-    //             );
-    //             setSnackbar({
-    //                 open: true,
-    //                 message: 'Proposal submitted successfully!',
-    //                 severity: 'success'
-    //             });
-    //         }
-
-    //         if (response?.data) {
-    //             console.log('Proposal saved:', response.data);
-    //             resetForm();
-    //             // Optionally navigate to proposals list
-    //             // navigate('/proposals');
-    //         } else {
-    //             throw new Error('No response data received');
-    //         }
-    //     } catch (err) {
-    //         console.error('Error saving proposal:', err);
-    //         let errorMessage = 'Error saving proposal. Please try again.';
-
-    //         if (err.response?.data?.message) {
-    //             errorMessage = err.response.data.message;
-    //         } else if (err.response?.status === 400) {
-    //             errorMessage = 'Invalid proposal data. Please check all fields.';
-    //         } else if (err.response?.status === 500) {
-    //             errorMessage = 'Server error. Please try again later.';
-    //         }
-
-    //         setSnackbar({
-    //             open: true,
-    //             message: errorMessage,
-    //             severity: 'error'
-    //         });
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
-
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -402,14 +316,20 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
 
             let response;
             if (proposalPayload.proposalId) {
-                response = await axios.put(`/api/proposals/${proposalPayload.proposalId}`, proposalPayload);
+                response = await axios.put(`/api/proposals/${proposalPayload.proposalId}`, proposalPayload,
+                    {
+                        headers: { Authorization: `Bearer ${token}` }
+                      }
+                );
                 setSnackbar({
                     open: true,
                     message: 'Proposal updated successfully!',
                     severity: 'success',
                 });
             } else {
-                response = await axios.post('/api/proposals', proposalPayload);
+                response = await axios.post('/api/proposals', proposalPayload,{
+                    headers: { Authorization: `Bearer ${token}` }
+                  });
                 setSnackbar({
                     open: true,
                     message: 'Proposal submitted successfully!',

@@ -50,7 +50,7 @@ const ProposalsList = () => {
     const [sortConfig, setSortConfig] = useState({ key: 'proposalId', order: 'asc' });
 
     const [tabValue, setTabValue] = useState(0);
-
+    const token = localStorage.getItem('token');
 
 
     const handleChangePage = (event, newPage) => {
@@ -103,13 +103,21 @@ const ProposalsList = () => {
 
     const fetchProposals = async () => {
         try {
+            const token = localStorage.getItem('token'); // get the JWT token from local storage
             const loggedUser = JSON.parse(localStorage.getItem('user'));
             if (!loggedUser?.userId) {
                 setError('User not found');
                 return;
             } //Fetch the logged-in user from local storage. If the user is not found, set an error message.
 
-            const response = await axios.get(`/api/proposals/user/${loggedUser.userId}`); //Fetch proposals using the logged-in user's userId.
+            const response = await axios.get(
+                `/api/proposals/user/${loggedUser.userId}`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`
+                  }
+                }
+              ); //Fetch proposals for the logged-in user using the userId.
             setProposals(response.data); //Store the fetched proposals in state.
         } catch (err) {
             console.error('Error fetching proposals:', err);
@@ -128,7 +136,10 @@ const ProposalsList = () => {
         try {
             if (proposal) {
                 // Fetch proposal details using proposalId
-                const response = await axios.get(`/api/proposals/${proposal.proposalId}`);
+                const response = await axios.get(
+                       `/api/proposals/${proposal.proposalId}`,
+                       { headers: { Authorization: `Bearer ${token}` } }
+                      );
                 setEditingProposal(response.data); // Store the fetched proposal in state
             } else {
                 setEditingProposal(null); // For new proposal
@@ -158,7 +169,9 @@ const ProposalsList = () => {
 
     const handleConfirmDelete = async () => {
         try {
-            await axios.delete(`/api/proposals/${proposalToDelete}`);
+            await axios.delete(`/api/proposals/${proposalToDelete}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                   );
             setSnackbar({
                 open: true,
                 message: 'Proposal deleted successfully',
