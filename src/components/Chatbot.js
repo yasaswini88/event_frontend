@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Box, Button, TextField, Typography, Paper, CircularProgress } from '@mui/material';
 import { fetchChatbotResponse } from './chatbotFetching'; // Import updated chatbotFetching.js
 import SmartToyIcon from '@mui/icons-material/SmartToy';
@@ -9,6 +9,7 @@ import IconButton from '@mui/material/IconButton';
 import axios from 'axios';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import  { useState, useRef, useEffect } from 'react';
 
 const Chatbot = ({ userDetails }) => {
 
@@ -24,6 +25,15 @@ const Chatbot = ({ userDetails }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+  const chatEndRef = useRef(null);
+
+  // Scroll to bottom whenever chatHistory changes
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatHistory]);
+
   // Function to dynamically handle API calls
   const handleApiCall = async (url) => {
     try {
@@ -37,48 +47,58 @@ const Chatbot = ({ userDetails }) => {
 
   const handleSendMessage = async () => {
     if (!userMessage) return;
-
+  
     setLoading(true);
     setTyping(true);
     setError(null);
-
+  
     try {
-      // Fetch chatbot response and pass user role dynamically
       const response = await fetchChatbotResponse(userMessage, userDetails.roles.roleName);
       console.log('Chatbot response:', response);
-
-      // Extract API URL from chatbot response
+  
       const urlMatch = response.match(/"apiURL"\s*:\s*"([^"]+)"/);
       const url = urlMatch ? urlMatch[1] : null;
-
+  
       if (url) {
-        const dynamicUrl = url.replace('{userId}', userId); // Replace {userId} dynamically
+        const dynamicUrl = url.replace('{userId}', userId);
         const apiData = await handleApiCall(dynamicUrl);
-
-
-
-        // Format API data for better readability
-        const formattedData = Array.isArray(apiData)
-          ? apiData
-            .map(
-              (item, index) =>
+  
+        let formattedData = '';
+  
+        if (Array.isArray(apiData) && apiData.length > 0) {
+          // Get only the last 5
+          const latestFive = apiData.slice(-5);
+  
+          // Build a nicely formatted string
+          const formattedList = latestFive
+            .map((item, index) => {
+              return (
                 `Proposal ${index + 1}:\n` +
-                `- Item Name: ${item.itemName}\n` +
-                `- Status: ${item.status}`
-            )
-            .join('\n\n')
-          : 'No proposals found or data is unavailable.';
-
-        console.log(formattedData);
-
-        // Update chat history with formatted API data
-        setChatHistory([
-          ...chatHistory,
+                `• Item Name: ${item.itemName}\n` +
+                `• Status: ${item.status}`
+              );
+            })
+            .join('\n\n');
+  
+          formattedData =
+            `Here are your latest ${latestFive.length} proposals:\n\n` + 
+            formattedList;
+        } else {
+          formattedData = 'No proposals found or data is unavailable.';
+        }
+  
+        console.log('Formatted data:', formattedData);
+  
+        setChatHistory((prev) => [
+          ...prev,
           { user: userMessage, bot: formattedData },
         ]);
       } else {
-        // Handle plain chatbot responses
-        setChatHistory([...chatHistory, { user: userMessage, bot: response }]);
+        // Plain (non-API) chatbot response
+        setChatHistory((prev) => [
+          ...prev,
+          { user: userMessage, bot: response },
+        ]);
       }
     } catch (err) {
       console.error('Error sending message:', err);
@@ -89,8 +109,8 @@ const Chatbot = ({ userDetails }) => {
       setUserMessage('');
     }
   };
-
-
+  
+  
   return (
     <div
       style={{
@@ -145,7 +165,7 @@ const Chatbot = ({ userDetails }) => {
               <Box
                 sx={{
                   display: 'flex',
-                  justifyContent: 'flex-start',
+                  justifyContent: 'flex-end',
                   alignItems: 'center',
                   gap: 1,
                   marginBottom: 1,
@@ -173,9 +193,10 @@ const Chatbot = ({ userDetails }) => {
               <Box
                 sx={{
                   display: 'flex',
-                  justifyContent: 'flex-end',
+                  justifyContent: 'flex-start',
                   alignItems: 'center',
                   gap: 1,
+                  marginBottom: 1,
                 }}
               >
                 <SmartToyIcon sx={{ color: '#555' }} />
@@ -188,6 +209,7 @@ const Chatbot = ({ userDetails }) => {
                   backgroundColor: '#e0e0e0',
                   color: '#000',
                   textAlign: 'left',
+                  whiteSpace: 'pre-line',
                 }} >{chat.bot}</Typography>
 
               </Box>
@@ -200,6 +222,7 @@ const Chatbot = ({ userDetails }) => {
             <em>Bot is typing...</em>
           </Typography>
         )}
+        <div ref={chatEndRef} /> 
       </Paper>
 
       {/* Error Message */}
