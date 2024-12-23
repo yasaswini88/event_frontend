@@ -98,8 +98,9 @@ const [fundingSourceId, setFundingSourceId] = useState('');
   
 
   const formatDateTime = (dateTime) => {
-    return new Date(dateTime).toLocaleString();
+    return new Date(dateTime).toLocaleDateString(); // Returns only the date in 'MM/DD/YYYY' format
   };
+  
 
   const renderStatusUpdateButtons = () => {
     if (proposal?.status && proposal.status.toLowerCase() === 'pending') {

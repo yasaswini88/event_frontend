@@ -257,8 +257,9 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
     };
 
     const formatDateTime = (dateTime) => {
-        return new Date(dateTime).toLocaleString();
-    };
+        return new Date(dateTime).toLocaleDateString(); // Returns only the date in 'MM/DD/YYYY' format
+      };
+      
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-US', {
