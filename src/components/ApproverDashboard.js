@@ -212,6 +212,15 @@ const ApproverDashboard = () => {
   // };
   const sortedProposals = sortData(getFilteredProposals(), sortConfig.key, sortConfig.order);
 
+  const updateProposalStatus = (proposalId, newStatus) => {
+    setProposals((prevProposals) =>
+        prevProposals.map((proposal) =>
+            proposal.proposalId === proposalId ? { ...proposal, status: newStatus } : proposal
+        )
+    );
+};
+
+
 
   const handlePageChange = (page) => {
     setPagination({ ...pagination, currentPage: page });
@@ -378,7 +387,7 @@ const ApproverDashboard = () => {
       </Box>
 
       {/* Dialog Component */}
-      <ApproverDialog
+      {/* <ApproverDialog
         open={dialogOpen}
         onClose={handleDialogClose}
         proposalId={selectedProposalId}
@@ -388,7 +397,19 @@ const ApproverDashboard = () => {
           ));
           handleDialogClose();
         }}
-      />
+      /> */}
+   <ApproverDialog
+    open={dialogOpen}
+    onClose={handleDialogClose}
+    proposalId={selectedProposalId}
+    onStatusUpdate={(updatedProposal) => {
+        updateProposalStatus(updatedProposal.proposalId, updatedProposal.status);
+        handleDialogClose();
+    }}
+    currentStatus={proposals.find((p) => p.proposalId === selectedProposalId)?.status}
+/>
+
+
     </Container>
   );
 };

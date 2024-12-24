@@ -273,6 +273,8 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
         return true;
     };
 
+  
+
     // const handleSubmit = async (e) => {
     //     e.preventDefault();
 
@@ -307,37 +309,29 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
     //             currentApproverId: formData.currentApproverId ? parseInt(formData.currentApproverId, 10) : null,
     //             proposalDate: formData.proposalDate ? new Date(formData.proposalDate).toISOString() : new Date().toISOString(),
     //             vendorInfo: formData.vendorInfo || '',
-    //             status: formData.status || 'Pending'
+    //             status: formData.status || 'Pending',
     //         };
 
     //         let response;
     //         if (proposalPayload.proposalId) {
-    //             response = await axios.put(
-    //                 `/api/proposals/${proposalPayload.proposalId}`,
-    //                 proposalPayload
-    //             );
+    //             response = await axios.put(`/api/proposals/${proposalPayload.proposalId}`, proposalPayload);
     //             setSnackbar({
     //                 open: true,
     //                 message: 'Proposal updated successfully!',
-    //                 severity: 'success'
+    //                 severity: 'success',
     //             });
     //         } else {
-    //             response = await axios.post(
-    //                 '/api/proposals',
-    //                 proposalPayload
-    //             );
+    //             response = await axios.post('/api/proposals', proposalPayload);
     //             setSnackbar({
     //                 open: true,
     //                 message: 'Proposal submitted successfully!',
-    //                 severity: 'success'
+    //                 severity: 'success',
     //             });
     //         }
 
     //         if (response?.data) {
-    //             console.log('Proposal saved:', response.data);
     //             resetForm();
-    //             // Optionally navigate to proposals list
-    //             // navigate('/proposals');
+    //             onSubmitSuccess(); // Close dialog
     //         } else {
     //             throw new Error('No response data received');
     //         }
@@ -365,41 +359,42 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+    
         if (!validateForm()) {
             return;
         }
-
+    
         setLoading(true);
         setError('');
-
+    
         try {
-            // Create a new object with proper data type conversions
             const loggedUser = JSON.parse(localStorage.getItem('user'));
             const userId = loggedUser ? loggedUser.userId : null;
-
+    
             if (!userId) {
                 setSnackbar({
                     open: true,
                     message: 'User is not logged in.',
-                    severity: 'error'
+                    severity: 'error',
                 });
                 setLoading(false);
                 return;
             }
-
+    
             const proposalPayload = {
                 ...formData,
                 quantity: parseInt(formData.quantity, 10),
                 estimatedCost: parseFloat(formData.estimatedCost),
-                userId: parseInt(userId, 10), // Set the logged-in user's ID here
+                userId: parseInt(userId, 10),
                 departmentId: formData.departmentId ? parseInt(formData.departmentId, 10) : null,
                 currentApproverId: formData.currentApproverId ? parseInt(formData.currentApproverId, 10) : null,
-                proposalDate: formData.proposalDate ? new Date(formData.proposalDate).toISOString() : new Date().toISOString(),
+                proposalDate: formData.proposalDate
+                    ? new Date(formData.proposalDate).toISOString()
+                    : new Date().toISOString(),
                 vendorInfo: formData.vendorInfo || '',
-                status: formData.status || 'Pending'
+                status: formData.status || 'Pending',
             };
-
+    
             let response;
             if (proposalPayload.proposalId) {
                 response = await axios.put(`/api/proposals/${proposalPayload.proposalId}`, proposalPayload);
@@ -416,17 +411,17 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                     severity: 'success',
                 });
             }
-
+    
             if (response?.data) {
                 resetForm();
-                onSubmitSuccess(); // Close dialog
+                onSubmitSuccess(response.data); // Send the updated proposal to the parent
             } else {
                 throw new Error('No response data received');
             }
         } catch (err) {
             console.error('Error saving proposal:', err);
             let errorMessage = 'Error saving proposal. Please try again.';
-
+    
             if (err.response?.data?.message) {
                 errorMessage = err.response.data.message;
             } else if (err.response?.status === 400) {
@@ -434,16 +429,17 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
             } else if (err.response?.status === 500) {
                 errorMessage = 'Server error. Please try again later.';
             }
-
+    
             setSnackbar({
                 open: true,
                 message: errorMessage,
-                severity: 'error'
+                severity: 'error',
             });
         } finally {
             setLoading(false);
         }
     };
+    
 
 
     const handleCloseSnackbar = () => {
@@ -583,19 +579,6 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                                 )}
                             />
 
-                            <TextField
-                                select
-                                label="Status"
-                                value={formData.status}
-                                onChange={handleChange('status')}
-                                fullWidth
-                            >
-                                {PROPOSAL_STATUS.map((status) => (
-                                    <MenuItem key={status} value={status} disabled={status !== 'Pending'}>
-                                        {status}
-                                    </MenuItem>
-                                ))}
-                            </TextField>
 
                             <Box
                                 sx={{

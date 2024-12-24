@@ -6,7 +6,7 @@ const ProtectedApproverRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem('user'));
 
   if (!user || user.roles?.roleId !== 3) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/" />;
   }
 
   return <ProtectedLayout requiredRoleIdId={3}>{children}</ProtectedLayout>;

@@ -11,7 +11,7 @@ import {
   Box,
   Grid,
   IconButton,
-  Divider,FormControl,InputLabel,Select,MenuItem,
+  Divider, FormControl, InputLabel, Select, MenuItem,
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 
@@ -22,7 +22,7 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [fundingSources, setFundingSources] = useState([]);
-const [fundingSourceId, setFundingSourceId] = useState('');
+  const [fundingSourceId, setFundingSourceId] = useState('');
 
 
   useEffect(() => {
@@ -68,55 +68,85 @@ const [fundingSourceId, setFundingSourceId] = useState('');
     }
   };
 
+  // const handleStatusUpdate = async (newStatus) => {
+  //   try {
+  //     if (!fundingSourceId) {
+  //       console.error('Funding source is required');
+  //       return;
+  //     }
+
+  //     const user = JSON.parse(localStorage.getItem('user'));
+  //     const response = await axios.put(`/api/proposals/${proposalId}/status`, null, {
+  //       params: {
+  //         newStatus: newStatus,
+  //         approverId: user.userId,
+  //         fundingSourceId: fundingSourceId, // Include the funding source ID
+  //         comments: comment
+  //       }
+  //     });
+
+  //     if (response.data) {
+  //       onStatusUpdate(response.data);
+  //       fetchApprovalHistory();
+  //       setComment('');
+  //       setFundingSourceId(''); // Reset funding source
+  //     }
+  //   } catch (err) {
+  //     console.error('Error updating status:', err);
+  //   }
+  // };
   const handleStatusUpdate = async (newStatus) => {
     try {
-      if (!fundingSourceId) {
-        console.error('Funding source is required');
-        return;
-      }
-  
-      const user = JSON.parse(localStorage.getItem('user'));
-      const response = await axios.put(`/api/proposals/${proposalId}/status`, null, {
-        params: {
-          newStatus: newStatus,
-          approverId: user.userId,
-          fundingSourceId: fundingSourceId, // Include the funding source ID
-          comments: comment
+        if (!fundingSourceId) {
+            console.error('Funding source is required');
+            return;
         }
-      });
-  
-      if (response.data) {
-        onStatusUpdate(response.data);
-        fetchApprovalHistory();
-        setComment('');
-        setFundingSourceId(''); // Reset funding source
-      }
+
+        const user = JSON.parse(localStorage.getItem('user'));
+        const response = await axios.put(`/api/proposals/${proposalId}/status`, null, {
+            params: {
+                newStatus: newStatus,
+                approverId: user.userId,
+                fundingSourceId: fundingSourceId, // Include the funding source ID
+                comments: comment,
+            },
+        });
+
+        if (response.data) {
+            // Notify the parent component about the status update
+            if (onStatusUpdate) {
+                onStatusUpdate(response.data); // Send updated proposal data
+            }
+            fetchApprovalHistory();
+            setComment('');
+            setFundingSourceId(''); // Reset funding source
+        }
     } catch (err) {
-      console.error('Error updating status:', err);
+        console.error('Error updating status:', err);
     }
-  };
-  
+};
+
 
   const formatDateTime = (dateTime) => {
     return new Date(dateTime).toLocaleDateString(); // Returns only the date in 'MM/DD/YYYY' format
   };
-  
+
 
   const renderStatusUpdateButtons = () => {
     if (proposal?.status && proposal.status.toLowerCase() === 'pending') {
       return (
         <>
-          <Button 
-            variant="contained" 
-            color="success" 
+          <Button
+            variant="contained"
+            color="success"
             onClick={() => handleStatusUpdate('APPROVED')}
             className="bg-green-600 hover:bg-green-700"
           >
             Approve
           </Button>
-          <Button 
-            variant="contained" 
-            color="error" 
+          <Button
+            variant="contained"
+            color="error"
             onClick={() => handleStatusUpdate('REJECTED')}
             className="bg-red-600 hover:bg-red-700"
           >
@@ -133,8 +163,8 @@ const [fundingSourceId, setFundingSourceId] = useState('');
   if (!proposal) return null;
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={onClose}
       maxWidth="md"
       fullWidth
@@ -149,68 +179,78 @@ const [fundingSourceId, setFundingSourceId] = useState('');
 
       <DialogContent className="p-6">
         <Grid container spacing={3}>
-          {/* <Grid item xs={6}>
-            <Typography variant="subtitle2" className="text-gray-600">Department</Typography>
-            <Typography variant="body1" className="font-medium">{proposal.department?.deptName}</Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography variant="subtitle2" className="text-gray-600">Requester</Typography>
-            <Typography variant="body1" className="font-medium">{proposal.user?.firstName} {proposal.user?.lastName}</Typography>
-          </Grid> */}
-          <Grid item xs={6}>
-            <Typography variant="subtitle2" className="text-gray-600">Item</Typography>
-            <Typography variant="body1" className="font-medium">{proposal.itemName}</Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography variant="subtitle2" className="text-gray-600">Category</Typography>
-            <Typography variant="body1" className="font-medium">{proposal.category}</Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography variant="subtitle2" className="text-gray-600">Quantity</Typography>
-            <Typography variant="body1" className="font-medium">{proposal.quantity}</Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography variant="subtitle2" className="text-gray-600">Estimated Cost</Typography>
-            <Typography variant="body1" className="font-medium">${proposal.estimatedCost}</Typography>
-          </Grid>
-          <Grid item xs={12}>
-            <Typography variant="subtitle2" className="text-gray-600">Status</Typography>
-            <Typography variant="body1" className="font-medium">{proposal.status}</Typography>
-          </Grid>
-          
-          {proposal.status && proposal.status.toLowerCase() === 'pending' && (
-  <>
-    <Grid item xs={12}>
-      <FormControl fullWidth className="mt-4">
-        <InputLabel>Funding Source</InputLabel>
-        <Select
-          value={fundingSourceId}
-          onChange={(e) => setFundingSourceId(e.target.value)}
-          label="Funding Source"
-        >
-          {fundingSources.map((source) => (
-            <MenuItem key={source.sourceId} value={source.sourceId}>
-              {source.sourceName} {/* Adjust based on the properties of your funding source */}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    </Grid>
-    <Grid item xs={12}>
-      <TextField
-        fullWidth
-        multiline
-        rows={3}
-        label="Add Comment"
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-        className="mt-4"
-      />
-    </Grid>
-  </>
-)}
+          <DialogContent>
+            <Grid container spacing={3}>
+              {/* Existing fields */}
+              <Grid item xs={6}>
+                <Typography variant="subtitle2" className="text-gray-600">Item</Typography>
+                <Typography variant="body1" className="font-medium">{proposal.itemName}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="subtitle2" className="text-gray-600">Category</Typography>
+                <Typography variant="body1" className="font-medium">{proposal.category}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="subtitle2" className="text-gray-600">Quantity</Typography>
+                <Typography variant="body1" className="font-medium">{proposal.quantity}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="subtitle2" className="text-gray-600">Estimated Cost</Typography>
+                <Typography variant="body1" className="font-medium">${proposal.estimatedCost}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="subtitle2" className="text-gray-600">Vendor Info</Typography>
+                <Typography variant="body1" className="font-medium">{proposal.vendorInfo}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="subtitle2" className="text-gray-600">Business Purpose</Typography>
+                <Typography variant="body1" className="font-medium">{proposal.businessPurpose}</Typography>
+              </Grid>
+              {/* <Grid item xs={6}>
+                <Typography variant="subtitle2" className="text-gray-600">Department</Typography>
+                <Typography variant="body1" className="font-medium">{getDepartmentNameById(proposal.departmentId)}</Typography>
+              </Grid> */}
+              <Grid item xs={6}>
+                <Typography variant="subtitle2" className="text-gray-600">Status</Typography>
+                <Typography variant="body1" className="font-medium">{proposal.status}</Typography>
+              </Grid>
+            </Grid>
+          </DialogContent>
 
-          {approvalHistory.length > 0 && proposal?.status?.toLowerCase() !== 'pending' &&(
+
+          {proposal.status && proposal.status.toLowerCase() === 'pending' && (
+            <>
+              <Grid item xs={12}>
+                <FormControl fullWidth className="mt-4">
+                  <InputLabel>Funding Source</InputLabel>
+                  <Select
+                    value={fundingSourceId}
+                    onChange={(e) => setFundingSourceId(e.target.value)}
+                    label="Funding Source"
+                  >
+                    {fundingSources.map((source) => (
+                      <MenuItem key={source.sourceId} value={source.sourceId}>
+                        {source.sourceName} {/* Adjust based on the properties of your funding source */}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  label="Add Comment"
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  className="mt-4"
+                />
+              </Grid>
+            </>
+          )}
+
+          {approvalHistory.length > 0 && proposal?.status?.toLowerCase() !== 'pending' && (
             <Grid item xs={12}>
               <Divider className="my-4" />
               <Typography variant="h6" className="mb-3">Approval History</Typography>

@@ -14,92 +14,43 @@ import {
     Dialog,
     DialogContent,
     DialogTitle,
-    DialogActions, IconButton,
-    Link,
+    DialogActions,
+    IconButton,
     Alert,
-    Snackbar
+    Snackbar,
+    Tabs,
+    Tab
 } from '@mui/material';
 import { TablePagination } from '@mui/material';
-import { Close as CloseIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Close as CloseIcon, Edit as EditIcon } from '@mui/icons-material';
 import ProposalForm from './ProposalForm';
 import { useTheme } from '@mui/material/styles';
 import { useMediaQuery } from '@mui/material';
 import { sortData } from '../utils/utilities';
-import { Tabs, Tab } from '@mui/material';
 import FacultyMetrics from './FacultyMetrics';
 
-
 const ProposalsList = () => {
-    const [proposals, setProposals] = useState([]); // Store proposals in state
+    const [proposals, setProposals] = useState([]);
     const [openDialog, setOpenDialog] = useState(false);
-    const [editingProposal, setEditingProposal] = useState(null); // Stores the details of the proposal being edited. 
-    //null indicates no editing.
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false); //Controls whether the delete confirmation dialog is open.
-    const [proposalToDelete, setProposalToDelete] = useState(null);  //Stores the proposalId of the proposal to be deleted. 
-    const [error, setError] = useState(''); //Stores error message  if any error occurs while fetching proposals. 
+    const [editingProposal, setEditingProposal] = useState(null);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [proposalToDelete, setProposalToDelete] = useState(null);
+    const [error, setError] = useState('');
     const [snackbar, setSnackbar] = useState({
         open: false,
         message: '',
         severity: 'success'
-    }); //Stores the snackbar message to be displayed. //severity is used to set the color of the snackbar.//open is used to control the visibility of the snackbar.//message is used to set the message to be displayed in the snackbar.
-    const [page, setPage] = useState(0); // Current page
-    const [rowsPerPage, setRowsPerPage] = useState(5); // Rows per page
-
+    });
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const [sortConfig, setSortConfig] = useState({ key: 'proposalId', order: 'desc' });
-
     const [tabValue, setTabValue] = useState(0);
-
-
-
-    const handleChangePage = (event, newPage) => {
-        setPage(newPage);
-    };
-
-    const handleChangeRowsPerPage = (event) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
-    };
-
-    const handleTabChange = (event, newValue) => {
-        setTabValue(newValue);
-    };
-
-    const handleSort = (key) => {
-        setSortConfig((prevConfig) => {
-            const newConfig = {
-                key,
-                order: prevConfig.key === key && prevConfig.order === 'asc' ? 'desc' : 'asc'
-            };
-            console.log("Sorting key:", key, "Order:", newConfig.order); // Debug log
-            return newConfig;
-        });
-    };
-
-
-    const getFilteredProposals = () => {
-        let filtered = proposals;
-
-        switch (tabValue) {
-            case 1: // Pending
-                return filtered.filter((proposal) => proposal.status.toLowerCase() === 'pending');
-            case 2: // Approved 
-                return filtered.filter((proposal) => proposal.status.toLowerCase() === 'approved');
-            case 3: // Rejected
-                return filtered.filter((proposal) => proposal.status.toLowerCase() === 'rejected');
-            default: // All
-                return filtered;
-        }
-    };
-
-    const sortedProposals = sortData(getFilteredProposals(), sortConfig.key, sortConfig.order);
-
-
 
     useEffect(() => {
         fetchProposals();
-    }, []); // Calls fetchProposals when the component loads to fetch the proposals.
+    }, []);
 
     const fetchProposals = async () => {
         try {
@@ -107,10 +58,11 @@ const ProposalsList = () => {
             if (!loggedUser?.userId) {
                 setError('User not found');
                 return;
-            } //Fetch the logged-in user from local storage. If the user is not found, set an error message.
+            }
 
-            const response = await axios.get(`/api/proposals/user/${loggedUser.userId}`); //Fetch proposals using the logged-in user's userId.
-            setProposals(response.data); //Store the fetched proposals in state.
+            // Fetch proposals for the current user
+            const response = await axios.get(`/api/proposals/user/${loggedUser.userId}`);
+            setProposals(response.data);
         } catch (err) {
             console.error('Error fetching proposals:', err);
             setError('Error fetching proposals');
@@ -122,18 +74,15 @@ const ProposalsList = () => {
         }
     };
 
-
-
     const handleOpenDialog = async (proposal = null) => {
         try {
             if (proposal) {
-                // Fetch proposal details using proposalId
                 const response = await axios.get(`/api/proposals/${proposal.proposalId}`);
-                setEditingProposal(response.data); // Store the fetched proposal in state
+                setEditingProposal(response.data);
             } else {
-                setEditingProposal(null); // For new proposal
+                setEditingProposal(null);
             }
-            setOpenDialog(true); // Open dialog
+            setOpenDialog(true);
         } catch (err) {
             console.error('Error fetching proposal details:', err);
             setSnackbar({
@@ -144,14 +93,13 @@ const ProposalsList = () => {
         }
     };
 
-
     const handleCloseDialog = () => {
-        setOpenDialog(false); // Close dialog
-        setEditingProposal(null); // Reset editingProposal state
-        fetchProposals();   // Fetch proposals
+        setOpenDialog(false);
+        setEditingProposal(null);
+        fetchProposals();   // Refresh after closing
     };
 
-    const handleOpenDeleteDialog = (proposalId) => {
+    const handleDelete = (proposalId) => {
         setProposalToDelete(proposalId);
         setDeleteDialogOpen(true);
     };
@@ -164,7 +112,7 @@ const ProposalsList = () => {
                 message: 'Proposal deleted successfully',
                 severity: 'success',
             });
-            fetchProposals(); // Refresh proposals after successful deletion
+            fetchProposals();
         } catch (err) {
             console.error('Error deleting proposal:', err);
             setSnackbar({
@@ -178,17 +126,51 @@ const ProposalsList = () => {
         }
     };
 
-
     const handleCloseSnackbar = () => {
         setSnackbar(prev => ({ ...prev, open: false }));
     };
 
-    const handleDelete = (proposalId) => {
-        handleOpenDeleteDialog(proposalId);
+    const handleTabChange = (event, newValue) => {
+        setTabValue(newValue);
     };
 
+    const handleChangePage = (event, newPage) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
+
+    const handleSort = (key) => {
+        setSortConfig((prevConfig) => {
+            const newConfig = {
+                key,
+                order: prevConfig.key === key && prevConfig.order === 'asc' ? 'desc' : 'asc'
+            };
+            return newConfig;
+        });
+    };
+
+    const getFilteredProposals = () => {
+        let filtered = proposals;
+        switch (tabValue) {
+            case 1: // Pending
+                return filtered.filter((proposal) => proposal.status?.toLowerCase() === 'pending');
+            case 2: // Approved
+                return filtered.filter((proposal) => proposal.status?.toLowerCase() === 'approved');
+            case 3: // Rejected
+                return filtered.filter((proposal) => proposal.status?.toLowerCase() === 'rejected');
+            default: // All
+                return filtered;
+        }
+    };
+
+    const sortedProposals = sortData(getFilteredProposals(), sortConfig.key, sortConfig.order);
 
     const formatDate = (dateString) => {
+        if (!dateString) return '—';
         return new Date(dateString).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
@@ -196,46 +178,45 @@ const ProposalsList = () => {
         });
     };
 
-    const isStatusApproved = (status) => {
-        return status?.toLowerCase() === 'approved';
-    };
-
     return (
         <Box sx={{ p: 3, minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-        <Box sx={{ maxWidth: 1200, margin: '0 auto' }}>
-            {/* Header Section */}
-            <Box
-                sx={{
-                    display: 'flex',
-                    flexDirection: isMobile ? 'column' : 'row',
-                    gap: isMobile ? 2 : 0,
-                    justifyContent: 'space-between',
-                    alignItems: isMobile ? 'stretch' : 'center',
-                    mb: 3
-                }}>
-                <Typography variant={isMobile ? 'h5' : 'h4'}
-                    sx={{ fontWeight: 'bold', color: '#333' }}>
-                    My Procurement Proposals
-                </Typography>
-                <Button
-                    fullWidth={isMobile}
-                    variant="contained"
-                    onClick={() => handleOpenDialog()}
+            <Box sx={{ maxWidth: 1200, margin: '0 auto' }}>
+                {/* Header Section */}
+                <Box
                     sx={{
-                        backgroundColor: '#1a237e',
-                        '&:hover': {
-                            backgroundColor: '#0d1b5e',
-                        }
+                        display: 'flex',
+                        flexDirection: isMobile ? 'column' : 'row',
+                        gap: isMobile ? 2 : 0,
+                        justifyContent: 'space-between',
+                        alignItems: isMobile ? 'stretch' : 'center',
+                        mb: 3
                     }}
                 >
-                    Submit New Proposal
-                </Button>
-            </Box>
+                    <Typography
+                        variant={isMobile ? 'h5' : 'h4'}
+                        sx={{ fontWeight: 'bold', color: '#333' }}
+                    >
+                        My Procurement Proposals
+                    </Typography>
+                    <Button
+                        fullWidth={isMobile}
+                        variant="contained"
+                        onClick={() => handleOpenDialog()}
+                        sx={{
+                            backgroundColor: '#1a237e',
+                            '&:hover': {
+                                backgroundColor: '#0d1b5e',
+                            }
+                        }}
+                    >
+                        Submit New Proposal
+                    </Button>
+                </Box>
 
-            {/* Metrics Dashboard */}
-            <Box sx={{ mb: 4 }}>
-                <FacultyMetrics proposals={proposals} />
-            </Box>
+                {/* Metrics Dashboard */}
+                <Box sx={{ mb: 4 }}>
+                    <FacultyMetrics proposals={proposals} />
+                </Box>
 
                 {error && (
                     <Alert severity="error" sx={{ mb: 2 }}>
@@ -251,124 +232,228 @@ const ProposalsList = () => {
                         borderBottom: '1px solid #e0e0e0',
                     }}
                     TabIndicatorProps={{
-                        sx: { backgroundColor: '#1a237e' }, // Set the indicator color
+                        sx: { backgroundColor: '#1a237e' },
                     }}
-                    variant={isMobile ? 'scrollable' : 'fullWidth'} // Make tabs scrollable on mobile
-                    scrollButtons={isMobile ? 'auto' : false} // Show scroll buttons only on mobile
+                    variant={isMobile ? 'scrollable' : 'fullWidth'}
+                    scrollButtons={isMobile ? 'auto' : false}
                     allowScrollButtonsMobile
                 >
                     <Tab label={`All (${proposals.length})`} />
-                    <Tab label={`Pending (${proposals.filter(p => p.status.toLowerCase() === 'pending').length})`} />
-                    <Tab label={`Approved (${proposals.filter(p => p.status.toLowerCase() === 'approved').length})`} />
-                    <Tab label={`Rejected (${proposals.filter(p => p.status.toLowerCase() === 'rejected').length})`} />
+                    <Tab label={`Pending (${proposals.filter(p => p.status?.toLowerCase() === 'pending').length})`} />
+                    <Tab label={`Approved (${proposals.filter(p => p.status?.toLowerCase() === 'approved').length})`} />
+                    <Tab label={`Rejected (${proposals.filter(p => p.status?.toLowerCase() === 'rejected').length})`} />
                 </Tabs>
+
                 <TableContainer
                     component={Paper}
                     sx={{
                         mb: 4,
                         boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-                        overflowX: 'auto', // Allow horizontal scrolling if needed
-                        maxWidth: '100%', // Make the table span full width
-                    }}>
+                        overflowX: 'auto',
+                        maxWidth: '100%',
+                    }}
+                >
                     <Table
                         sx={{
-                            minWidth: 1500, // Adjusted minWidth for better alignment
+                            minWidth: 1500,
                         }}
                     >
                         <TableHead>
                             <TableRow sx={{ backgroundColor: '#1a237e' }}>
-                                <TableCell onClick={() => handleSort('proposalId')} sx={{ color: 'white', cursor: 'pointer' }}>
-                                    Proposal ID {sortConfig.key === 'proposalId' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                <TableCell
+                                    sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center', cursor: 'pointer' }}
+                                    onClick={() => handleSort('proposalId')}
+                                >
+                                    Proposal ID
                                 </TableCell>
-                                <TableCell onClick={() => handleSort('itemName')} sx={{ color: 'white', cursor: 'pointer' }}>
-                                    Item Name {sortConfig.key === 'itemName' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                <TableCell
+                                    sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center', cursor: 'pointer' }}
+                                    onClick={() => handleSort('itemName')}
+                                >
+                                    Item Name
                                 </TableCell>
-                                <TableCell sx={{ color: 'white' }}>Category</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Description</TableCell>
-                                <TableCell onClick={() => handleSort('quantity')} sx={{ color: 'white', cursor: 'pointer' }}>
-                                    Quantity {sortConfig.key === 'quantity' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                <TableCell
+                                    sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center', cursor: 'pointer' }}
+                                    onClick={() => handleSort('category')}
+                                >
+                                    Category
                                 </TableCell>
-                                <TableCell onClick={() => handleSort('estimatedCost')} sx={{ color: 'white', cursor: 'pointer' }}>
-                                    Estimated Cost {sortConfig.key === 'estimatedCost' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                <TableCell
+                                    sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center', cursor: 'pointer' }}
+                                    onClick={() => handleSort('description')}
+                                >
+                                    Description
                                 </TableCell>
-                                <TableCell sx={{ color: 'white' }}>Status</TableCell>
-                                <TableCell onClick={() => handleSort('proposalDate')} sx={{ color: 'white', cursor: 'pointer' }}>
-                                    Proposal Date {sortConfig.key === 'proposalDate' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                <TableCell
+                                    sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center', cursor: 'pointer' }}
+                                    onClick={() => handleSort('quantity')}
+                                >
+                                    Quantity
                                 </TableCell>
-                                <TableCell sx={{ color: 'white' }}>Actions</TableCell>
+                                <TableCell
+                                    sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center', cursor: 'pointer' }}
+                                    onClick={() => handleSort('estimatedCost')}
+                                >
+                                    Estimated Cost
+                                </TableCell>
+                                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>
+                                    Status
+                                </TableCell>
+                                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>
+                                    Proposal Date
+                                </TableCell>
+                                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>
+                                    Order Status
+                                </TableCell>
+                                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>
+                                    Delivery Status
+                                </TableCell>
+                                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>
+                                    Actions
+                                </TableCell>
                             </TableRow>
                         </TableHead>
 
                         <TableBody>
-                            {sortedProposals.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((proposal) => (
-                                <TableRow key={proposal.proposalId} sx={{ backgroundColor: '#F7F6FE' }}>
-                                    <TableCell>{proposal.proposalId}</TableCell>
-                                    <TableCell>{proposal.itemName}</TableCell>
-                                    <TableCell>{proposal.category}</TableCell>
-                                    <TableCell>{proposal.description}</TableCell>
-                                    <TableCell>{proposal.quantity}</TableCell>
-                                    <TableCell>${proposal.estimatedCost.toFixed(2)}</TableCell>
-                                    <TableCell>
-                                        <Box
-                                            sx={{
-                                                backgroundColor:
-                                                    proposal.status.toLowerCase() === 'approved' ? '#e8f5e9' :
-                                                        proposal.status.toLowerCase() === 'pending' ? '#fff3e0' :
-                                                            proposal.status.toLowerCase() === 'rejected' ? '#ffebee' : '#f5f5f5',
-                                                color:
-                                                    proposal.status.toLowerCase() === 'approved' ? '#2e7d32' :
-                                                        proposal.status.toLowerCase() === 'pending' ? '#e65100' :
-                                                            proposal.status.toLowerCase() === 'rejected' ? '#c62828' : '#333',
-                                                p: 1,
-                                                borderRadius: 1,
-                                                textAlign: 'center'
-                                            }}
-                                        >
-                                            {proposal.status}
-                                        </Box>
-                                    </TableCell>
-                                    <TableCell>{formatDate(proposal.proposalDate)}</TableCell>
-                                    <TableCell>
-                                        <Box sx={{ display: 'flex', gap: 1 }}>
-                                            <IconButton
-                                                color="primary"
-                                                onClick={() => handleOpenDialog(proposal)}
-                                                disabled={proposal.status !== 'Pending'}
+                            {sortedProposals
+                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                .map((proposal) => (
+                                    <TableRow key={proposal.proposalId}>
+                                        <TableCell align="center">{proposal.proposalId}</TableCell>
+                                        <TableCell align="center">{proposal.itemName}</TableCell>
+                                        <TableCell align="center">{proposal.category}</TableCell>
+                                        <TableCell align="center">{proposal.description}</TableCell>
+                                        <TableCell align="center">{proposal.quantity}</TableCell>
+                                        <TableCell align="center">
+                                            {proposal.estimatedCost
+                                                ? `$${proposal.estimatedCost.toFixed(2)}`
+                                                : '—'}
+                                        </TableCell>
+                                        <TableCell align="center">
+                                            <Box
                                                 sx={{
-                                                    opacity: proposal.status !== 'Pending' ? 0.5 : 1,
-                                                    '&:hover': {
-                                                        backgroundColor: proposal.status !== 'Pending' ? 'transparent' : undefined
-                                                    }
+                                                    backgroundColor:
+                                                        proposal.status?.toLowerCase() === 'approved'
+                                                            ? '#e8f5e9'
+                                                            : proposal.status?.toLowerCase() === 'pending'
+                                                            ? '#fff3e0'
+                                                            : proposal.status?.toLowerCase() === 'rejected'
+                                                            ? '#ffebee'
+                                                            : '#f5f5f5',
+                                                    color:
+                                                        proposal.status?.toLowerCase() === 'approved'
+                                                            ? '#2e7d32'
+                                                            : proposal.status?.toLowerCase() === 'pending'
+                                                            ? '#e65100'
+                                                            : proposal.status?.toLowerCase() === 'rejected'
+                                                            ? '#c62828'
+                                                            : '#333',
+                                                    padding: '8px',
+                                                    borderRadius: 1,
+                                                    textAlign: 'center',
                                                 }}
                                             >
-                                                <EditIcon />
-                                            </IconButton>
-                                            {/* <IconButton
-                                                color="error"
-                                                onClick={() => handleDelete(proposal.proposalId)}
-                                                disabled={proposal.status !== 'Pending'}
-                                            >
-                                                <DeleteIcon />
-                                            </IconButton> */}
+                                                {proposal.status || 'N/A'}
+                                            </Box>
+                                        </TableCell>
+                                        <TableCell align="center">
+                                            {proposal.proposalDate
+                                                ? formatDate(proposal.proposalDate)
+                                                : '—'}
+                                        </TableCell>
 
-                                        </Box>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
+                                        {/* ============ ORDER STATUS (Color-coded) ============ */}
+                                        <TableCell align="center">
+                                            <Box
+                                                sx={{
+                                                    backgroundColor:
+                                                        proposal.orderStatus?.toUpperCase() === 'ORDERED'
+                                                            ? '#e8f5e9'
+                                                            : proposal.orderStatus?.toUpperCase() === 'PENDING'
+                                                            ? '#fff3e0'
+                                                            : '#f5f5f5',
+                                                    color:
+                                                        proposal.orderStatus?.toUpperCase() === 'ORDERED'
+                                                            ? '#2e7d32'
+                                                            : proposal.orderStatus?.toUpperCase() === 'PENDING'
+                                                            ? '#e65100'
+                                                            : '#333',
+                                                    padding: '8px',
+                                                    borderRadius: 1,
+                                                    textAlign: 'center',
+                                                }}
+                                            >
+                                                {proposal.orderStatus || '—'}
+                                            </Box>
+                                        </TableCell>
+
+                                        {/* ============ DELIVERY STATUS (Color-coded) ============ */}
+                                        <TableCell align="center">
+                                            <Box
+                                                sx={{
+                                                    backgroundColor:
+                                                        proposal.deliveryStatus === 'Delivered'
+                                                            ? '#e8f5e9'
+                                                            : proposal.deliveryStatus === 'Shipped'
+                                                            ? '#e3f2fd'
+                                                            : proposal.deliveryStatus === 'Processing'
+                                                            ? '#fffde7'
+                                                            : '#fff3e0',
+                                                    color:
+                                                        proposal.deliveryStatus === 'Delivered'
+                                                            ? '#2e7d32'
+                                                            : proposal.deliveryStatus === 'Shipped'
+                                                            ? '#1565c0'
+                                                            : proposal.deliveryStatus === 'Processing'
+                                                            ? '#f57f17'
+                                                            : '#e65100',
+                                                    padding: '8px',
+                                                    borderRadius: 1,
+                                                    textAlign: 'center',
+                                                }}
+                                            >
+                                                {proposal.deliveryStatus || '—'}
+                                            </Box>
+                                        </TableCell>
+
+                                        {/* ============ ACTIONS ============ */}
+                                        <TableCell align="center">
+                                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                                                {/* Only enable editing if status is still PENDING */}
+                                                <IconButton
+                                                    color="primary"
+                                                    onClick={() => handleOpenDialog(proposal)}
+                                                    disabled={
+                                                        proposal.status?.toLowerCase() !== 'pending'
+                                                    }
+                                                    sx={{
+                                                        opacity:
+                                                            proposal.status?.toLowerCase() !== 'pending'
+                                                                ? 0.5
+                                                                : 1,
+                                                    }}
+                                                >
+                                                    <EditIcon />
+                                                </IconButton>
+                                            </Box>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
                         </TableBody>
                     </Table>
                     <TablePagination
                         rowsPerPageOptions={isMobile ? [5, 10] : [5, 10, 25]}
                         component="div"
-                        count={getFilteredProposals().length}  // Updated this line
+                        count={getFilteredProposals().length}
                         rowsPerPage={rowsPerPage}
                         page={page}
                         onPageChange={handleChangePage}
                         onRowsPerPageChange={handleChangeRowsPerPage}
-                        labelRowsPerPage={isMobile ? "Rows:" : "Rows per page:"}
+                        labelRowsPerPage={isMobile ? 'Rows:' : 'Rows per page:'}
                     />
                 </TableContainer>
 
+                {/* ============ Dialog for Creating/Editing Proposal ============ */}
                 <Dialog
                     open={openDialog}
                     onClose={handleCloseDialog}
@@ -393,6 +478,8 @@ const ProposalsList = () => {
                         />
                     </DialogContent>
                 </Dialog>
+
+                {/* ============ Dialog for Confirm Delete ============ */}
                 <Dialog
                     open={deleteDialogOpen}
                     onClose={() => setDeleteDialogOpen(false)}
@@ -410,6 +497,8 @@ const ProposalsList = () => {
                         </Button>
                     </DialogActions>
                 </Dialog>
+
+                {/* ============ Snackbar ============ */}
                 <Snackbar
                     open={snackbar.open}
                     autoHideDuration={6000}

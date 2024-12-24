@@ -6,7 +6,7 @@ const ProtectedAdminRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem('user'));
 
   if (!user || user.roles?.roleId !== 1) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/" />;
   }
 
   return <ProtectedLayout requiredRoleId={1}>{children}</ProtectedLayout>;

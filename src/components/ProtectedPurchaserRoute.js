@@ -7,7 +7,7 @@ const ProtectedPurchaserRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem('user'));
 
   if (!user || user.roles?.roleId !== 4) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/" />;
   }
 
   return <ProtectedLayout requiredRoleId={4}>{children}</ProtectedLayout>;

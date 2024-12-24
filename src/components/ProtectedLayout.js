@@ -9,7 +9,7 @@ const ProtectedLayout = ({ children, requiredRoleId = null }) => {
 
   useEffect(() => {
     if (!user) {
-      navigate('/login');
+      navigate('/');
       return;
     }
   

@@ -26,7 +26,11 @@ import AdminApprover from './components/AdminApprover';
 import './App.css';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import SingleProposalView from './components/SingleProposalView'; 
+
+
 // Set axios default base URL
+
 
 axios.defaults.baseURL = `http://35.153.179.66:8080`;
 
@@ -38,9 +42,12 @@ function App() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+ 
+
   return (
     <Router>
       <div className="App">
+      {/* {shouldShowAppBar && <CommonAppBar showLogout={false} />} */}
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<Begin />} />
@@ -50,7 +57,7 @@ function App() {
               <SignUp />
             </>
           } />
-          <Route path="/login" element={
+          <Route path="/" element={
             <>
               <CommonAppBar showLogout={false} />
               <Login />
@@ -163,20 +170,14 @@ function App() {
           />
 
 
-          {/* Catch all route */}
-          {/* <Route
-            path="*"
-            element={
-              <Navigate
-                to={user ?
-                  (user.roles?.roleName === 'Admin' ? '/admin-dashboard' :
-                    user.roles?.roleName === 'Approver' ? '/approver-dashboard' :
-                      user.roles?.roleName === 'Purchaser' ? '/purchaser-dashboard' :
-                        '/proposal')
-                  : '/login'}
-              />
-            }
-          /> */}
+<Route
+    path="/proposal/:proposalId"
+    element={
+      <ProtectedLayout>
+        <SingleProposalView />
+      </ProtectedLayout>
+    }
+  />
 
           <Route
             path="*"
