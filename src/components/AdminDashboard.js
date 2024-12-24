@@ -265,27 +265,7 @@ const AdminDashboard = () => {
     return (
         <Box sx={{ p: 3, minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
             {/* Drawer Toggle Button */}
-            <IconButton
-                color="inherit"
-                aria-label="open drawer"
-                onClick={toggleDrawer}
-                edge="start"
-                sx={{
-                    position: 'fixed',
-                    left: 16,
-                    top: 80,
-                    zIndex: 1200,
-                    backgroundColor: '#1a237e',
-                    color: '#fff',
-                    '&:hover': {
-                        backgroundColor: '#0d1b5e',
-                    }
-                }}
-            >
-                <MenuIcon />
-            </IconButton>
-
-            <Layout open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+           
 
             <Box sx={{ maxWidth: 1200, margin: '0 auto' }}>
                 {/* Header */}

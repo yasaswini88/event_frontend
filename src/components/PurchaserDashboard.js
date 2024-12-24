@@ -283,9 +283,30 @@ const PurchaserDashboard = () => {
     const formatDateForInput = (dateString) => {
         if (!dateString) return '';
         const date = new Date(dateString);
-        // Format: YYYY-MM-DDThh:mm
-        return date.toISOString().slice(0, 16);
+
+        // Convert to local timezone
+        const offset = date.getTimezoneOffset() * 60000; // Offset in milliseconds
+        const localTime = new Date(date - offset).toISOString().slice(0, 16);
+
+        return localTime;
     };
+
+    const handleExpectedDeliveryDateChange = (e) => {
+        const inputDate = new Date(e.target.value);
+        const currentDate = new Date();
+
+        // Ensure the input date is in the future
+        if (inputDate >= currentDate) {
+            setExpectedDeliveryDate(e.target.value);
+        } else {
+            setSnackbar({
+                open: true,
+                message: 'Expected delivery date must be in the future',
+                severity: 'error',
+            });
+        }
+    };
+
 
     return (
         <Box sx={{
@@ -516,12 +537,19 @@ const PurchaserDashboard = () => {
                             label="Expected Delivery Date"
                             type="datetime-local"
                             value={formatDateForInput(expectedDeliveryDate)}
-                            onChange={(e) => setExpectedDeliveryDate(e.target.value)}
+                            onChange={handleExpectedDeliveryDateChange}
                             fullWidth
+                            InputProps={{
+                                inputProps: {
+                                    min: formatDateForInput(new Date()), // Use the current local time
+                                },
+                            }}
                             InputLabelProps={{
                                 shrink: true,
                             }}
                         />
+
+
                     </Box>
                 </DialogContent>
                 <DialogActions>

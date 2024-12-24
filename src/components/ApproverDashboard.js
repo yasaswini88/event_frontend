@@ -64,7 +64,7 @@ const ApproverDashboard = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filteredProposals, setFilteredProposals] = useState([]);
   const [pagination, setPagination] = useState({ currentPage: 1, itemsPerPage: 6, totalItems: 0 });
-  const [sortConfig, setSortConfig] = useState({ key: 'proposalDate', order: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'proposalDate', order: 'desc' });
 
 
 
