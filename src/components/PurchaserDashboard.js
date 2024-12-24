@@ -111,7 +111,7 @@ const PurchaserDashboard = () => {
                     department: department?.deptName || 'Unknown Department',
                     quantity: proposal.quantity,
                     finalCost: proposal.estimatedCost,
-                    orderStatus: matchingOrder ? 'ORDERED' : 'PENDING',
+                    orderStatus: matchingOrder ? matchingOrder.orderStatus : 'PENDING',
                     deliveryStatus: matchingOrder?.deliveryStatus || 'Not Started',
                     expectedDeliveryDate: matchingOrder?.expectedDeliveryDate,
                     purchaseOrderNumber: matchingOrder?.purchaseOrderNumber || 'Not Generated',
@@ -164,12 +164,10 @@ const PurchaserDashboard = () => {
     );
 
 
-
     const handleCreatePurchaseOrder = async (proposalId) => {
         try {
             const response = await axios.post(`/api/purchase-orders/create/${proposalId}`);
-
-            // Update the local state immediately
+    
             setPurchaseOrders(prevOrders =>
                 prevOrders.map(order => {
                     if (order.proposalId === proposalId) {
@@ -179,12 +177,13 @@ const PurchaserDashboard = () => {
                             orderId: response.data.orderId, // Make sure to update orderId if needed
                             orderStatus: 'ORDERED', // Update order status
                             deliveryStatus: 'Not Started'
+                           
                         };
                     }
                     return order;
                 })
             );
-
+    
             setSnackbar({
                 open: true,
                 message: 'Purchase order created successfully',
@@ -199,17 +198,19 @@ const PurchaserDashboard = () => {
             });
         }
     };
+    
     const handleUpdateOrderStatus = async (orderId, newStatus) => {
         try {
             await axios.put(`/api/purchase-orders/${orderId}/order-status`, null, {
                 params: { newOrderStatus: newStatus }
             });
+    
             setSnackbar({
                 open: true,
                 message: 'Order status updated successfully',
                 severity: 'success'
             });
-            fetchPurchaseOrders();
+            fetchPurchaseOrders(); // Refresh purchase orders after successful update
         } catch (err) {
             console.error('Error updating order status:', err);
             setSnackbar({
@@ -219,6 +220,7 @@ const PurchaserDashboard = () => {
             });
         }
     };
+    
 
     const handleUpdateDeliveryStatus = async () => {
         try {
