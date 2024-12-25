@@ -1,6 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AppBar, Toolbar, Box, Typography, Button, IconButton } from '@mui/material';
+import {
+  AppBar,
+  Toolbar,
+  Box,
+  Typography,
+  Button,
+  IconButton,
+  Popover,
+} from '@mui/material';
 import { Logout as LogoutIcon } from '@mui/icons-material';
 import Layout from './Layout'; // Import the Layout component
 
@@ -8,11 +16,20 @@ const CommonAppBar = ({ showLogout = true }) => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user'));
   const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handleLogout = () => {
     localStorage.removeItem('user');
     navigate('/');
     window.location.href = '/';
+  };
+
+  const handlePopoverOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handlePopoverClose = () => {
+    setAnchorEl(null);
   };
 
   const getUserName = () => {
@@ -62,15 +79,52 @@ const CommonAppBar = ({ showLogout = true }) => {
               </Typography>
             </Box>
             {showLogout && (
-              <Button
-                onClick={handleLogout}
-                startIcon={<LogoutIcon />}
-                variant="outlined"
-                color="primary"
-                sx={{ ml: 2 }}
-              >
-                Logout
-              </Button>
+              <>
+                <Button
+                  onClick={handlePopoverOpen}
+                  startIcon={<LogoutIcon />}
+                  variant="outlined"
+                  color="primary"
+                  sx={{ ml: 2 }}
+                >
+                  Logout
+                </Button>
+                <Popover
+                  open={Boolean(anchorEl)}
+                  anchorEl={anchorEl}
+                  onClose={handlePopoverClose}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'center',
+                  }}
+                  transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'center',
+                  }}
+                >
+                  <Box sx={{ p: 2 }}>
+                    <Typography sx={{ mb: 2 }}>
+                      Are you sure you want to log out? 
+                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Button
+                        onClick={handlePopoverClose}
+                        variant="outlined"
+                        color="primary"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleLogout}
+                        variant="contained"
+                        color="secondary"
+                      >
+                        Logout
+                      </Button>
+                    </Box>
+                  </Box>
+                </Popover>
+              </>
             )}
           </Box>
         </Toolbar>

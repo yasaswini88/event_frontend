@@ -51,6 +51,7 @@ const PurchaserDashboard = () => {
 
     const orderStatusOptions = ['all', 'PENDING', 'ORDERED'];
     const deliveryStatusOptions = ['all', 'Not Started', 'Processing', 'Shipped', 'Delivered'];
+    const [trackingNumber, setTrackingNumber] = useState('');
 
 
 
@@ -175,7 +176,8 @@ const PurchaserDashboard = () => {
                     if (order.proposalId === proposalId) {
                         return {
                             ...order,
-                            purchaseOrderNumber: response.data.purchaseOrderNumber,
+                            // purchaseOrderNumber: response.data.purchaseOrderNumber,
+                            purchaseOrderNumber: trackingNumber,
                             orderId: response.data.orderId, // Make sure to update orderId if needed
                             orderStatus: 'ORDERED', // Update order status
                             deliveryStatus: 'Not Started'
@@ -234,7 +236,8 @@ const PurchaserDashboard = () => {
             await axios.put(`/api/purchase-orders/${selectedOrder.orderId}/delivery-status`, null, {
                 params: {
                     newStatus: newDeliveryStatus,
-                    expectedDeliveryDate: expectedDeliveryDate
+                    expectedDeliveryDate: expectedDeliveryDate,
+                    purchaseOrderNumber: trackingNumber 
                 }
             });
             setSnackbar({
@@ -258,6 +261,7 @@ const PurchaserDashboard = () => {
         setSelectedOrder(order);
         setExpectedDeliveryDate(order.expectedDeliveryDate || '');
         setNewDeliveryStatus(order.deliveryStatus || '');
+        setTrackingNumber(order.purchaseOrderNumber !== 'Not Generated' ? order.purchaseOrderNumber : '');
         setOpenDialog(true);
     };
 
@@ -374,6 +378,7 @@ const PurchaserDashboard = () => {
                         </MenuItem>
                     ))}
                 </TextField>
+
             </Box>
             <TableContainer component={Paper} sx={{ mb: 4, boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
                 <Table>
@@ -548,7 +553,12 @@ const PurchaserDashboard = () => {
                                 shrink: true,
                             }}
                         />
-
+                        <TextField
+                            label="Tracking Number"
+                            value={trackingNumber}
+                            onChange={(e) => setTrackingNumber(e.target.value)}
+                            fullWidth
+                        />
 
                     </Box>
                 </DialogContent>
