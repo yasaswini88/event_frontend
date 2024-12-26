@@ -527,7 +527,15 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                                 label="Estimated Cost"
                                 type="number"
                                 value={formData.estimatedCost || ''}
-                                onChange={handleChange('estimatedCost')}
+                                onChange={(e) => {
+                                    const value = parseFloat(e.target.value);
+                                    if (value >= 0 || e.target.value === '') {
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            estimatedCost: e.target.value,
+                                        }));
+                                    }
+                                }}
                                 required
                                 fullWidth
                                 InputProps={{
@@ -536,8 +544,12 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                                             <MoneyIcon />
                                         </InputAdornment>
                                     ),
+                                    inputProps: { min: 0 }, // Disallow negative input
                                 }}
+                                error={formData.estimatedCost < 0}
+                                helperText={formData.estimatedCost < 0 ? "Estimated cost cannot be negative" : ""}
                             />
+
 
                             <TextField
                                 label="Vendor Information"

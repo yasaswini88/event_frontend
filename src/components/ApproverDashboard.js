@@ -55,7 +55,7 @@ const ApproverDashboard = () => {
   const [proposals, setProposals] = useState([]);
   const [users, setUsers] = useState([]);
   const [departments, setDepartments] = useState([]);
-  const [tabValue, setTabValue] = useState(0);
+  const [tabValue, setTabValue] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   // New state variables for dialog
   const [selectedProposalId, setSelectedProposalId] = useState(null);
@@ -64,7 +64,7 @@ const ApproverDashboard = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filteredProposals, setFilteredProposals] = useState([]);
   const [pagination, setPagination] = useState({ currentPage: 1, itemsPerPage: 6, totalItems: 0 });
-  const [sortConfig, setSortConfig] = useState({ key: 'proposalDate', order: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'proposalDate', order: 'desc' });
 
 
 
@@ -73,6 +73,10 @@ const ApproverDashboard = () => {
     fetchUsers();
     fetchDepartments();
   }, []);
+
+  useEffect(() => {
+    filterProposals('pending'); // Filter proposals for the "Pending" status initially
+  }, [proposals]);
 
   const fetchProposals = async () => {
     try {
@@ -210,6 +214,7 @@ const ApproverDashboard = () => {
   // const handleTabChange = (event, newValue) => {
   //   setTabValue(newValue);
   // };
+  // const sortedProposals = sortData(getFilteredProposals(), sortConfig.key, sortConfig.order);
   const sortedProposals = sortData(getFilteredProposals(), sortConfig.key, sortConfig.order);
 
   const updateProposalStatus = (proposalId, newStatus) => {
@@ -219,6 +224,7 @@ const ApproverDashboard = () => {
         )
     );
 };
+
 
 
 
@@ -237,16 +243,28 @@ const ApproverDashboard = () => {
 
 
 
-  const filterProposals = (status) => {
-    let filtered = proposals;
-    if (status !== 'ALL') {
-        filtered = filtered.filter((proposal) => 
-            proposal.status.toLowerCase() === status.toLowerCase()
-        );
-    }
-    setFilteredProposals(filtered);
-    setPagination({ ...pagination, currentPage: 1, totalItems: filtered.length });
+//   const filterProposals = (status) => {
+//     let filtered = proposals;
+//     if (status !== 'ALL') {
+//         filtered = filtered.filter((proposal) => 
+//             proposal.status.toLowerCase() === status.toLowerCase()
+//         );
+//     }
+//     setFilteredProposals(filtered);
+//     setPagination({ ...pagination, currentPage: 1, totalItems: filtered.length });
+// };
+
+const filterProposals = (status) => {
+  let filtered = proposals;
+  if (status !== 'ALL') {
+    filtered = filtered.filter((proposal) => 
+      proposal.status.toLowerCase() === status.toLowerCase()
+    );
+  }
+  setFilteredProposals(filtered);
+  setPagination({ ...pagination, currentPage: 1, totalItems: filtered.length });
 };
+
 
   const formatDate = (dateString) => {
     return new Date(dateString).toISOString().split('T')[0];
