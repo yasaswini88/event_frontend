@@ -51,6 +51,7 @@ const PurchaserDashboard = () => {
 
     const orderStatusOptions = ['all', 'PENDING', 'ORDERED'];
     const deliveryStatusOptions = ['all', 'Not Started', 'Processing', 'Shipped', 'Delivered'];
+    const [trackingNumber, setTrackingNumber] = useState('');
 
 
 
@@ -111,7 +112,7 @@ const PurchaserDashboard = () => {
                     department: department?.deptName || 'Unknown Department',
                     quantity: proposal.quantity,
                     finalCost: proposal.estimatedCost,
-                    orderStatus: matchingOrder ? matchingOrder.orderStatus : 'PENDING',
+                    orderStatus: matchingOrder ? 'ORDERED' : 'PENDING',
                     deliveryStatus: matchingOrder?.deliveryStatus || 'Not Started',
                     expectedDeliveryDate: matchingOrder?.expectedDeliveryDate,
                     purchaseOrderNumber: matchingOrder?.purchaseOrderNumber || 'Not Generated',
@@ -164,26 +165,28 @@ const PurchaserDashboard = () => {
     );
 
 
+
     const handleCreatePurchaseOrder = async (proposalId) => {
         try {
             const response = await axios.post(`/api/purchase-orders/create/${proposalId}`);
-    
+
+            // Update the local state immediately
             setPurchaseOrders(prevOrders =>
                 prevOrders.map(order => {
                     if (order.proposalId === proposalId) {
                         return {
                             ...order,
-                            purchaseOrderNumber: response.data.purchaseOrderNumber,
+                            // purchaseOrderNumber: response.data.purchaseOrderNumber,
+                            purchaseOrderNumber: trackingNumber,
                             orderId: response.data.orderId, // Make sure to update orderId if needed
                             orderStatus: 'ORDERED', // Update order status
                             deliveryStatus: 'Not Started'
-                           
                         };
                     }
                     return order;
                 })
             );
-    
+
             setSnackbar({
                 open: true,
                 message: 'Purchase order created successfully',
@@ -198,19 +201,17 @@ const PurchaserDashboard = () => {
             });
         }
     };
-    
     const handleUpdateOrderStatus = async (orderId, newStatus) => {
         try {
             await axios.put(`/api/purchase-orders/${orderId}/order-status`, null, {
                 params: { newOrderStatus: newStatus }
             });
-    
             setSnackbar({
                 open: true,
                 message: 'Order status updated successfully',
                 severity: 'success'
             });
-            fetchPurchaseOrders(); // Refresh purchase orders after successful update
+            fetchPurchaseOrders();
         } catch (err) {
             console.error('Error updating order status:', err);
             setSnackbar({
@@ -220,7 +221,6 @@ const PurchaserDashboard = () => {
             });
         }
     };
-    
 
     const handleUpdateDeliveryStatus = async () => {
         try {
@@ -236,7 +236,8 @@ const PurchaserDashboard = () => {
             await axios.put(`/api/purchase-orders/${selectedOrder.orderId}/delivery-status`, null, {
                 params: {
                     newStatus: newDeliveryStatus,
-                    expectedDeliveryDate: expectedDeliveryDate
+                    expectedDeliveryDate: expectedDeliveryDate,
+                    purchaseOrderNumber: trackingNumber 
                 }
             });
             setSnackbar({
@@ -260,6 +261,7 @@ const PurchaserDashboard = () => {
         setSelectedOrder(order);
         setExpectedDeliveryDate(order.expectedDeliveryDate || '');
         setNewDeliveryStatus(order.deliveryStatus || '');
+        setTrackingNumber(order.purchaseOrderNumber !== 'Not Generated' ? order.purchaseOrderNumber : '');
         setOpenDialog(true);
     };
 
@@ -285,9 +287,30 @@ const PurchaserDashboard = () => {
     const formatDateForInput = (dateString) => {
         if (!dateString) return '';
         const date = new Date(dateString);
-        // Format: YYYY-MM-DDThh:mm
-        return date.toISOString().slice(0, 16);
+
+        // Convert to local timezone
+        const offset = date.getTimezoneOffset() * 60000; // Offset in milliseconds
+        const localTime = new Date(date - offset).toISOString().slice(0, 16);
+
+        return localTime;
     };
+
+    const handleExpectedDeliveryDateChange = (e) => {
+        const inputDate = new Date(e.target.value);
+        const currentDate = new Date();
+
+        // Ensure the input date is in the future
+        if (inputDate >= currentDate) {
+            setExpectedDeliveryDate(e.target.value);
+        } else {
+            setSnackbar({
+                open: true,
+                message: 'Expected delivery date must be in the future',
+                severity: 'error',
+            });
+        }
+    };
+
 
     return (
         <Box sx={{
@@ -355,6 +378,7 @@ const PurchaserDashboard = () => {
                         </MenuItem>
                     ))}
                 </TextField>
+
             </Box>
             <TableContainer component={Paper} sx={{ mb: 4, boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
                 <Table>
@@ -518,12 +542,24 @@ const PurchaserDashboard = () => {
                             label="Expected Delivery Date"
                             type="datetime-local"
                             value={formatDateForInput(expectedDeliveryDate)}
-                            onChange={(e) => setExpectedDeliveryDate(e.target.value)}
+                            onChange={handleExpectedDeliveryDateChange}
                             fullWidth
+                            InputProps={{
+                                inputProps: {
+                                    min: formatDateForInput(new Date()), // Use the current local time
+                                },
+                            }}
                             InputLabelProps={{
                                 shrink: true,
                             }}
                         />
+                        <TextField
+                            label="Tracking Number"
+                            value={trackingNumber}
+                            onChange={(e) => setTrackingNumber(e.target.value)}
+                            fullWidth
+                        />
+
                     </Box>
                 </DialogContent>
                 <DialogActions>
