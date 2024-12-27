@@ -467,10 +467,43 @@ const PurchaserDashboard = () => {
                                 {/* <TableCell>{item.description}</TableCell> */}
 
                                 {/* NEW: Show the requester's name */}
-                                <TableCell>{item.requesterName}</TableCell>
+                                {/* <TableCell>{item.requesterName}</TableCell> */}
+
+                                <TableCell>
+                                    {item.requesterName ? (
+                                        <a
+                                        href={`https://mail.google.com/mail/?view=cm&fs=1&to=${item.requesterName}&su=Hello%20Requester&body=Hi%20there!`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{ textDecoration: 'none', color: '#1a237e' }}
+                                        >
+                                            {item.requesterName}
+                                            {/* or item.requesterEmail if you just want to show the email address directly */}
+                                        </a>
+                                    ) : (
+                                        item.requesterName || '—'
+                                    )}
+                                </TableCell>
+
 
                                 {/* NEW: Show the approver's name */}
-                                <TableCell>{item.approverName}</TableCell>
+                                {/* <TableCell>{item.approverName}</TableCell> */}
+
+                                <TableCell>
+                                    {item.approverName ? (
+                                        <a
+                                            href={`https://mail.google.com/mail/?view=cm&fs=1&to=${item.approverName}&su=Hello%20Approver&body=Hi%20there!`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{ textDecoration: 'none', color: '#1a237e' }}
+                                        >
+                                            {item.approverName}
+                                        </a>
+                                    ) : (
+                                        item.approverName || '—'
+                                    )}
+                                </TableCell>
+
 
                                 <TableCell>
                                     <Box sx={{

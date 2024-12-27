@@ -302,6 +302,11 @@ const ProposalsList = () => {
                                 <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>
                                     Proposal Date
                                 </TableCell>
+                                <TableCell
+                                    sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}
+                                >
+                                    Approver
+                                </TableCell>
                                 <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>
                                     Order Status
                                 </TableCell>
@@ -336,18 +341,18 @@ const ProposalsList = () => {
                                                         proposal.status?.toLowerCase() === 'approved'
                                                             ? '#e8f5e9'
                                                             : proposal.status?.toLowerCase() === 'pending'
-                                                            ? '#fff3e0'
-                                                            : proposal.status?.toLowerCase() === 'rejected'
-                                                            ? '#ffebee'
-                                                            : '#f5f5f5',
+                                                                ? '#fff3e0'
+                                                                : proposal.status?.toLowerCase() === 'rejected'
+                                                                    ? '#ffebee'
+                                                                    : '#f5f5f5',
                                                     color:
                                                         proposal.status?.toLowerCase() === 'approved'
                                                             ? '#2e7d32'
                                                             : proposal.status?.toLowerCase() === 'pending'
-                                                            ? '#e65100'
-                                                            : proposal.status?.toLowerCase() === 'rejected'
-                                                            ? '#c62828'
-                                                            : '#333',
+                                                                ? '#e65100'
+                                                                : proposal.status?.toLowerCase() === 'rejected'
+                                                                    ? '#c62828'
+                                                                    : '#333',
                                                     padding: '8px',
                                                     borderRadius: 1,
                                                     textAlign: 'center',
@@ -361,6 +366,23 @@ const ProposalsList = () => {
                                                 ? formatDate(proposal.proposalDate)
                                                 : '—'}
                                         </TableCell>
+                                        {/* <TableCell align="center">
+                                            {proposal.approverName || '—'}
+                                        </TableCell> */}
+                                        <TableCell align="center">
+                                            {proposal.approverName ? (
+                                                <a
+                                                    href={`https://mail.google.com/mail/?view=cm&fs=1&to=${proposal.approverName}&su=Hello&body=Hi!`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    style={{ textDecoration: 'none', color: '#1a237e' }} // optional styling
+                                                >
+                                                    {proposal.approverName}
+                                                </a>
+                                            ) : (
+                                                '—'
+                                            )}
+                                        </TableCell>
 
                                         {/* ============ ORDER STATUS (Color-coded) ============ */}
                                         <TableCell align="center">
@@ -370,14 +392,14 @@ const ProposalsList = () => {
                                                         proposal.orderStatus?.toUpperCase() === 'ORDERED'
                                                             ? '#e8f5e9'
                                                             : proposal.orderStatus?.toUpperCase() === 'PENDING'
-                                                            ? '#fff3e0'
-                                                            : '#f5f5f5',
+                                                                ? '#fff3e0'
+                                                                : '#f5f5f5',
                                                     color:
                                                         proposal.orderStatus?.toUpperCase() === 'ORDERED'
                                                             ? '#2e7d32'
                                                             : proposal.orderStatus?.toUpperCase() === 'PENDING'
-                                                            ? '#e65100'
-                                                            : '#333',
+                                                                ? '#e65100'
+                                                                : '#333',
                                                     padding: '8px',
                                                     borderRadius: 1,
                                                     textAlign: 'center',
@@ -395,18 +417,18 @@ const ProposalsList = () => {
                                                         proposal.deliveryStatus === 'Delivered'
                                                             ? '#e8f5e9'
                                                             : proposal.deliveryStatus === 'Shipped'
-                                                            ? '#e3f2fd'
-                                                            : proposal.deliveryStatus === 'Processing'
-                                                            ? '#fffde7'
-                                                            : '#fff3e0',
+                                                                ? '#e3f2fd'
+                                                                : proposal.deliveryStatus === 'Processing'
+                                                                    ? '#fffde7'
+                                                                    : '#fff3e0',
                                                     color:
                                                         proposal.deliveryStatus === 'Delivered'
                                                             ? '#2e7d32'
                                                             : proposal.deliveryStatus === 'Shipped'
-                                                            ? '#1565c0'
-                                                            : proposal.deliveryStatus === 'Processing'
-                                                            ? '#f57f17'
-                                                            : '#e65100',
+                                                                ? '#1565c0'
+                                                                : proposal.deliveryStatus === 'Processing'
+                                                                    ? '#f57f17'
+                                                                    : '#e65100',
                                                     padding: '8px',
                                                     borderRadius: 1,
                                                     textAlign: 'center',
