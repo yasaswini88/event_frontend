@@ -216,7 +216,7 @@ const SingleProposalView = () => {
                                         }
                                     }}
                                 >
-                                    Edit Proposal
+                                    Review Proposal
                                 </Button>
                             )}
 

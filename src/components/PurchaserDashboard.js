@@ -112,6 +112,13 @@ const PurchaserDashboard = () => {
                     department: department?.deptName || 'Unknown Department',
                     quantity: proposal.quantity,
                     finalCost: proposal.estimatedCost,
+
+                    // Add these lines:
+                    description: proposal.description,            // from your new backend field
+                    requesterName: proposal.requesterName,        // from your new backend field
+                    approverName: proposal.approverName,
+
+
                     orderStatus: matchingOrder ? 'ORDERED' : 'PENDING',
                     deliveryStatus: matchingOrder?.deliveryStatus || 'Not Started',
                     expectedDeliveryDate: matchingOrder?.expectedDeliveryDate,
@@ -237,7 +244,7 @@ const PurchaserDashboard = () => {
                 params: {
                     newStatus: newDeliveryStatus,
                     expectedDeliveryDate: expectedDeliveryDate,
-                    purchaseOrderNumber: trackingNumber 
+                    purchaseOrderNumber: trackingNumber
                 }
             });
             setSnackbar({
@@ -414,6 +421,14 @@ const PurchaserDashboard = () => {
                             >
                                 Cost {sortConfig.key === 'finalCost' && (sortConfig.order === 'asc' ? '↑' : '↓')}
                             </TableCell>
+                            {/* NEW: Description column */}
+                            <TableCell sx={{ color: 'white' }}>Description</TableCell>
+
+                            {/* NEW: Requester */}
+                            <TableCell sx={{ color: 'white' }}>Requester</TableCell>
+
+                            {/* NEW: Approver */}
+                            <TableCell sx={{ color: 'white' }}>Approver</TableCell>
                             <TableCell sx={{ color: 'white' }}>Order Status</TableCell>
                             <TableCell sx={{ color: 'white' }}>Delivery Status</TableCell>
                             <TableCell sx={{ color: 'white' }}>Tracking Number</TableCell>
@@ -432,6 +447,16 @@ const PurchaserDashboard = () => {
                                 <TableCell>{item.department}</TableCell>
                                 <TableCell>{item.quantity}</TableCell>
                                 <TableCell>${item.finalCost.toFixed(2)}</TableCell>
+
+                                {/* NEW: Show description */}
+                                <TableCell>{item.description}</TableCell>
+
+                                {/* NEW: Show the requester's name */}
+                                <TableCell>{item.requesterName}</TableCell>
+
+                                {/* NEW: Show the approver's name */}
+                                <TableCell>{item.approverName}</TableCell>
+
                                 <TableCell>
                                     <Box sx={{
                                         backgroundColor: item.orderStatus === 'ORDERED' ? '#e8f5e9' : '#fff3e0',
