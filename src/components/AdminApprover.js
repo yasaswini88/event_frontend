@@ -294,8 +294,7 @@ const AdminApprover = () => {
         if (searchQuery) {
             filtered = filtered.filter(
                 (proposal) =>
-                    proposal.itemName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    proposal.description.toLowerCase().includes(searchQuery.toLowerCase())
+                    proposal.itemName.toLowerCase().includes(searchQuery.toLowerCase()) 
             );
         }
 

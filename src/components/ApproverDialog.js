@@ -97,34 +97,34 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
   // };
   const handleStatusUpdate = async (newStatus) => {
     try {
-        if (!fundingSourceId) {
-            console.error('Funding source is required');
-            return;
-        }
+      if (!fundingSourceId) {
+        console.error('Funding source is required');
+        return;
+      }
 
-        const user = JSON.parse(localStorage.getItem('user'));
-        const response = await axios.put(`/api/proposals/${proposalId}/status`, null, {
-            params: {
-                newStatus: newStatus,
-                approverId: user.userId,
-                fundingSourceId: fundingSourceId, // Include the funding source ID
-                comments: comment,
-            },
-        });
+      const user = JSON.parse(localStorage.getItem('user'));
+      const response = await axios.put(`/api/proposals/${proposalId}/status`, null, {
+        params: {
+          newStatus: newStatus,
+          approverId: user.userId,
+          fundingSourceId: fundingSourceId, // Include the funding source ID
+          comments: comment,
+        },
+      });
 
-        if (response.data) {
-            // Notify the parent component about the status update
-            if (onStatusUpdate) {
-                onStatusUpdate(response.data); // Send updated proposal data
-            }
-            fetchApprovalHistory();
-            setComment('');
-            setFundingSourceId(''); // Reset funding source
+      if (response.data) {
+        // Notify the parent component about the status update
+        if (onStatusUpdate) {
+          onStatusUpdate(response.data); // Send updated proposal data
         }
+        fetchApprovalHistory();
+        setComment('');
+        setFundingSourceId(''); // Reset funding source
+      }
     } catch (err) {
-        console.error('Error updating status:', err);
+      console.error('Error updating status:', err);
     }
-};
+  };
 
 
   const formatDateTime = (dateTime) => {
@@ -190,6 +190,11 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
                 <Typography variant="subtitle2" className="text-gray-600">Category</Typography>
                 <Typography variant="body1" className="font-medium">{proposal.category}</Typography>
               </Grid>
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" className="text-gray-600">Item Description</Typography>
+                <Typography variant="body1" className="font-medium">{proposal.description}</Typography>
+              </Grid>
+
               <Grid item xs={6}>
                 <Typography variant="subtitle2" className="text-gray-600">Quantity</Typography>
                 <Typography variant="body1" className="font-medium">{proposal.quantity}</Typography>
