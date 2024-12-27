@@ -29,6 +29,10 @@ import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { sortData } from '../utils/utilities';
+import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+
+
 
 const PurchaserDashboard = () => {
     const [purchaseOrders, setPurchaseOrders] = useState([]);
@@ -52,6 +56,9 @@ const PurchaserDashboard = () => {
     const orderStatusOptions = ['all', 'PENDING', 'ORDERED'];
     const deliveryStatusOptions = ['all', 'Not Started', 'Processing', 'Shipped', 'Delivered'];
     const [trackingNumber, setTrackingNumber] = useState('');
+
+    const navigate = useNavigate();
+
 
 
 
@@ -409,20 +416,20 @@ const PurchaserDashboard = () => {
                             >
                                 Department {sortConfig.key === 'department' && (sortConfig.order === 'asc' ? '↑' : '↓')}
                             </TableCell>
-                            <TableCell
+                            {/* <TableCell
                                 sx={{ color: 'white', cursor: 'pointer' }}
                                 onClick={() => handleSort('quantity')}
                             >
                                 Quantity {sortConfig.key === 'quantity' && (sortConfig.order === 'asc' ? '↑' : '↓')}
-                            </TableCell>
-                            <TableCell
+                            </TableCell> */}
+                            {/* <TableCell
                                 sx={{ color: 'white', cursor: 'pointer' }}
                                 onClick={() => handleSort('finalCost')}
                             >
                                 Cost {sortConfig.key === 'finalCost' && (sortConfig.order === 'asc' ? '↑' : '↓')}
-                            </TableCell>
+                            </TableCell> */}
                             {/* NEW: Description column */}
-                            <TableCell sx={{ color: 'white' }}>Description</TableCell>
+                            {/* <TableCell sx={{ color: 'white' }}>Description</TableCell> */}
 
                             {/* NEW: Requester */}
                             <TableCell sx={{ color: 'white' }}>Requester</TableCell>
@@ -443,13 +450,21 @@ const PurchaserDashboard = () => {
                             <TableRow key={item.proposalId} sx={{ backgroundColor: '#F7F6FE' }}>
                                 {/* Changed order to match header */}
                                 {/* <TableCell>{item.orderId || item.proposalId}</TableCell> */}
-                                <TableCell>{item.itemName}</TableCell>
+                                <TableCell>
+                                    <Link
+                                        to={`/proposal/${item.proposalId}`}
+                                        style={{ textDecoration: 'none', color: '#1a237e', cursor: 'pointer' }}
+                                    >
+                                        {item.itemName}
+                                    </Link>
+                                </TableCell>
+
                                 <TableCell>{item.department}</TableCell>
-                                <TableCell>{item.quantity}</TableCell>
-                                <TableCell>${item.finalCost.toFixed(2)}</TableCell>
+                                {/* <TableCell>{item.quantity}</TableCell>
+                                <TableCell>${item.finalCost.toFixed(2)}</TableCell> */}
 
                                 {/* NEW: Show description */}
-                                <TableCell>{item.description}</TableCell>
+                                {/* <TableCell>{item.description}</TableCell> */}
 
                                 {/* NEW: Show the requester's name */}
                                 <TableCell>{item.requesterName}</TableCell>
