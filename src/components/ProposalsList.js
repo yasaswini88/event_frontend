@@ -47,11 +47,38 @@ const ProposalsList = () => {
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const [sortConfig, setSortConfig] = useState({ key: 'proposalId', order: 'desc' });
     const [tabValue, setTabValue] = useState(0);
+    const [openHistoryDialog, setOpenHistoryDialog] = useState(false);
+    const [proposalHistory, setProposalHistory] = useState([]);
+    const [selectedProposalId, setSelectedProposalId] = useState(null);
+
 
     useEffect(() => {
         fetchProposals();
     }, []);
 
+    // const fetchProposals = async () => {
+    //     try {
+    //         const loggedUser = JSON.parse(localStorage.getItem('user'));
+    //         if (!loggedUser?.userId) {
+    //             setError('User not found');
+    //             return;
+    //         }
+
+    //         // Fetch proposals for the current user
+    //         const response = await axios.get(`/api/proposals/user/${loggedUser.userId}`);
+    //         setProposals(response.data);
+    //     } catch (err) {
+    //         console.error('Error fetching proposals:', err);
+    //         setError('Error fetching proposals');
+    //         setSnackbar({
+    //             open: true,
+    //             message: 'Error fetching proposals',
+    //             severity: 'error'
+    //         });
+    //     }
+    // };
+
+    // 1) In fetchProposals()
     const fetchProposals = async () => {
         try {
             const loggedUser = JSON.parse(localStorage.getItem('user'));
@@ -62,7 +89,28 @@ const ProposalsList = () => {
 
             // Fetch proposals for the current user
             const response = await axios.get(`/api/proposals/user/${loggedUser.userId}`);
-            setProposals(response.data);
+            const fetchedProposals = response.data;  // array of proposals
+
+            // For each proposal, check if there's any history
+            // (This will do an extra GET /history call per proposal)
+            const withHistoryPromises = fetchedProposals.map(async (proposal) => {
+                try {
+                    const histResp = await axios.get(`/api/proposals/${proposal.proposalId}/history`);
+                    // If length > 0, it means there's some history or comments
+                    proposal.hasHistory = (histResp.data.length > 0);
+                } catch (err) {
+                    console.error('Error checking history for proposal', proposal.proposalId, err);
+                    // If an error occurs, treat it as no history
+                    proposal.hasHistory = false;
+                }
+                return proposal;
+            });
+
+            // Wait for all the history checks to complete
+            const proposalsWithHistory = await Promise.all(withHistoryPromises);
+
+            // Now store them in state
+            setProposals(proposalsWithHistory);
         } catch (err) {
             console.error('Error fetching proposals:', err);
             setError('Error fetching proposals');
@@ -73,6 +121,7 @@ const ProposalsList = () => {
             });
         }
     };
+
 
     const handleOpenDialog = async (proposal = null) => {
         try {
@@ -166,6 +215,30 @@ const ProposalsList = () => {
                 return filtered;
         }
     };
+
+    const handleOpenHistoryDialog = async (proposalId) => {
+        try {
+            setSelectedProposalId(proposalId);
+            // Fetch approval history
+            const response = await axios.get(`/api/proposals/${proposalId}/history`);
+
+            // IMPORTANT: if you currently have code filtering out
+            // repeated oldStatus==newStatus, remove that if you want 
+            // to see "comment-only" entries (PENDING -> PENDING).
+
+            setProposalHistory(response.data);
+            setOpenHistoryDialog(true);
+
+        } catch (err) {
+            console.error('Error fetching approval history:', err);
+            setSnackbar({
+                open: true,
+                message: 'No comments found for this proposal',
+                severity: 'error',
+            });
+        }
+    };
+
 
     const sortedProposals = sortData(getFilteredProposals(), sortConfig.key, sortConfig.order);
 
@@ -457,6 +530,29 @@ const ProposalsList = () => {
                                                 >
                                                     <EditIcon />
                                                 </IconButton>
+                                                {/* <Button
+                                                    variant="outlined"
+                                                    onClick={() => handleOpenHistoryDialog(proposal.proposalId)}
+                                                >
+                                                    View Comments
+                                                </Button> */}
+
+                                                <Button
+                                                    variant="outlined"
+                                                    onClick={() => handleOpenHistoryDialog(proposal.proposalId)}
+                                                    sx={{
+                                                        backgroundColor: proposal.hasHistory ? '#386641' : '#85182a',
+                                                        color: '#fff',         // so text is visible on both green/red
+                                                        borderColor: 'transparent',
+                                                        '&:hover': {
+                                                            backgroundColor: proposal.hasHistory ? '#95d5b2' : '#f7a399'
+                                                        }
+                                                    }}
+                                                >
+                                                    View Comments
+                                                </Button>
+
+
                                             </Box>
                                         </TableCell>
                                     </TableRow>
@@ -536,6 +632,48 @@ const ProposalsList = () => {
                     </Alert>
                 </Snackbar>
             </Box>
+            <Dialog
+                open={openHistoryDialog}
+                onClose={() => setOpenHistoryDialog(false)}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>Proposal History (Comments)</DialogTitle>
+                <DialogContent>
+                    {proposalHistory.length === 0 ? (
+                        <Typography>No history found.</Typography>
+                    ) : (
+                        proposalHistory.map((entry, index) => (
+                            <Box
+                                key={index}
+                                sx={{
+                                    mb: 2,
+                                    p: 2,
+                                    border: '1px solid #eee',
+                                    borderRadius: 1
+                                }}
+                            >
+                                <Typography variant="body2">
+                                    <strong>Old Status:</strong> {entry.oldStatus} &nbsp;
+                                    <strong>New Status:</strong> {entry.newStatus}
+                                </Typography>
+                                {entry.comments && (
+                                    <Typography variant="body2" sx={{ mt: 1 }}>
+                                        <strong>Comment:</strong> {entry.comments}
+                                    </Typography>
+                                )}
+
+                            </Box>
+                        ))
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenHistoryDialog(false)} variant="outlined">
+                        Close
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
         </Box>
     );
 };

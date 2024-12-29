@@ -68,33 +68,7 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
     }
   };
 
-  // const handleStatusUpdate = async (newStatus) => {
-  //   try {
-  //     if (!fundingSourceId) {
-  //       console.error('Funding source is required');
-  //       return;
-  //     }
 
-  //     const user = JSON.parse(localStorage.getItem('user'));
-  //     const response = await axios.put(`/api/proposals/${proposalId}/status`, null, {
-  //       params: {
-  //         newStatus: newStatus,
-  //         approverId: user.userId,
-  //         fundingSourceId: fundingSourceId, // Include the funding source ID
-  //         comments: comment
-  //       }
-  //     });
-
-  //     if (response.data) {
-  //       onStatusUpdate(response.data);
-  //       fetchApprovalHistory();
-  //       setComment('');
-  //       setFundingSourceId(''); // Reset funding source
-  //     }
-  //   } catch (err) {
-  //     console.error('Error updating status:', err);
-  //   }
-  // };
   const handleStatusUpdate = async (newStatus) => {
     try {
       if (!fundingSourceId) {
@@ -126,6 +100,42 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
     }
   };
 
+  const handleAddComment = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+  
+      // Prepare request parameters
+      const params = {
+        approverId: user.userId,
+        comments: comment, // Add comment
+      };
+  
+      // Include funding source only if selected
+      if (fundingSourceId) {
+        params.fundingSourceId = fundingSourceId;
+      }
+  
+      // Send comment request
+      await axios.put(`/api/proposals/${proposalId}/comment`, null, {
+        params,
+      });
+  
+      // Optionally refetch the proposal to update the history
+      await fetchApprovalHistory();
+  
+      // Clear out comment box and funding source
+      setComment('');
+      setFundingSourceId('');
+  
+      // Close the dialog
+      onClose();
+    } catch (err) {
+      console.error('Error adding comment:', err);
+    }
+  };
+  
+
+
 
   const formatDateTime = (dateTime) => {
     return new Date(dateTime).toLocaleDateString(); // Returns only the date in 'MM/DD/YYYY' format
@@ -152,6 +162,14 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
           >
             Reject
           </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => handleAddComment()}
+          >
+            Send Comment
+          </Button>
+
         </>
       );
     }
