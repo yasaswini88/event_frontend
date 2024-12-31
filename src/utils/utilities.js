@@ -4,17 +4,6 @@ export const formatDate = (dateString, format='MM/DD/YYYY') => {
     return dayjs(dateString).format(format);
 };
 
-// Common sorting function
-// export const sortData = (data, key, order = 'asc') => {
-//     return [...data].sort((a, b) => {
-//         const valueA = a[key];
-//         const valueB = b[key];
-
-//         if (valueA < valueB) return order === 'asc' ? -1 : 1;
-//         if (valueA > valueB) return order === 'asc' ? 1 : -1;
-//         return 0; // Equal values
-//     });
-// };
 
 export const sortData = (data, key, order = 'asc') => {
     return [...data].sort((a, b) => {

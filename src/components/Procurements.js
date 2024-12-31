@@ -42,7 +42,7 @@ const Procurements = () => {
     const [selectedProposal, setSelectedProposal] = useState(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [proposalToDelete, setProposalToDelete] = useState(null);
-    const [sortConfig, setSortConfig] = useState({ key: 'proposalId', order: 'asc' });
+    const [sortConfig, setSortConfig] = useState({ key: 'proposalId', order: 'desc' });
 
     const [tabValue, setTabValue] = useState(0);
 
@@ -312,9 +312,9 @@ const Procurements = () => {
                                                 <IconButton color="primary" onClick={() => handleEdit(proposal)}>
                                                     <EditIcon />
                                                 </IconButton>
-                                                <IconButton color="error" onClick={() => handleDelete(proposal.proposalId)}>
+                                                {/* <IconButton color="error" onClick={() => handleDelete(proposal.proposalId)}>
                                                     <DeleteIcon />
-                                                </IconButton>
+                                                </IconButton> */}
                                             </Box>
                                         </TableCell>
                                     </TableRow>

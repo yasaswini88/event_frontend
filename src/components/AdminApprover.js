@@ -172,7 +172,7 @@ const AdminApprover = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
-   
+
 
 
     // Edit Dialog States
@@ -185,14 +185,14 @@ const AdminApprover = () => {
     const [viewDialogOpen, setViewDialogOpen] = useState(false);
     const [selectedProposalId, setSelectedProposalId] = useState(null);
     const [status, setStatus] = useState(null);
-    const [sortConfig, setSortConfig] = useState({ key: 'proposalId', order: 'asc' });
+    const [sortConfig, setSortConfig] = useState({ key: 'proposalId', order: 'desc' });
     const handleSort = (key) => {
         setSortConfig((prevConfig) => ({
             key,
             order: prevConfig.key === key && prevConfig.order === 'asc' ? 'desc' : 'asc',
         }));
     };
-    
+
 
     const handleViewProposal = (proposalId) => {
         setSelectedProposalId(proposalId);
@@ -294,14 +294,13 @@ const AdminApprover = () => {
         if (searchQuery) {
             filtered = filtered.filter(
                 (proposal) =>
-                    proposal.itemName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    proposal.description.toLowerCase().includes(searchQuery.toLowerCase())
+                    proposal.itemName.toLowerCase().includes(searchQuery.toLowerCase()) 
             );
         }
 
         switch (tabValue) {
             case 1:
-                return filtered.filter((proposal) => proposal.status.toLowerCase() === 'PENDING'.toLowerCase()); 
+                return filtered.filter((proposal) => proposal.status.toLowerCase() === 'PENDING'.toLowerCase());
             case 2:
                 return filtered.filter((proposal) => proposal.status === 'APPROVED');
             case 3:
@@ -328,7 +327,7 @@ const AdminApprover = () => {
         }).format(amount);
     };
 
-    console.log({viewDialogOpen});
+    console.log({ viewDialogOpen });
 
     return (
         <Container maxWidth="xl">
@@ -352,20 +351,20 @@ const AdminApprover = () => {
                     sx={{ mb: 3 }}
                 />
 
-               <Tabs
-                         value={tabValue}
-                         onChange={handleTabChange}
-                         sx={{
-                           mb: 3,
-                           borderBottom: '1px solid #e0e0e0',
-                         }}
-                         TabIndicatorProps={{
-                           sx: { backgroundColor: '#1a237e' }, // Set the indicator color
-                         }}
-                         variant={isMobile ? 'scrollable' : 'fullWidth'} // Make tabs scrollable on mobile
-                         scrollButtons={isMobile ? 'auto' : false} // Show scroll buttons only on mobile
-                         allowScrollButtonsMobile
-                       >
+                <Tabs
+                    value={tabValue}
+                    onChange={handleTabChange}
+                    sx={{
+                        mb: 3,
+                        borderBottom: '1px solid #e0e0e0',
+                    }}
+                    TabIndicatorProps={{
+                        sx: { backgroundColor: '#1a237e' }, // Set the indicator color
+                    }}
+                    variant={isMobile ? 'scrollable' : 'fullWidth'} // Make tabs scrollable on mobile
+                    scrollButtons={isMobile ? 'auto' : false} // Show scroll buttons only on mobile
+                    allowScrollButtonsMobile
+                >
                     <Tab label={`All(${proposals.length})`} />
                     <Tab label={`Pending(${proposals.filter((p) => p.status.toLowerCase() === 'PENDING'.toLowerCase()).length})`} />
                     <Tab label={`Approved(${proposals.filter((p) => p.status === 'APPROVED').length})`} />
@@ -373,93 +372,102 @@ const AdminApprover = () => {
                 </Tabs>
 
                 <TableContainer component={Paper}
-                sx={{
-                    mb: 4,
-                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-                    overflowX: isMobile ? 'auto' : 'visible', // Enable horizontal scrolling on mobile
-                }}>
+                    sx={{
+                        mb: 4,
+                        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                        overflowX: isMobile ? 'auto' : 'visible', // Enable horizontal scrolling on mobile
+                    }}>
                     <Table>
-                    <TableHead>
-    <TableRow sx={{ backgroundColor: '#1a237e' }}>
-        <TableCell
-            onClick={() => handleSort('proposalId')}
-            sx={{ color: 'white', cursor: 'pointer' }}
-        >
-            ID {sortConfig.key === 'proposalId' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
-        </TableCell>
-        <TableCell
-            onClick={() => handleSort('proposalDate')}
-            sx={{ color: 'white', cursor: 'pointer' }}
-        >
-            Date {sortConfig.key === 'proposalDate' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
-        </TableCell>
-        <TableCell sx={{ color: 'white' }}>Requester</TableCell>
-        <TableCell
-            onClick={() => handleSort('itemName')}
-            sx={{ color: 'white', cursor: 'pointer' }}
-        >
-            Item {sortConfig.key === 'itemName' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
-        </TableCell>
-        <TableCell
-            onClick={() => handleSort('category')}
-            sx={{ color: 'white', cursor: 'pointer' }}
-        >
-            Category {sortConfig.key === 'category' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
-        </TableCell>
-        <TableCell sx={{ color: 'white' }}>Department</TableCell>
-        <TableCell
-            onClick={() => handleSort('estimatedCost')}
-            sx={{ color: 'white', cursor: 'pointer' }}
-        >
-            Cost {sortConfig.key === 'estimatedCost' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
-        </TableCell>
-        <TableCell sx={{ color: 'white' }}>Status</TableCell>
-        <TableCell sx={{ color: 'white' }}>Actions</TableCell>
-    </TableRow>
-</TableHead>
+                        <TableHead>
+                            <TableRow sx={{ backgroundColor: '#1a237e' }}>
+                                <TableCell
+                                    onClick={() => handleSort('proposalId')}
+                                    sx={{ color: 'white', cursor: 'pointer' }}
+                                >
+                                    ID {sortConfig.key === 'proposalId' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                </TableCell>
+                                <TableCell
+                                    onClick={() => handleSort('proposalDate')}
+                                    sx={{ color: 'white', cursor: 'pointer' }}
+                                >
+                                    Date {sortConfig.key === 'proposalDate' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                </TableCell>
+                                <TableCell sx={{ color: 'white' }}>Requester</TableCell>
+                                <TableCell sx={{ color: 'white' }}>Approver</TableCell>
 
-<TableBody>
-    {sortedProposals
-        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-        .map((proposal) => (
-            <TableRow key={proposal.proposalId} sx={{ backgroundColor: '#F7F6FE' }}>
-                <TableCell>{proposal.proposalId}</TableCell>
-                <TableCell>{formatDate(proposal.proposalDate)}</TableCell>
-                <TableCell>
-                    {users.find(u => u.userId === proposal.userId)?.firstName || 'Unknown'}
-                </TableCell>
-                <TableCell>{proposal.itemName}</TableCell>
-                <TableCell>{proposal.category}</TableCell>
-                <TableCell>
-                    {departments.find(d => d.deptId === proposal.departmentId)?.deptName || 'Unknown'}
-                </TableCell>
-                <TableCell>{formatCurrency(proposal.estimatedCost)}</TableCell>
-                <TableCell>
-                    <StyledChip
-                        label={proposal.status.toLowerCase()}
-                        status={proposal.status.toUpperCase()}
-                        size="small"
-                    />
-                </TableCell>
-                <TableCell>
-                    <IconButton
-                        size="small"
-                        color="primary"
-                        onClick={() => handleViewProposal(proposal.proposalId)}
-                    >
-                        <VisibilityIcon />
-                    </IconButton>
-                    <IconButton
+                                <TableCell
+                                    onClick={() => handleSort('itemName')}
+                                    sx={{ color: 'white', cursor: 'pointer' }}
+                                >
+                                    Item {sortConfig.key === 'itemName' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                </TableCell>
+                                <TableCell
+                                    onClick={() => handleSort('category')}
+                                    sx={{ color: 'white', cursor: 'pointer' }}
+                                >
+                                    Category {sortConfig.key === 'category' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                </TableCell>
+                                <TableCell sx={{ color: 'white' }}>Department</TableCell>
+                                <TableCell
+                                    onClick={() => handleSort('estimatedCost')}
+                                    sx={{ color: 'white', cursor: 'pointer' }}
+                                >
+                                    Cost {sortConfig.key === 'estimatedCost' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                                </TableCell>
+                                <TableCell sx={{ color: 'white' }}>Status</TableCell>
+                                <TableCell sx={{ color: 'white' }}>Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+
+                        <TableBody>
+                            {sortedProposals
+                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                .map((proposal) => (
+                                    <TableRow key={proposal.proposalId} sx={{ backgroundColor: '#F7F6FE' }}>
+                                        <TableCell>{proposal.proposalId}</TableCell>
+                                        <TableCell>{formatDate(proposal.proposalDate)}</TableCell>
+                                        <TableCell>
+                                            {users.find(u => u.userId === proposal.userId)?.firstName || 'Unknown'}
+                                        </TableCell>
+                                        <TableCell>
+                                            {
+                                                users.find((u) => u.userId === proposal.currentApproverId)
+                                                    ?.firstName || 'N/A'
+                                            }
+                                        </TableCell>
+
+                                        <TableCell>{proposal.itemName}</TableCell>
+                                        <TableCell>{proposal.category}</TableCell>
+                                        <TableCell>
+                                            {departments.find(d => d.deptId === proposal.departmentId)?.deptName || 'Unknown'}
+                                        </TableCell>
+                                        <TableCell>{formatCurrency(proposal.estimatedCost)}</TableCell>
+                                        <TableCell>
+                                            <StyledChip
+                                                label={proposal.status.toLowerCase()}
+                                                status={proposal.status.toUpperCase()}
+                                                size="small"
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <IconButton
+                                                size="small"
+                                                color="primary"
+                                                onClick={() => handleViewProposal(proposal.proposalId)}
+                                            >
+                                                <VisibilityIcon />
+                                            </IconButton>
+                                            {/* <IconButton
                         size="small"
                         color="error"
                         onClick={() => handleDeleteProposal(proposal.proposalId)}
                     >
                         <DeleteIcon />
-                    </IconButton>
-                </TableCell>
-            </TableRow>
-        ))}
-</TableBody>
+                    </IconButton> */}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                        </TableBody>
 
                     </Table>
                     <TablePagination
@@ -479,10 +487,10 @@ const AdminApprover = () => {
                 {/* Edit Dialog */}
                 <AdminApproverDialog
                     open={viewDialogOpen}
-                    
+
                     onClose={() => setViewDialogOpen(false)}
                     proposalId={selectedProposalId}
-                    fullScreen={isMobile} 
+                    fullScreen={isMobile}
                     onStatusUpdate={(updatedProposal) => {
                         fetchProposals();
                         setViewDialogOpen(false);

@@ -51,11 +51,11 @@ const StyledChip = styled(Chip)(({ theme, status }) => ({
 
 const ApproverDashboard = () => {
   const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [proposals, setProposals] = useState([]);
   const [users, setUsers] = useState([]);
   const [departments, setDepartments] = useState([]);
-  const [tabValue, setTabValue] = useState(0);
+  const [tabValue, setTabValue] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   // New state variables for dialog
   const [selectedProposalId, setSelectedProposalId] = useState(null);
@@ -64,7 +64,7 @@ const ApproverDashboard = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filteredProposals, setFilteredProposals] = useState([]);
   const [pagination, setPagination] = useState({ currentPage: 1, itemsPerPage: 6, totalItems: 0 });
-  const [sortConfig, setSortConfig] = useState({ key: 'proposalDate', order: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'proposalDate', order: 'desc' });
 
 
 
@@ -73,6 +73,10 @@ const ApproverDashboard = () => {
     fetchUsers();
     fetchDepartments();
   }, []);
+
+  useEffect(() => {
+    filterProposals('pending'); // Filter proposals for the "Pending" status initially
+  }, [proposals]);
 
   const fetchProposals = async () => {
     try {
@@ -184,33 +188,50 @@ const ApproverDashboard = () => {
     return department ? department.deptName : 'Unknown';
   };
 
+  const getUserEmailById = (userId) => {
+    const user = users.find(u => u.userId === userId);
+    return user ? user.email : 'unknown@email.com';
+  };
+  
+
   const getFilteredProposals = () => {
     let filtered = proposals;
 
     if (searchQuery) {
       filtered = filtered.filter(
         (proposal) =>
-          proposal.itemName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          proposal.description.toLowerCase().includes(searchQuery.toLowerCase())
+          proposal.itemName.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
+   
     switch (tabValue) {
       case 1: // Pending
-          return filtered.filter((proposal) => proposal.status.toLowerCase() === 'pending');
+        return filtered.filter((proposal) => proposal.status.toLowerCase() === 'pending');
       case 2: // Approved
-          return filtered.filter((proposal) => proposal.status.toLowerCase() === 'approved');
+        return filtered.filter((proposal) => proposal.status.toLowerCase() === 'approved');
       case 3: // Rejected
-          return filtered.filter((proposal) => proposal.status.toLowerCase() === 'rejected');
+        return filtered.filter((proposal) => proposal.status.toLowerCase() === 'rejected');
       default: // All
-          return filtered;
-  }
+        return filtered;
+    }
   };
 
   // const handleTabChange = (event, newValue) => {
   //   setTabValue(newValue);
   // };
+  // const sortedProposals = sortData(getFilteredProposals(), sortConfig.key, sortConfig.order);
   const sortedProposals = sortData(getFilteredProposals(), sortConfig.key, sortConfig.order);
+
+  const updateProposalStatus = (proposalId, newStatus) => {
+    setProposals((prevProposals) =>
+      prevProposals.map((proposal) =>
+        proposal.proposalId === proposalId ? { ...proposal, status: newStatus } : proposal
+      )
+    );
+  };
+
+
 
 
   const handlePageChange = (page) => {
@@ -219,25 +240,37 @@ const ApproverDashboard = () => {
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
-    const status = newValue === 0 ? 'ALL' : 
-                  newValue === 1 ? 'pending' : 
-                  newValue === 2 ? 'approved' : 
-                  'rejected';
+    const status = newValue === 0 ? 'ALL' :
+      newValue === 1 ? 'pending' :
+        newValue === 2 ? 'approved' :
+          'rejected';
     filterProposals(status);
-};
+  };
 
 
+
+  //   const filterProposals = (status) => {
+  //     let filtered = proposals;
+  //     if (status !== 'ALL') {
+  //         filtered = filtered.filter((proposal) => 
+  //             proposal.status.toLowerCase() === status.toLowerCase()
+  //         );
+  //     }
+  //     setFilteredProposals(filtered);
+  //     setPagination({ ...pagination, currentPage: 1, totalItems: filtered.length });
+  // };
 
   const filterProposals = (status) => {
     let filtered = proposals;
     if (status !== 'ALL') {
-        filtered = filtered.filter((proposal) => 
-            proposal.status.toLowerCase() === status.toLowerCase()
-        );
+      filtered = filtered.filter((proposal) =>
+        proposal.status.toLowerCase() === status.toLowerCase()
+      );
     }
     setFilteredProposals(filtered);
     setPagination({ ...pagination, currentPage: 1, totalItems: filtered.length });
-};
+  };
+
 
   const formatDate = (dateString) => {
     return new Date(dateString).toISOString().split('T')[0];
@@ -281,10 +314,10 @@ const ApproverDashboard = () => {
           scrollButtons={isMobile ? 'auto' : false} // Show scroll buttons only on mobile
           allowScrollButtonsMobile
         >
-           <Tab label={`All (${proposals.length})`} />
-    <Tab label={`Pending (${proposals.filter((p) => p.status.toLowerCase() === 'pending').length})`} />
-    <Tab label={`Approved (${proposals.filter((p) => p.status.toLowerCase() === 'approved').length})`} />
-    <Tab label={`Rejected (${proposals.filter((p) => p.status.toLowerCase() === 'rejected').length})`} />
+          <Tab label={`All (${proposals.length})`} />
+          <Tab label={`Pending (${proposals.filter((p) => p.status.toLowerCase() === 'pending').length})`} />
+          <Tab label={`Approved (${proposals.filter((p) => p.status.toLowerCase() === 'approved').length})`} />
+          <Tab label={`Rejected (${proposals.filter((p) => p.status.toLowerCase() === 'rejected').length})`} />
         </Tabs>
 
         <TableContainer component={Paper}>
@@ -333,33 +366,46 @@ const ApproverDashboard = () => {
                 <TableRow key={proposal.proposalId} sx={{ backgroundColor: '#F7F6FE' }}>
                   <TableCell>{formatDate(proposal.proposalDate)}</TableCell>
                   <TableCell>{proposal.category}</TableCell>
-                  <TableCell>{getUserNameById(proposal.userId)}</TableCell>
+                  {/* <TableCell>{getUserNameById(proposal.userId)}</TableCell> */}
+                  <TableCell>
+                    {proposal.userId ? (
+                      <a
+                        href={`https://mail.google.com/mail/?view=cm&fs=1&to=${getUserEmailById(proposal.userId)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ textDecoration: 'none', color: '#1a237e' }}
+                      >
+                        {getUserEmailById(proposal.userId)}
+                      </a>
+                    ) : '—'}
+                  </TableCell>
+
                   <TableCell>{proposal.itemName}</TableCell>
                   <TableCell>{proposal.quantity}</TableCell>
                   <TableCell>{formatCurrency(proposal.estimatedCost)}</TableCell>
                   <TableCell>{getDepartmentNameById(proposal.departmentId)}</TableCell>
                   <TableCell>
-                  <StyledChip
-    label={proposal.status.toLowerCase()}
-    status={proposal.status.toUpperCase()}
-    size="small"
-/>
+                    <StyledChip
+                      label={proposal.status.toLowerCase()}
+                      status={proposal.status.toUpperCase()}
+                      size="small"
+                    />
                   </TableCell>
                   <TableCell>
-    <IconButton size="small" sx={{ color: 'blue' }} onClick={() => handleViewProposal(proposal.proposalId)}>
-        <VisibilityIcon />
-    </IconButton>
-    {proposal.status.toLowerCase() === 'pending' && (
-        <>
-            <IconButton size="small" sx={{ color: 'red' }} onClick={() => handleDirectReject(proposal.proposalId)}>
-                
-            </IconButton>
-            <IconButton size="small" sx={{ color: 'green' }} onClick={() => handleDirectApprove(proposal.proposalId)}>
-              
-            </IconButton>
-        </>
-    )}
-</TableCell>
+                    <IconButton size="small" sx={{ color: 'blue' }} onClick={() => handleViewProposal(proposal.proposalId)}>
+                      <VisibilityIcon />
+                    </IconButton>
+                    {proposal.status.toLowerCase() === 'pending' && (
+                      <>
+                        <IconButton size="small" sx={{ color: 'red' }} onClick={() => handleDirectReject(proposal.proposalId)}>
+
+                        </IconButton>
+                        <IconButton size="small" sx={{ color: 'green' }} onClick={() => handleDirectApprove(proposal.proposalId)}>
+
+                        </IconButton>
+                      </>
+                    )}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -378,7 +424,7 @@ const ApproverDashboard = () => {
       </Box>
 
       {/* Dialog Component */}
-      <ApproverDialog
+      {/* <ApproverDialog
         open={dialogOpen}
         onClose={handleDialogClose}
         proposalId={selectedProposalId}
@@ -388,7 +434,19 @@ const ApproverDashboard = () => {
           ));
           handleDialogClose();
         }}
+      /> */}
+      <ApproverDialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        proposalId={selectedProposalId}
+        onStatusUpdate={(updatedProposal) => {
+          updateProposalStatus(updatedProposal.proposalId, updatedProposal.status);
+          handleDialogClose();
+        }}
+        currentStatus={proposals.find((p) => p.proposalId === selectedProposalId)?.status}
       />
+
+
     </Container>
   );
 };
