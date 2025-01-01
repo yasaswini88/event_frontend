@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
+
 import {
     Box,
     Paper,
@@ -64,7 +65,7 @@ const Procurements = () => {
 
     const fetchProcurements = async () => {
         try {
-            const response = await axios.get('/api/proposals');
+            const response = await api.get('/api/proposals');
             setProcurements(response.data);
         } catch (err) {
             console.error('Error fetching procurements:', err);
@@ -103,7 +104,7 @@ const Procurements = () => {
 
     const handleEditSave = async () => {
         try {
-            await axios.put(`/api/proposals/${selectedProposal.proposalId}`, selectedProposal);
+            await api.put(`/api/proposals/${selectedProposal.proposalId}`, selectedProposal);
             handleSnackbar('Proposal updated successfully', 'success');
             fetchProcurements();
             handleEditClose();
@@ -120,7 +121,7 @@ const Procurements = () => {
 
     const handleDeleteConfirm = async () => {
         try {
-            await axios.delete(`/api/proposals/${proposalToDelete}`);
+            await api.delete(`/api/proposals/${proposalToDelete}`);
             handleSnackbar('Proposal deleted successfully', 'success');
             fetchProcurements();
             setDeleteDialogOpen(false);

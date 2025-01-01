@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import axios from 'axios';
+import api from '../utils/api';
+
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import useEffect from 'react';
 import {
@@ -45,7 +46,7 @@ const Login = () => {
       const credential = response.credential;
 
       // Call the backend API
-      const backendResponse = await axios.post('/api/google-login', {
+      const backendResponse = await api.post('/api/google-login', {
         credential: credential,
       });
 
@@ -108,7 +109,7 @@ const Login = () => {
     dispatch(loginStart());
 
     try {
-      const response = await axios.post('/api/login', { email, password });
+      const response = await api.post('/api/login', { email, password });
 
       if (response.data) {
         const { token, user } = response.data;

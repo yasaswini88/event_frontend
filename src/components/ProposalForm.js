@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
+
 import {
     AppBar,
     Toolbar,
@@ -75,12 +76,12 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
         const fetchData = async () => {
             try {
                 // Fetch approvers
-                const usersResponse = await axios.get('/api/users');
+                const usersResponse = await api.get('/api/users');
                 const approversList = usersResponse.data.filter(user => user.roles?.roleId === 3);
                 setApprovers(approversList);
 
                 // Fetch departments
-                const departmentsResponse = await axios.get('/api/departments');
+                const departmentsResponse = await api.get('/api/departments');
                 setDepartments(departmentsResponse.data);
             } catch (error) {
                 console.error('Error fetching approvers or departments:', error);
@@ -115,7 +116,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
 
     const fetchUsers = async () => {
         try {
-            const response = await axios.get('/api/users');
+            const response = await api.get('/api/users');
             setUsers(response.data);
         } catch (error) {
             console.error('Error fetching users:', error);
@@ -130,7 +131,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
 
     const fetchExistingProposal = async () => {
         try {
-            const response = await axios.get(`/api/proposals/${proposalId}`);
+            const response = await api.get(`/api/proposals/${proposalId}`);
             if (response.data) {
                 setFormData({
                     ...response.data,
@@ -159,7 +160,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
 
     const fetchApprovers = async () => {
         try {
-            const response = await axios.get('/api/users');
+            const response = await api.get('/api/users');
             const approversList = response.data.filter(user => user.roles.roleName === 'Approver');
             setApprovers(approversList);
         } catch (err) {
@@ -174,7 +175,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
 
     const fetchDepartments = async () => {
         try {
-            const response = await axios.get('/api/departments');
+            const response = await api.get('/api/departments');
             setDepartments(response.data);
         } catch (err) {
             console.error('Error fetching departments:', err);
@@ -188,7 +189,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
 
     const fetchLoggedInUser = async () => {
         try {
-            const response = await axios.get('/api/loggedinuser');
+            const response = await api.get('/api/loggedinuser');
             setLoggedInUser(response.data.username); // Assuming the API returns an object with a username field
         } catch (err) {
             console.error('Error fetching logged-in user:', err);
@@ -314,14 +315,14 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
 
     //         let response;
     //         if (proposalPayload.proposalId) {
-    //             response = await axios.put(`/api/proposals/${proposalPayload.proposalId}`, proposalPayload);
+    //             response = await api.put(`/api/proposals/${proposalPayload.proposalId}`, proposalPayload);
     //             setSnackbar({
     //                 open: true,
     //                 message: 'Proposal updated successfully!',
     //                 severity: 'success',
     //             });
     //         } else {
-    //             response = await axios.post('/api/proposals', proposalPayload);
+    //             response = await api.post('/api/proposals', proposalPayload);
     //             setSnackbar({
     //                 open: true,
     //                 message: 'Proposal submitted successfully!',
@@ -397,14 +398,14 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
     
             let response;
             if (proposalPayload.proposalId) {
-                response = await axios.put(`/api/proposals/${proposalPayload.proposalId}`, proposalPayload);
+                response = await api.put(`/api/proposals/${proposalPayload.proposalId}`, proposalPayload);
                 setSnackbar({
                     open: true,
                     message: 'Proposal updated successfully!',
                     severity: 'success',
                 });
             } else {
-                response = await axios.post('/api/proposals', proposalPayload);
+                response = await api.post('/api/proposals', proposalPayload);
                 setSnackbar({
                     open: true,
                     message: 'Proposal submitted successfully!',

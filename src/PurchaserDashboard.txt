@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
+
 import {
     Box,
     Paper,
@@ -45,7 +46,8 @@ const PurchaserDashboard = () => {
 
     const fetchPurchaseOrders = async () => {
         try {
-            const response = await axios.get('/api/purchase-orders');
+            const response = await api.
+get('/api/purchase-orders');
             setPurchaseOrders(response.data);
         } catch (err) {
             console.error('Error fetching purchase orders:', err);
@@ -60,7 +62,8 @@ const PurchaserDashboard = () => {
 
     const handleCreatePurchaseOrder = async (proposalId) => {
         try {
-            const response = await axios.post(`/api/purchase-orders/create/${proposalId}`);
+            const response = await api.
+post(`/api/purchase-orders/create/${proposalId}`);
             setSnackbar({
                 open: true,
                 message: 'Purchase order created successfully',
@@ -79,7 +82,8 @@ const PurchaserDashboard = () => {
 
     const handleUpdateOrderStatus = async (orderId, newStatus) => {
         try {
-            await axios.put(`/api/purchase-orders/${orderId}/order-status`, null, {
+            await api.
+put(`/api/purchase-orders/${orderId}/order-status`, null, {
                 params: { newOrderStatus: newStatus }
             });
             setSnackbar({
@@ -109,7 +113,8 @@ const PurchaserDashboard = () => {
                 return;
             }
     
-            await axios.put(`/api/purchase-orders/${selectedOrder.orderId}/delivery-status`, null, {
+            await api.
+put(`/api/purchase-orders/${selectedOrder.orderId}/delivery-status`, null, {
                 params: {
                     newStatus: newDeliveryStatus,
                     expectedDeliveryDate: expectedDeliveryDate

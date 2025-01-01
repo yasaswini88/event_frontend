@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
+
 import {
   Box,
   Paper,
@@ -82,7 +83,7 @@ const ApproverDashboard = () => {
     try {
       const user = JSON.parse(localStorage.getItem('user'));
       if (user && user.userId) {
-        const response = await axios.get(`/api/proposals/approver/${user.userId}`);
+        const response = await api.get(`/api/proposals/approver/${user.userId}`);
         setProposals(response.data);
       } else {
         console.error('User not found in local storage');
@@ -105,7 +106,7 @@ const ApproverDashboard = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('/api/users');
+      const response = await api.get('/api/users');
       setUsers(response.data);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -114,7 +115,7 @@ const ApproverDashboard = () => {
 
   const fetchDepartments = async () => {
     try {
-      const response = await axios.get('/api/departments');
+      const response = await api.get('/api/departments');
       setDepartments(response.data);
     } catch (error) {
       console.error('Error fetching departments:', error);
@@ -144,7 +145,7 @@ const ApproverDashboard = () => {
   const handleStatusUpdate = async (proposalId, newStatus, comments) => {
     try {
       const user = JSON.parse(localStorage.getItem('user'));
-      const response = await axios.put(
+      const response = await api.put(
         `/api/proposals/${proposalId}/status`,
         null,
         {

@@ -15,7 +15,8 @@ import {
   Typography
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
-import axios from 'axios';
+import api from '../utils/api';
+
 
 /**
  * UserEditDialog
@@ -102,7 +103,8 @@ const UserEditDialog = ({ open, onClose, user, onUpdateSuccess, roles = [] }) =>
     setLoading(true);
     try {
       // Send a PUT request to update user
-      const response = await axios.put(`/api/users/${user.userId}`, formData);
+      const response = await api.
+put(`/api/users/${user.userId}`, formData);
       console.log('User update response:', response.data);
 
       if (response.data) {

@@ -25,7 +25,8 @@ import {
     Delete as DeleteIcon,
     Add as AddIcon 
 } from '@mui/icons-material';
-import axios from 'axios';
+import api from '../utils/api';
+
 
 const DepartmentManagement = () => {
     const [departments, setDepartments] = useState([]);
@@ -47,7 +48,7 @@ const DepartmentManagement = () => {
 
     const fetchDepartments = async () => {
         try {
-            const response = await axios.get('/api/departments');
+            const response = await api.get('/api/departments');
             setDepartments(response.data);
         } catch (error) {
             showSnackbar('Error fetching departments', 'error');
@@ -66,7 +67,7 @@ const DepartmentManagement = () => {
 
     const handleEditSave = async () => {
         try {
-            await axios.put(
+            await api.put(
                 `/api/departments/${editDepartment.deptId}`, 
                 editDepartment
             );
@@ -85,7 +86,7 @@ const DepartmentManagement = () => {
 
     const handleDeleteConfirm = async () => {
         try {
-            await axios.delete(`/api/departments/${departmentToDelete.deptId}`);
+            await api.delete(`/api/departments/${departmentToDelete.deptId}`);
             showSnackbar('Department deleted successfully', 'success');
             fetchDepartments();
         } catch (error) {
@@ -102,7 +103,7 @@ const DepartmentManagement = () => {
 
     const handleAddSave = async () => {
         try {
-            await axios.post('/api/departments', newDepartment);
+            await api.post('/api/departments', newDepartment);
             showSnackbar('Department added successfully', 'success');
             fetchDepartments();
             setAddDialogOpen(false);

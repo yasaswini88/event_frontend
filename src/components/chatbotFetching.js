@@ -1,4 +1,5 @@
-import axios from 'axios';
+import api from '../utils/api';
+
 
 export const fetchChatbotResponse = async (userMessage, role) => {
     const prefix = 'sk-proj';
@@ -107,7 +108,7 @@ When responding:
   };
 
   try {
-    const response = await axios.post(
+    const response = await api.post(
       'https://api.openai.com/v1/chat/completions',
       {
         model: 'gpt-4',

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
+
 import {
     Typography,
     Box,
@@ -39,7 +40,7 @@ const Events = () => {
 
     const fetchEvents = async () => {
         try {
-            const response = await axios.get('/api/events');
+            const response = await api.get('/api/events');
             setEvents(response.data);
         } catch (error) {
             console.error('Error fetching events:', error);

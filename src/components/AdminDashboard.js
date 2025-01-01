@@ -47,7 +47,8 @@
  */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
+
 import {
     Box,
     Paper,
@@ -118,7 +119,7 @@ const AdminDashboard = () => {
 
     const fetchUsers = async () => {
         try {
-            const response = await axios.get('/api/users');
+            const response = await api.get('/api/users');
             setUsers(response.data);
             setFilteredUsers(response.data); // initially, no filter is applied
         } catch (err) {
@@ -134,7 +135,7 @@ const AdminDashboard = () => {
 
     const fetchRoles = async () => {
         try {
-            const response = await axios.get('/api/roles');
+            const response = await api.get('/api/roles');
             setRoles(response.data);
         } catch (err) {
             console.error('Error fetching roles:', err);
@@ -193,7 +194,7 @@ const AdminDashboard = () => {
      */
     const handleEditUser = async (user) => {
         try {
-            const response = await axios.get(`/api/users/${user.userId}`);
+            const response = await api.get(`/api/users/${user.userId}`);
             console.log('User response data:', response.data);
 
             // Flatten or adapt the user if needed
@@ -238,7 +239,7 @@ const AdminDashboard = () => {
 
     const handleConfirmDelete = async () => {
         try {
-            await axios.delete(`/api/users/${userToDelete}`);
+            await api.delete(`/api/users/${userToDelete}`);
             setSnackbar({
                 open: true,
                 message: 'User deleted successfully',

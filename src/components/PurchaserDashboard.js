@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
+
 import {
     Box,
     Paper,
@@ -88,17 +89,17 @@ const PurchaserDashboard = () => {
     const fetchPurchaseOrders = async () => {
         try {
             // Get all approved proposals
-            const proposalsResponse = await axios.get('/api/proposals/status/APPROVED');
+            const proposalsResponse = await api.get('/api/proposals/status/APPROVED');
             console.log("Approved Proposals:", proposalsResponse.data);
             const approvedProposals = proposalsResponse.data;
 
             // Get existing purchase orders
-            const ordersResponse = await axios.get('/api/purchase-orders');
+            const ordersResponse = await api.get('/api/purchase-orders');
             console.log("Existing Orders:", ordersResponse.data);
             const existingOrders = ordersResponse.data;
 
             // Get departments
-            const departmentsResponse = await axios.get('/api/departments');
+            const departmentsResponse = await api.get('/api/departments');
             const departments = departmentsResponse.data;
             setDepartments(departments);
 
@@ -182,7 +183,7 @@ const PurchaserDashboard = () => {
 
     const handleCreatePurchaseOrder = async (proposalId) => {
         try {
-            const response = await axios.post(`/api/purchase-orders/create/${proposalId}`);
+            const response = await api.post(`/api/purchase-orders/create/${proposalId}`);
 
             // Update the local state immediately
             setPurchaseOrders(prevOrders =>
@@ -217,7 +218,7 @@ const PurchaserDashboard = () => {
     };
     const handleUpdateOrderStatus = async (orderId, newStatus) => {
         try {
-            await axios.put(`/api/purchase-orders/${orderId}/order-status`, null, {
+            await api.put(`/api/purchase-orders/${orderId}/order-status`, null, {
                 params: { newOrderStatus: newStatus }
             });
             setSnackbar({
@@ -247,7 +248,7 @@ const PurchaserDashboard = () => {
                 return;
             }
 
-            await axios.put(`/api/purchase-orders/${selectedOrder.orderId}/delivery-status`, null, {
+            await api.put(`/api/purchase-orders/${selectedOrder.orderId}/delivery-status`, null, {
                 params: {
                     newStatus: newDeliveryStatus,
                     expectedDeliveryDate: expectedDeliveryDate,

@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
+
 import SignUp from './components/Signup';
 import Login from './components/Login';
 import Begin from './components/Begin';
@@ -18,7 +19,8 @@ import CommonAppBar from './components/CommonAppBar';
 import './App.css';
 
 // Set axios default base URL
-axios.defaults.baseURL = `http://35.153.179.66:8080`;
+api.
+defaults.baseURL = `http://35.153.179.66:8080`;
 
 function App() {
   const user = JSON.parse(localStorage.getItem('user'));

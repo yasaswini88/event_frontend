@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import api from "../utils/api";
 import {
   Box,
   Container,
@@ -30,7 +31,7 @@ const ForgotPassword = () => {
     setError("");
 
     try {
-      const response = await axios.post('/api/forgot-password', { email });
+      const response = await api.post('/api/forgot-password', { email });
       setMessage("Passcode sent to your email.");
       setTimeout(() => {
         navigate("/verify-code", { state: { email } });

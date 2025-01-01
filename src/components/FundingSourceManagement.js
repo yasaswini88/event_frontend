@@ -24,7 +24,8 @@ import {
     Delete as DeleteIcon,
     Add as AddIcon 
 } from '@mui/icons-material';
-import axios from 'axios';
+import api from '../utils/api';
+
 
 const FundingSourceManagement = () => {
     const [fundingSources, setFundingSources] = useState([]);
@@ -46,7 +47,8 @@ const FundingSourceManagement = () => {
 
     const fetchFundingSources = async () => {
         try {
-            const response = await axios.get('/api/funding-sources');
+            const response = await api.
+get('/api/funding-sources');
             setFundingSources(response.data);
         } catch (error) {
             showSnackbar('Error fetching funding sources', 'error');
@@ -68,7 +70,8 @@ const FundingSourceManagement = () => {
 
     const handleEditSave = async () => {
         try {
-            await axios.put(
+            await api.
+put(
                 `/api/funding-sources/${editSource.sourceId}`, 
                 {
                     sourceId: editSource.sourceId,
@@ -90,7 +93,8 @@ const FundingSourceManagement = () => {
 
     const handleDeleteConfirm = async () => {
         try {
-            await axios.delete(`/api/funding-sources/${sourceToDelete.sourceId}`);
+            await api.
+delete(`/api/funding-sources/${sourceToDelete.sourceId}`);
             showSnackbar('Funding source deleted successfully', 'success');
             fetchFundingSources();
         } catch (error) {
@@ -107,7 +111,8 @@ const FundingSourceManagement = () => {
 
     const handleAddSave = async () => {
         try {
-            await axios.post('/api/funding-sources', {
+            await api.
+post('/api/funding-sources', {
                 sourceName: newSource.sourceName
             });
             showSnackbar('Funding source added successfully', 'success');

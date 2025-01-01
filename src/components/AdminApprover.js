@@ -102,7 +102,8 @@
  * @returns {string} The formatted currency string.
  */
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
+
 import {
     Box,
     Paper,
@@ -207,7 +208,7 @@ const AdminApprover = () => {
 
     const fetchProposals = async () => {
         try {
-            const response = await axios.get('/api/proposals');
+            const response = await api.get('/api/proposals');
             setProposals(response.data);
         } catch (error) {
             console.error('Error fetching proposals:', error);
@@ -216,7 +217,7 @@ const AdminApprover = () => {
 
     const fetchUsers = async () => {
         try {
-            const response = await axios.get('/api/users');
+            const response = await api.get('/api/users');
             setUsers(response.data);
         } catch (error) {
             console.error('Error fetching users:', error);
@@ -225,7 +226,7 @@ const AdminApprover = () => {
 
     const fetchDepartments = async () => {
         try {
-            const response = await axios.get('/api/departments');
+            const response = await api.get('/api/departments');
             setDepartments(response.data);
         } catch (error) {
             console.error('Error fetching departments:', error);
@@ -244,7 +245,7 @@ const AdminApprover = () => {
 
     const handleConfirmDelete = async () => {
         try {
-            await axios.delete(`/api/proposals/${proposalToDelete}`);
+            await api.delete(`/api/proposals/${proposalToDelete}`);
             fetchProposals(); // Refresh the list
             setDeleteDialogOpen(false);
         } catch (error) {
@@ -255,7 +256,7 @@ const AdminApprover = () => {
     const handleStatusUpdate = async (proposalId, newStatus) => {
         try {
             const user = JSON.parse(localStorage.getItem('user'));
-            await axios.put(
+            await api.put(
                 `/api/proposals/${proposalId}/status`,
                 null,
                 {
@@ -275,7 +276,7 @@ const AdminApprover = () => {
 
     const handleSaveEdit = async () => {
         try {
-            await axios.put(`/api/proposals/${selectedProposal.proposalId}`, selectedProposal);
+            await api.put(`/api/proposals/${selectedProposal.proposalId}`, selectedProposal);
             fetchProposals();
             setEditDialogOpen(false);
         } catch (error) {

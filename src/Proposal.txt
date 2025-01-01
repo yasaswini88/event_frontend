@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
+
 import {
     AppBar,
     Toolbar,
@@ -74,7 +75,8 @@ const ProposalForm = () => {
 
     const fetchUsers = async () => {
         try {
-            const response = await axios.get('/api/users');
+            const response = await api.
+get('/api/users');
             setUsers(response.data);
         } catch (error) {
             console.error('Error fetching users:', error);
@@ -89,7 +91,8 @@ const ProposalForm = () => {
 
     const fetchExistingProposal = async () => {
         try {
-            const response = await axios.get(`/api/proposals/${proposalId}`);
+            const response = await api.
+get(`/api/proposals/${proposalId}`);
             if (response.data) {
                 setFormData({
                     ...response.data,
@@ -118,7 +121,8 @@ const ProposalForm = () => {
 
     const fetchApprovers = async () => {
         try {
-            const response = await axios.get('/api/users');
+            const response = await api.
+get('/api/users');
             const approversList = response.data.filter(user => user.roleName === 'Approver');
             setApprovers(approversList);
         } catch (err) {
@@ -133,7 +137,8 @@ const ProposalForm = () => {
 
     const fetchDepartments = async () => {
         try {
-            const response = await axios.get('/api/departments');
+            const response = await api.
+get('/api/departments');
             setDepartments(response.data);
         } catch (err) {
             console.error('Error fetching departments:', err);
@@ -147,7 +152,8 @@ const ProposalForm = () => {
 
     const fetchLoggedInUser = async () => {
         try {
-            const response = await axios.get('/api/loggedinuser');
+            const response = await api.
+get('/api/loggedinuser');
             setLoggedInUser(response.data.username); // Assuming the API returns an object with a username field
         } catch (err) {
             console.error('Error fetching logged-in user:', err);
@@ -277,7 +283,8 @@ const handleCurrentApproverChange = (event, value) => {
      
             let response;
             if (proposalPayload.proposalId) {
-                response = await axios.put(
+                response = await api.
+put(
                     `/api/proposals/${proposalPayload.proposalId}`,
                     proposalPayload
                 );
@@ -287,7 +294,8 @@ const handleCurrentApproverChange = (event, value) => {
                     severity: 'success'
                 });
             } else {
-                response = await axios.post(
+                response = await api.
+post(
                     '/api/proposals',
                     proposalPayload
                 );

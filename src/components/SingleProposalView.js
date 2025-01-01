@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
+
 import {
     Box,
     Card,
@@ -43,7 +44,7 @@ const SingleProposalView = () => {
     useEffect(() => {
         const fetchProposal = async () => {
             try {
-                const response = await axios.get(`/api/proposals/${proposalId}`);
+                const response = await api.get(`/api/proposals/${proposalId}`);
                 setProposal(response.data);
             } catch (err) {
                 console.error('Error fetching proposal details:', err);

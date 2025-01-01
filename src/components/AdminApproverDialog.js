@@ -11,7 +11,8 @@
  * @returns {JSX.Element|null} The rendered component.
  */
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
+
 import {
     Dialog,
     DialogTitle,
@@ -72,7 +73,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
 
     // const fetchProposalDetails = async () => {
     //     try {
-    //         const response = await axios.get(`/api/proposals/${proposalId}`);
+    //         const response = await api.get(`/api/proposals/${proposalId}`);
     //         const proposalData = response.data;
     //         setProposal(proposalData);
     //         setEditedProposal(proposalData);
@@ -93,13 +94,13 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
     const fetchProposalDetails = async () => {
         try {
             // First get the proposal details
-            const proposalResponse = await axios.get(`/api/proposals/${proposalId}`);
+            const proposalResponse = await api.get(`/api/proposals/${proposalId}`);
             const proposalData = proposalResponse.data;
 
             let historyData = [];
             // Then get the approval history
             if(typeof proposalData.status === 'string' && proposalData.status.toLowerCase() != 'pending'){
-            const historyResponse = await axios.get(`/api/proposals/${proposalId}/history`);
+            const historyResponse = await api.get(`/api/proposals/${proposalId}/history`);
             historyData = historyResponse.data;
             setApprovalHistory(historyData);
              
@@ -127,7 +128,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
 
     const fetchApprovalHistory = async () => {
         try {
-            const response = await axios.get(`/api/proposals/${proposalId}/history`);
+            const response = await api.get(`/api/proposals/${proposalId}/history`);
             setApprovalHistory(response.data);
         } catch (err) {
             console.error('Error fetching approval history:', err);
@@ -138,7 +139,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
         try {
             setFundingSourceLoading(true);
             setFundingSourceError(null);
-            const response = await axios.get(`/api/funding-sources`);
+            const response = await api.get(`/api/funding-sources`);
             setFundingSources(response.data);
         } catch (err) {
             console.error('Error fetching funding sources:', err);
@@ -151,7 +152,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
     const handleStatusUpdate = async (newStatus) => {
         try {
             const user = JSON.parse(localStorage.getItem('user'));
-            const response = await axios.put(
+            const response = await api.put(
                 `/api/proposals/${proposalId}/status`,
                 null,
                 {
@@ -185,7 +186,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
     //         };
 
     //         // First update the basic proposal details
-    //         await axios.put(`/api/proposals/${proposalId}`, editedProposal);
+    //         await api.put(`/api/proposals/${proposalId}`, editedProposal);
 
     //         // Then update the status if there's a comment
     //         if (comment.trim()) {
@@ -223,7 +224,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
             }
 
             // First update the proposal status with funding source
-            const statusResponse = await axios.put(
+            const statusResponse = await api.put(
                 `/api/proposals/${proposalId}/status`,
                 null,
                 {
@@ -238,7 +239,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
 
             if (statusResponse.data) {
                 // Then update other proposal details
-                const proposalResponse = await axios.put(
+                const proposalResponse = await api.put(
                     `/api/proposals/${proposalId}`,
                     editedProposal
                 );

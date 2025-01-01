@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
+
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import {
   Box,
@@ -35,7 +36,7 @@ const Login = () => {
       const credential = response.credential;
       
       // Call backend API to verify Google token and get user details
-      const backendResponse = await axios.post('/api/google-login', {
+      const backendResponse = await api.post('/api/google-login', {
         credential: credential
       });
   
@@ -82,7 +83,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('/api/login', { email, password });
+      const response = await api.post('/api/login', { email, password });
       setIsLoading(false);
 
       if (response.data) {

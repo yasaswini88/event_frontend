@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
+
 import {
   Dialog,
   DialogTitle,
@@ -35,7 +36,7 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
 
   const fetchProposalDetails = async () => {
     try {
-      const response = await axios.get(`/api/proposals/${proposalId}`);
+      const response = await api.get(`/api/proposals/${proposalId}`);
       setProposal(response.data);
       setLoading(false);
     } catch (err) {
@@ -46,7 +47,7 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
 
   const fetchApprovalHistory = async () => {
     try {
-      const response = await axios.get(`/api/proposals/${proposalId}/history`);
+      const response = await api.get(`/api/proposals/${proposalId}/history`);
       // Remove duplicate status changes by keeping only unique combinations of oldStatus and newStatus
       const uniqueHistory = response.data.filter((item, index, self) =>
         index === self.findIndex((t) => (
@@ -61,7 +62,7 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
 
   const fetchFundingSources = async () => {
     try {
-      const response = await axios.get(`/api/funding-sources`); // Replace with your funding sources endpoint
+      const response = await api.get(`/api/funding-sources`); // Replace with your funding sources endpoint
       setFundingSources(response.data);
     } catch (err) {
       console.error('Error fetching funding sources:', err);
@@ -77,7 +78,7 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
       }
 
       const user = JSON.parse(localStorage.getItem('user'));
-      const response = await axios.put(`/api/proposals/${proposalId}/status`, null, {
+      const response = await api.put(`/api/proposals/${proposalId}/status`, null, {
         params: {
           newStatus: newStatus,
           approverId: user.userId,
@@ -116,7 +117,7 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
       }
   
       // Send comment request
-      await axios.put(`/api/proposals/${proposalId}/comment`, null, {
+      await api.put(`/api/proposals/${proposalId}/comment`, null, {
         params,
       });
   

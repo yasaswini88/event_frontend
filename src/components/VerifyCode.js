@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
+import api from "../utils/api";
 import {
   Box,
   Container,
@@ -27,7 +28,7 @@ const VerifyCode = () => {
     setMessage("");
 
     try {
-      const response = await axios.post("/api/verify-code", {
+      const response = await api.post("/api/verify-code", {
         email: location.state?.email,
         code,
       });

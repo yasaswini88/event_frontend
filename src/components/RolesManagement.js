@@ -20,7 +20,8 @@ import {
     Alert
 } from '@mui/material';
 import { Edit as EditIcon } from '@mui/icons-material';
-import axios from 'axios';
+import api from '../utils/api';
+
 
 const RolesManagement = () => {
     const [roles, setRoles] = useState([]);
@@ -38,7 +39,7 @@ const RolesManagement = () => {
 
     const fetchRoles = async () => {
         try {
-            const response = await axios.get('/api/roles');
+            const response = await api.get('/api/roles');
             setRoles(response.data);
         } catch (error) {
             showSnackbar('Error fetching roles', 'error');
@@ -57,7 +58,7 @@ const RolesManagement = () => {
 
     const handleEditSave = async () => {
         try {
-            await axios.put(
+            await api.put(
                 `/api/roles/${editRole.roleId}`,
                 editRole
             );

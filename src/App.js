@@ -1,7 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import api from './utils/api';
+
 import SignUp from './components/Signup';
 import Login from './components/Login';
 import Begin from './components/Begin';
@@ -32,7 +33,7 @@ import SingleProposalView from './components/SingleProposalView';
 // Set axios default base URL
 
 
-axios.defaults.baseURL = `http://35.153.179.66:8080`;
+api.defaults.baseURL = `http://35.153.179.66:8080`;
 
 
 function App() {

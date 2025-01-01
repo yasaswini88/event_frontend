@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
+
 import {
     Box,
     Paper,
@@ -65,7 +66,7 @@ const ProposalsList = () => {
     //         }
 
     //         // Fetch proposals for the current user
-    //         const response = await axios.get(`/api/proposals/user/${loggedUser.userId}`);
+    //         const response = await api.get(`/api/proposals/user/${loggedUser.userId}`);
     //         setProposals(response.data);
     //     } catch (err) {
     //         console.error('Error fetching proposals:', err);
@@ -88,14 +89,14 @@ const ProposalsList = () => {
             }
 
             // Fetch proposals for the current user
-            const response = await axios.get(`/api/proposals/user/${loggedUser.userId}`);
+            const response = await api.get(`/api/proposals/user/${loggedUser.userId}`);
             const fetchedProposals = response.data;  // array of proposals
 
             // For each proposal, check if there's any history
             // (This will do an extra GET /history call per proposal)
             const withHistoryPromises = fetchedProposals.map(async (proposal) => {
                 try {
-                    const histResp = await axios.get(`/api/proposals/${proposal.proposalId}/history`);
+                    const histResp = await api.get(`/api/proposals/${proposal.proposalId}/history`);
                     // If length > 0, it means there's some history or comments
                     proposal.hasHistory = (histResp.data.length > 0);
                 } catch (err) {
@@ -126,7 +127,7 @@ const ProposalsList = () => {
     const handleOpenDialog = async (proposal = null) => {
         try {
             if (proposal) {
-                const response = await axios.get(`/api/proposals/${proposal.proposalId}`);
+                const response = await api.get(`/api/proposals/${proposal.proposalId}`);
                 setEditingProposal(response.data);
             } else {
                 setEditingProposal(null);
@@ -155,7 +156,7 @@ const ProposalsList = () => {
 
     const handleConfirmDelete = async () => {
         try {
-            await axios.delete(`/api/proposals/${proposalToDelete}`);
+            await api.delete(`/api/proposals/${proposalToDelete}`);
             setSnackbar({
                 open: true,
                 message: 'Proposal deleted successfully',
@@ -220,7 +221,7 @@ const ProposalsList = () => {
         try {
             setSelectedProposalId(proposalId);
             // Fetch approval history
-            const response = await axios.get(`/api/proposals/${proposalId}/history`);
+            const response = await api.get(`/api/proposals/${proposalId}/history`);
 
             // IMPORTANT: if you currently have code filtering out
             // repeated oldStatus==newStatus, remove that if you want 

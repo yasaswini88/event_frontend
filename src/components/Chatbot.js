@@ -6,7 +6,8 @@ import Person4Icon from '@mui/icons-material/Person4';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import SendIcon from '@mui/icons-material/Send';
 import IconButton from '@mui/material/IconButton';
-import axios from 'axios';
+import api from '../utils/api';
+
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import  { useState, useRef, useEffect } from 'react';
@@ -37,7 +38,7 @@ const Chatbot = ({ userDetails }) => {
   // Function to dynamically handle API calls
   const handleApiCall = async (url) => {
     try {
-      const response = await axios.get(url);
+      const response = await api.get(url);
       return response.data; // Return the API data
     } catch (error) {
       console.error(`Error fetching data from ${url}:`, error);
