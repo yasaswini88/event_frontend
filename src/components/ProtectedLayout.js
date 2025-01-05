@@ -1,38 +1,39 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { selectRole } from '../redux/authSlice';
 import { Box } from '@mui/material';
 import CommonAppBar from './CommonAppBar';
 
-const ProtectedLayout = ({ children, requiredRoleId = null }) => {
+const ProtectedLayout = ({ children, requiredRole = null }) => {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem('user'));
+  const role = useSelector(selectRole);
 
   useEffect(() => {
-    if (!user) {
+    if (!role) {
       navigate('/');
       return;
     }
-  
-    if (requiredRoleId && user.roles?.roleId !== requiredRoleId) {
-      // Redirect based on role if they're accessing the wrong area
-      switch (user.roles?.roleId) {
-        case 1:
+
+    if (requiredRole && role !== requiredRole) {
+      // Redirect based on role if accessing the wrong area
+      switch (role) {
+        case 'Admin':
           navigate('/admin-dashboard');
           break;
-        case 3:
+        case 'Approver':
           navigate('/approver-dashboard');
           break;
-        case 4:
+        case 'Purchaser':
           navigate('/purchaser-dashboard');
           break;
         default:
           navigate('/proposal');
       }
     }
-  }, [navigate, requiredRoleId, user]);
-  
+  }, [navigate, requiredRole, role]);
 
-  if (!user) return null;
+  if (!role) return null;
 
   return (
     <Box>

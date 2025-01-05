@@ -4,16 +4,14 @@ import axios from 'axios';
 
 // Create an Axios instance
 const api = axios.create({
-  baseURL: `http://18.234.73.35:8080`, // Backend base URL
+  baseURL: 'http://18.234.73.35:8080',
 });
 
-// Add a request interceptor
+// Interceptor to attach token
 api.interceptors.request.use(
   (config) => {
-    // Get the token from localStorage
     const token = localStorage.getItem('token');
     if (token) {
-      // Add the Authorization header
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -21,13 +19,14 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Add a response interceptor (optional)
+// Global response handling
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle 401 errors globally
     if (error.response && error.response.status === 401) {
-      window.location.href = '/'; // Redirect to login on unauthorized
+      // Token is invalid or expired
+      localStorage.removeItem('token');
+      window.location.href = '/'; // Redirect to login
     }
     return Promise.reject(error);
   }

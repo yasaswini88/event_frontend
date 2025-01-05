@@ -1,15 +1,17 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { selectRole } from '../redux/authSlice';
 import ProtectedLayout from './ProtectedLayout';
 
 const ProtectedAdminRoute = ({ children }) => {
-  const user = JSON.parse(localStorage.getItem('user'));
+  const role = useSelector(selectRole);
 
-  if (!user || user.roles?.roleId !== 1) {
+  if (!role || role !== 'Admin') {
     return <Navigate to="/" />;
   }
 
-  return <ProtectedLayout requiredRoleId={1}>{children}</ProtectedLayout>;
+  return <ProtectedLayout requiredRole="Admin">{children}</ProtectedLayout>;
 };
 
 export default ProtectedAdminRoute;

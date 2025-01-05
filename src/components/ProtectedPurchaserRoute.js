@@ -1,16 +1,17 @@
-// ProtectedPurchaserRoute.js
 import React from 'react';
 import { Navigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { selectRole } from '../redux/authSlice';
 import ProtectedLayout from './ProtectedLayout';
 
 const ProtectedPurchaserRoute = ({ children }) => {
-  const user = JSON.parse(localStorage.getItem('user'));
+  const role = useSelector(selectRole); // Fetch role from Redux state
 
-  if (!user || user.roles?.roleId !== 4) {
+  if (!role || role !== 'Purchaser') {
     return <Navigate to="/" />;
   }
 
-  return <ProtectedLayout requiredRoleId={4}>{children}</ProtectedLayout>;
+  return <ProtectedLayout requiredRole="Purchaser">{children}</ProtectedLayout>;
 };
 
 export default ProtectedPurchaserRoute;
