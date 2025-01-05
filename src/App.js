@@ -33,7 +33,7 @@ import SingleProposalView from './components/SingleProposalView';
 // Set axios default base URL
 
 
-api.defaults.baseURL = `http://35.153.179.66:8080`;
+api.defaults.baseURL = `http://18.234.73.35:8080`;
 
 
 function App() {

@@ -4,7 +4,7 @@ import axios from 'axios';
 
 // Create an Axios instance
 const api = axios.create({
-  baseURL: 'http://35.153.179.66:8080', // Backend base URL
+  baseURL: `http://18.234.73.35:8080`, // Backend base URL
 });
 
 // Add a request interceptor
@@ -27,7 +27,7 @@ api.interceptors.response.use(
   (error) => {
     // Handle 401 errors globally
     if (error.response && error.response.status === 401) {
-      window.location.href = '/login'; // Redirect to login on unauthorized
+      window.location.href = '/'; // Redirect to login on unauthorized
     }
     return Promise.reject(error);
   }
