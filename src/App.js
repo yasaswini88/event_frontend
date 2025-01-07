@@ -26,13 +26,14 @@ import AdminApprover from './components/AdminApprover';
 import './App.css';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import SingleProposalView from './components/SingleProposalView'; 
+import SingleProposalView from './components/SingleProposalView';
 
 
 // Set axios default base URL
 
 
-axios.defaults.baseURL = `http://35.153.179.66:8080`;
+// axios.defaults.baseURL = `http://18.234.73.35:8080`;
+axios.defaults.baseURL = 'https://oneaiforall.com';
 
 
 function App() {
@@ -42,12 +43,12 @@ function App() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
- 
+
 
   return (
     <Router>
       <div className="App">
-      {/* {shouldShowAppBar && <CommonAppBar showLogout={false} />} */}
+        {/* {shouldShowAppBar && <CommonAppBar showLogout={false} />} */}
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<Begin />} />
@@ -110,6 +111,17 @@ function App() {
               </ProtectedLayout>
             } 
           /> */}
+
+          <Route
+            path="/proposal/:proposalId"
+            element={
+              <ProtectedLayout>
+                <SingleProposalView />
+              </ProtectedLayout>
+            }
+          />
+
+
           <Route
             path="/proposal"
             element={
@@ -170,14 +182,7 @@ function App() {
           />
 
 
-<Route
-    path="/proposal/:proposalId"
-    element={
-      <ProtectedLayout>
-        <SingleProposalView />
-      </ProtectedLayout>
-    }
-  />
+
 
           <Route
             path="*"
@@ -194,7 +199,7 @@ function App() {
                             ? '/purchaser-dashboard'
                             : '/proposal' // e.g. faculty or default route
                     )
-                    : '/login'
+                    : '/'
                 }
               />
             }

@@ -269,7 +269,7 @@ const ProposalsList = () => {
                         variant={isMobile ? 'h5' : 'h4'}
                         sx={{ fontWeight: 'bold', color: '#333' }}
                     >
-                        My Procurement Proposals
+                        My Procurement Requests
                     </Typography>
                     <Button
                         fullWidth={isMobile}
@@ -282,7 +282,7 @@ const ProposalsList = () => {
                             }
                         }}
                     >
-                        Submit New Proposal
+                        Submit New Request
                     </Button>
                 </Box>
 
@@ -337,7 +337,7 @@ const ProposalsList = () => {
                                     sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center', cursor: 'pointer' }}
                                     onClick={() => handleSort('proposalId')}
                                 >
-                                    Proposal ID
+                                    Request ID
                                 </TableCell>
                                 <TableCell
                                     sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center', cursor: 'pointer' }}
@@ -373,7 +373,7 @@ const ProposalsList = () => {
                                     Status
                                 </TableCell>
                                 <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>
-                                    Proposal Date
+                                    Request Date
                                 </TableCell>
                                 <TableCell
                                     sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}

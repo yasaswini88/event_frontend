@@ -59,18 +59,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
     });
     const [loggedInUser, setLoggedInUser] = useState(''); // Added state for logged-in user
 
-    // useEffect(() => {
-    //     const initializeData = async () => {
-    //         await fetchUsers();
-    //         await fetchApprovers();
-    //         await fetchDepartments();
-    //         if (proposalId) {
-    //             await fetchExistingProposal();
-    //         }
-    //     };
 
-    //     initializeData();
-    // }, [proposalId]);
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -273,7 +262,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
         return true;
     };
 
-  
+
 
     // const handleSubmit = async (e) => {
     //     e.preventDefault();
@@ -359,18 +348,18 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-    
+
         if (!validateForm()) {
             return;
         }
-    
+
         setLoading(true);
         setError('');
-    
+
         try {
             const loggedUser = JSON.parse(localStorage.getItem('user'));
             const userId = loggedUser ? loggedUser.userId : null;
-    
+
             if (!userId) {
                 setSnackbar({
                     open: true,
@@ -380,7 +369,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                 setLoading(false);
                 return;
             }
-    
+
             const proposalPayload = {
                 ...formData,
                 quantity: parseInt(formData.quantity, 10),
@@ -394,7 +383,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                 vendorInfo: formData.vendorInfo || '',
                 status: formData.status || 'Pending',
             };
-    
+
             let response;
             if (proposalPayload.proposalId) {
                 response = await axios.put(`/api/proposals/${proposalPayload.proposalId}`, proposalPayload);
@@ -411,7 +400,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                     severity: 'success',
                 });
             }
-    
+
             if (response?.data) {
                 resetForm();
                 onSubmitSuccess(response.data); // Send the updated proposal to the parent
@@ -421,7 +410,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
         } catch (err) {
             console.error('Error saving proposal:', err);
             let errorMessage = 'Error saving proposal. Please try again.';
-    
+
             if (err.response?.data?.message) {
                 errorMessage = err.response.data.message;
             } else if (err.response?.status === 400) {
@@ -429,7 +418,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
             } else if (err.response?.status === 500) {
                 errorMessage = 'Server error. Please try again later.';
             }
-    
+
             setSnackbar({
                 open: true,
                 message: errorMessage,
@@ -439,7 +428,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
             setLoading(false);
         }
     };
-    
+
 
 
     const handleCloseSnackbar = () => {
@@ -501,6 +490,17 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                                 ))}
                             </TextField>
 
+                            {/* <TextField
+                                label="Description"
+                                value={formData.description || ''}
+                                onChange={handleChange('description')}
+                                required
+                                multiline
+                                rows={4}
+                                fullWidth
+
+                            /> */}
+
                             <TextField
                                 label="Description"
                                 value={formData.description || ''}
@@ -509,7 +509,13 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                                 multiline
                                 rows={4}
                                 fullWidth
+                                inputProps={{
+                                    maxLength: 1000, // Set maximum characters
+                                }}
+                                helperText={`${formData.description?.length || 0}/1000`} // Show current character count
+                                error={(formData.description?.length || 0) > 1000} // Show error state if it exceeds limit
                             />
+
 
                             <TextField
                                 label="Quantity"
@@ -556,8 +562,12 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                                 value={formData.vendorInfo || ''}
                                 onChange={handleChange('vendorInfo')}
                                 fullWidth
+                                inputProps={{
+                                    maxLength: 150, // Set maximum characters
+                                }}
+                                helperText={`${formData.vendorInfo?.length || 0}/150`} // Show current character count
+                                error={(formData.vendorInfo?.length || 0) > 150} // Show error state if it exceeds limit
                             />
-
                             <TextField
                                 label="Business Purpose"
                                 value={formData.businessPurpose || ''}
@@ -566,6 +576,11 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                                 multiline
                                 rows={3}
                                 fullWidth
+                                inputProps={{
+                                    maxLength: 500, // Set maximum characters
+                                }}
+                                helperText={`${formData.businessPurpose?.length || 0}/500`} // Show current character count
+                                error={(formData.businessPurpose?.length || 0) > 500} // Show error state if it exceeds limit
                             />
 
                             <Autocomplete

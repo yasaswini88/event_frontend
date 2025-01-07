@@ -93,8 +93,15 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
     const fetchProposalDetails = async () => {
         try {
             // First get the proposal details
-            const proposalResponse = await axios.get(`/api/proposals/${proposalId}`);
+            const user = JSON.parse(localStorage.getItem('user'));
+    // Pass currentUserId
+    const proposalResponse = await axios.get(`/api/proposals/${proposalId}`, {
+      params: { currentUserId: user.userId }
+    });
+            // const proposalResponse = await axios.get(`/api/proposals/${proposalId}`);
             const proposalData = proposalResponse.data;
+
+            
 
             let historyData = [];
             // Then get the approval history

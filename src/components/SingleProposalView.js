@@ -40,20 +40,51 @@ const SingleProposalView = () => {
 
 
 
+    // useEffect(() => {
+    //     const fetchProposal = async () => {
+    //         try {
+    //             const response = await axios.get(`/api/proposals/${proposalId}`);
+    //             setProposal(response.data);
+    //         } catch (err) {
+    //             if (err.response && err.response.status === 403) {
+    //                 setError('You do not have permission to view this proposal.');
+    //             } else {
+    //                 setError('Failed to load proposal details.');
+    //             }
+    //         } finally {
+    //             setLoading(false);
+    //         }
+    //     };
+    //     fetchProposal();
+    // }, [proposalId]);
+
     useEffect(() => {
         const fetchProposal = async () => {
-            try {
-                const response = await axios.get(`/api/proposals/${proposalId}`);
-                setProposal(response.data);
-            } catch (err) {
-                console.error('Error fetching proposal details:', err);
-                setError('Failed to load proposal details.');
-            } finally {
-                setLoading(false);
+          try {
+            // If user object is { userId: 52, ... }:
+            const currentUserId = user.userId;
+      
+            // CORRECT: use backticks around the string
+            const response = await axios.get(
+              `/api/proposals/${proposalId}`,   // note the backticks ``
+              { params: { currentUserId } }     // pass the user ID
+            );
+      
+            setProposal(response.data);
+          } catch (err) {
+            if (err.response && err.response.status === 403) {
+              setError('You do not have permission to view this proposal.');
+            } else {
+              setError('Failed to load proposal details.');
             }
+          } finally {
+            setLoading(false);
+          }
         };
         fetchProposal();
-    }, [proposalId]);
+      }, [proposalId, user]);
+      
+    
 
     if (loading) {
         return (
