@@ -16,6 +16,7 @@ import {
   Tab,
   Tabs,
   Container,
+  Button,
 
 } from '@mui/material';
 import { TablePagination } from '@mui/material';
@@ -27,6 +28,7 @@ import {
 import { styled } from '@mui/material/styles';
 import ApproverDialog from './ApproverDialog';
 import AnalyticsDashboard from './AnalyticsDashboard';
+import ApproverSetAlerts from './ApproverSetAlerts';
 import { sortData } from '../utils/utilities';
 import { useTheme, useMediaQuery } from '@mui/material';
 
@@ -65,6 +67,8 @@ const ApproverDashboard = () => {
   const [filteredProposals, setFilteredProposals] = useState([]);
   const [pagination, setPagination] = useState({ currentPage: 1, itemsPerPage: 6, totalItems: 0 });
   const [sortConfig, setSortConfig] = useState({ key: 'proposalDate', order: 'desc' });
+  const [alertsDialogOpen, setAlertsDialogOpen] = useState(false);
+
 
 
 
@@ -192,7 +196,7 @@ const ApproverDashboard = () => {
     const user = users.find(u => u.userId === userId);
     return user ? user.email : 'unknown@email.com';
   };
-  
+
 
   const getFilteredProposals = () => {
     let filtered = proposals;
@@ -204,7 +208,7 @@ const ApproverDashboard = () => {
       );
     }
 
-   
+
     switch (tabValue) {
       case 1: // Pending
         return filtered.filter((proposal) => proposal.status.toLowerCase() === 'pending');
@@ -288,7 +292,29 @@ const ApproverDashboard = () => {
   return (
     <Container maxWidth="xl">
 
+
       <AnalyticsDashboard proposals={proposals} />
+
+      {/* Example: a link or button to open the ApproverSetAlerts */}
+      <Button
+        variant="outlined"
+        onClick={() => setAlertsDialogOpen(true)}
+        sx={{
+          borderColor: '#1a237e',
+          color: '#1a237e',
+          '&:hover': {
+            backgroundColor: '#1a237e',
+            color: 'white',
+            borderColor: '#1a237e'
+          },
+          minWidth: '180px',
+          height: '45px'
+        }}
+      >
+        Set Alert Preferences
+      </Button>
+
+
 
       <Box sx={{ p: 3, mt: 8 }}>
         <TextField
@@ -414,7 +440,7 @@ const ApproverDashboard = () => {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={proposals.length}
+            count={sortedProposals.length} // Use the filtered proposals length
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={handleChangePage}
@@ -444,6 +470,10 @@ const ApproverDashboard = () => {
           handleDialogClose();
         }}
         currentStatus={proposals.find((p) => p.proposalId === selectedProposalId)?.status}
+      />
+      <ApproverSetAlerts
+        open={alertsDialogOpen}
+        onClose={() => setAlertsDialogOpen(false)}
       />
 
 

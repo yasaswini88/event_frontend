@@ -58,7 +58,7 @@ export const fetchChatbotResponse = async (userMessage, role) => {
      - How do I manage user roles and permissions?
      - Where can I view the system-wide reports?
      - How can I customize approval workflows?
-
+      - Admin can customize the approval workflows even after proposal is approved or rejected.Admin can have an option to change the status of the proposal. 
 **General Functionality**:
 - The dashboards for each role are customized based on login credentials.
 - The statuses of proposals and orders include "Pending," "Approved," "Rejected," "Ordered," and "Processing."

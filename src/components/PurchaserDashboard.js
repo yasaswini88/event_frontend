@@ -32,6 +32,14 @@ import { sortData } from '../utils/utilities';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import {
+    DateRangePicker,
+    SingleInputDateRangeField
+} from '@mui/x-date-pickers-pro';
+
+
 
 
 const PurchaserDashboard = () => {
@@ -56,6 +64,11 @@ const PurchaserDashboard = () => {
     const orderStatusOptions = ['all', 'PENDING', 'ORDERED'];
     const deliveryStatusOptions = ['all', 'Not Started', 'Processing', 'Shipped', 'Delivered'];
     const [trackingNumber, setTrackingNumber] = useState('');
+
+    // const [startDate, setStartDate] = useState('');
+    // const [endDate, setEndDate] = useState('');
+
+    const [dateRange, setDateRange] = useState([null, null]);
 
     const navigate = useNavigate();
 
@@ -162,7 +175,31 @@ const PurchaserDashboard = () => {
                 selectedDeliveryStatus === 'all' ||
                 order.deliveryStatus === selectedDeliveryStatus;
 
-            return departmentMatch && orderStatusMatch && deliveryStatusMatch;
+            // let dateMatch = true;
+            // if (startDate && endDate && order.expectedDeliveryDate) {
+            //     const orderDate = new Date(order.expectedDeliveryDate);
+            //     const sDate = new Date(startDate);      // e.g. 2025-01-10 => JS date
+            //     const eDate = new Date(endDate);        // e.g. 2025-01-20 => JS date
+
+            //     // Check if orderDate is >= sDate AND <= eDate
+            //     dateMatch = (orderDate >= sDate && orderDate <= eDate);
+            // }
+
+            let dateMatch = true;
+            const [start, end] = dateRange;
+            if (start && end && order.expectedDeliveryDate) {
+                const orderDate = new Date(order.expectedDeliveryDate);
+                const sDate = new Date(start);
+                const eDate = new Date(end);
+                dateMatch = (orderDate >= sDate && orderDate <= eDate);
+            }
+
+            return (
+                departmentMatch &&
+                orderStatusMatch &&
+                deliveryStatusMatch &&
+                dateMatch
+            );
         });
     };
 
@@ -393,6 +430,49 @@ const PurchaserDashboard = () => {
                     ))}
                 </TextField>
 
+                {/* <TextField
+                    label="Start Date"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    sx={{ minWidth: isMobile ? '100%' : 200 }}
+                /> */}
+
+                {/* NEW: End date filter */}
+                {/* <TextField
+                    label="End Date"
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    sx={{ minWidth: isMobile ? '100%' : 200 }}
+                /> */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <DateRangePicker
+                        slots={{ field: SingleInputDateRangeField }}
+                        value={dateRange}
+                        onChange={(newValue) => setDateRange(newValue)}
+                        slotProps={{
+                            textField: {
+                                label: 'Filter by Expected Delivery Date',
+                                variant: 'outlined',
+                                fullWidth: isMobile
+                            }
+                        }}
+                    />
+
+                    <Typography
+                        variant="body2"
+                        sx={{ cursor: 'pointer', color: 'primary.main', textDecoration: 'underline' }}
+                        onClick={() => setDateRange([null, null])}
+                    >
+                        Clear
+                    </Typography>
+                </Box>
+
+
+
             </Box>
             <TableContainer component={Paper} sx={{ mb: 4, boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
                 <Table>
@@ -472,7 +552,7 @@ const PurchaserDashboard = () => {
                                 <TableCell>
                                     {item.requesterName ? (
                                         <a
-                                        href={`https://mail.google.com/mail/?view=cm&fs=1&to=${item.requesterName}&su=Hello%20Requester&body=Hi%20there!`}
+                                            href={`https://mail.google.com/mail/?view=cm&fs=1&to=${item.requesterName}&su=Hello%20Requester&body=Hi%20there!`}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             style={{ textDecoration: 'none', color: '#1a237e' }}

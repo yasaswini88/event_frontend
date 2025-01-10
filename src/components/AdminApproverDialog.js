@@ -31,7 +31,7 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 
-const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status }) => {
+const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, status }) => {
     const [proposal, setProposal] = useState(null);
     const [comment, setComment] = useState('');
     const [approvalHistory, setApprovalHistory] = useState([]);
@@ -42,7 +42,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
     const [editedProposal, setEditedProposal] = useState(null);
     const [fundingSourceLoading, setFundingSourceLoading] = useState(true);
     const [fundingSourceError, setFundingSourceError] = useState(null);
-    
+
 
     // useEffect(() => {
     //     if (open && proposalId) {
@@ -94,25 +94,25 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
         try {
             // First get the proposal details
             const user = JSON.parse(localStorage.getItem('user'));
-    // Pass currentUserId
-    const proposalResponse = await axios.get(`/api/proposals/${proposalId}`, {
-      params: { currentUserId: user.userId }
-    });
+            // Pass currentUserId
+            const proposalResponse = await axios.get(`/api/proposals/${proposalId}`, {
+                params: { currentUserId: user.userId }
+            });
             // const proposalResponse = await axios.get(`/api/proposals/${proposalId}`);
             const proposalData = proposalResponse.data;
 
-            
+
 
             let historyData = [];
             // Then get the approval history
-            if(typeof proposalData.status === 'string' && proposalData.status.toLowerCase() != 'pending'){
-            const historyResponse = await axios.get(`/api/proposals/${proposalId}/history`);
-            historyData = historyResponse.data;
-            setApprovalHistory(historyData);
-             
+            if (typeof proposalData.status === 'string' && proposalData.status.toLowerCase() != 'pending') {
+                const historyResponse = await axios.get(`/api/proposals/${proposalId}/history`);
+                historyData = historyResponse.data;
+                setApprovalHistory(historyData);
+
             }
-            
-            
+
+
 
             // Get the most recent funding source from history
             const mostRecentHistory = historyData[0]; // Assuming history is ordered by date desc
@@ -218,7 +218,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
         setFundingSourceLoading(true);
         setFundingSourceError(null);
 
-        
+
     };
 
     const handleSaveChanges = async () => {
@@ -265,8 +265,8 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
 
     const formatDateTime = (dateTime) => {
         return new Date(dateTime).toLocaleDateString(); // Returns only the date in 'MM/DD/YYYY' format
-      };
-      
+    };
+
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-US', {
@@ -292,7 +292,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
                 backgroundColor: '#1a237e',
                 color: 'white'
             }}>
-                <Typography variant="h6">Proposal Details (Admin View)</Typography>
+                <Typography variant="h6">Request Details (Admin View)</Typography>
                 <IconButton onClick={handleClose} size="small" sx={{ color: 'white' }}>
                     <CloseIcon />
                 </IconButton>
@@ -320,7 +320,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
                         </Grid>
                         <Grid item xs={4}>
                             <Typography variant="subtitle2" color="textSecondary">
-                                Proposal Date
+                                Request Date
                             </Typography>
                             <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
                                 {new Date(editedProposal.proposalDate).toLocaleDateString()}
@@ -425,7 +425,12 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate,status 
                             rows={3}
                             label="New Comment"
                             value={comment}
-                            onChange={(e) => setComment(e.target.value)}
+                            onChange={(e) => {
+                                const inputValue = e.target.value;
+                                setComment(inputValue.length <= 500 ? inputValue : inputValue.slice(0, 500));
+                            }}
+                            inputProps={{ maxLength: 500 }}
+                            helperText={`${comment.length}/500`}
                         />
                     </Grid>
 

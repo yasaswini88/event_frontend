@@ -17,9 +17,15 @@ import {
     CircularProgress,
     Snackbar
 } from '@mui/material';
+
 import {
     AttachMoney as MoneyIcon,
-} from '@mui/icons-material';
+    Description as DescriptionIcon,
+    Category as CategoryIcon,
+    Business as BusinessIcon,
+    Person as PersonIcon,
+    LocalShipping as VendorIcon
+  } from '@mui/icons-material';
 
 const PROPOSAL_STATUS = ['Pending', 'Approved', 'Rejected'];
 const PROCUREMENT_CATEGORIES = ['Equipment', 'Supplies', 'Services', 'Food', 'Software', 'Other'];
@@ -33,7 +39,8 @@ const initialFormState = {
     vendorInfo: '',
     businessPurpose: '',
     status: 'Pending',
-    proposalDate: new Date().toISOString(),
+    proposalDate: new Date().toString(),
+
     userId: null,
     departmentId: null,
 };
@@ -264,88 +271,6 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
 
 
 
-    // const handleSubmit = async (e) => {
-    //     e.preventDefault();
-
-    //     if (!validateForm()) {
-    //         return;
-    //     }
-
-    //     setLoading(true);
-    //     setError('');
-
-    //     try {
-    //         // Create a new object with proper data type conversions
-    //         const loggedUser = JSON.parse(localStorage.getItem('user'));
-    //         const userId = loggedUser ? loggedUser.userId : null;
-
-    //         if (!userId) {
-    //             setSnackbar({
-    //                 open: true,
-    //                 message: 'User is not logged in.',
-    //                 severity: 'error'
-    //             });
-    //             setLoading(false);
-    //             return;
-    //         }
-
-    //         const proposalPayload = {
-    //             ...formData,
-    //             quantity: parseInt(formData.quantity, 10),
-    //             estimatedCost: parseFloat(formData.estimatedCost),
-    //             userId: parseInt(userId, 10), // Set the logged-in user's ID here
-    //             departmentId: formData.departmentId ? parseInt(formData.departmentId, 10) : null,
-    //             currentApproverId: formData.currentApproverId ? parseInt(formData.currentApproverId, 10) : null,
-    //             proposalDate: formData.proposalDate ? new Date(formData.proposalDate).toISOString() : new Date().toISOString(),
-    //             vendorInfo: formData.vendorInfo || '',
-    //             status: formData.status || 'Pending',
-    //         };
-
-    //         let response;
-    //         if (proposalPayload.proposalId) {
-    //             response = await axios.put(`/api/proposals/${proposalPayload.proposalId}`, proposalPayload);
-    //             setSnackbar({
-    //                 open: true,
-    //                 message: 'Proposal updated successfully!',
-    //                 severity: 'success',
-    //             });
-    //         } else {
-    //             response = await axios.post('/api/proposals', proposalPayload);
-    //             setSnackbar({
-    //                 open: true,
-    //                 message: 'Proposal submitted successfully!',
-    //                 severity: 'success',
-    //             });
-    //         }
-
-    //         if (response?.data) {
-    //             resetForm();
-    //             onSubmitSuccess(); // Close dialog
-    //         } else {
-    //             throw new Error('No response data received');
-    //         }
-    //     } catch (err) {
-    //         console.error('Error saving proposal:', err);
-    //         let errorMessage = 'Error saving proposal. Please try again.';
-
-    //         if (err.response?.data?.message) {
-    //             errorMessage = err.response.data.message;
-    //         } else if (err.response?.status === 400) {
-    //             errorMessage = 'Invalid proposal data. Please check all fields.';
-    //         } else if (err.response?.status === 500) {
-    //             errorMessage = 'Server error. Please try again later.';
-    //         }
-
-    //         setSnackbar({
-    //             open: true,
-    //             message: errorMessage,
-    //             severity: 'error'
-    //         });
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -473,6 +398,14 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                                 onChange={handleChange('itemName')}
                                 required
                                 fullWidth
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <DescriptionIcon />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            
                             />
 
                             <TextField
@@ -482,6 +415,13 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                                 onChange={handleChange('category')}
                                 required
                                 fullWidth
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <CategoryIcon />
+                                        </InputAdornment>
+                                    ),
+                                }}
                             >
                                 {PROCUREMENT_CATEGORIES.map((category) => (
                                     <MenuItem key={category} value={category}>
@@ -490,17 +430,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                                 ))}
                             </TextField>
 
-                            {/* <TextField
-                                label="Description"
-                                value={formData.description || ''}
-                                onChange={handleChange('description')}
-                                required
-                                multiline
-                                rows={4}
-                                fullWidth
-
-                            /> */}
-
+                           
                             <TextField
                                 label="Description"
                                 value={formData.description || ''}
@@ -513,7 +443,15 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                                     maxLength: 1000, // Set maximum characters
                                 }}
                                 helperText={`${formData.description?.length || 0}/1000`} // Show current character count
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <DescriptionIcon />
+                                        </InputAdornment>
+                                    ),
+                                }}
                                 error={(formData.description?.length || 0) > 1000} // Show error state if it exceeds limit
+                                
                             />
 
 
@@ -562,6 +500,13 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                                 value={formData.vendorInfo || ''}
                                 onChange={handleChange('vendorInfo')}
                                 fullWidth
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <VendorIcon />
+                                        </InputAdornment>
+                                    ),
+                                }}
                                 inputProps={{
                                     maxLength: 150, // Set maximum characters
                                 }}
@@ -576,6 +521,13 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                                 multiline
                                 rows={3}
                                 fullWidth
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <BusinessIcon />
+                                        </InputAdornment>
+                                    ),
+                                }}
                                 inputProps={{
                                     maxLength: 500, // Set maximum characters
                                 }}
@@ -589,7 +541,19 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                                 getOptionLabel={(option) => `${option.email} (${option.firstName} ${option.lastName})`}
                                 onChange={handleCurrentApproverChange}
                                 renderInput={(params) => (
-                                    <TextField {...params} label="Select Current Approver" required />
+                                    <TextField {...params} label="Select Current Approver" required 
+                                    InputProps={{
+                                        ...params.InputProps,
+                                        startAdornment: (
+                                            <>
+                                                <InputAdornment position="start">
+                                                    <PersonIcon />
+                                                </InputAdornment>
+                                                {params.InputProps.startAdornment}
+                                            </>
+                                        ),
+                                    }}
+                                    />
                                 )}
                             />
 

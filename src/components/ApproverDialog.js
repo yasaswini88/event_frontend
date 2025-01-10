@@ -24,14 +24,36 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
   const [fundingSources, setFundingSources] = useState([]);
   const [fundingSourceId, setFundingSourceId] = useState('');
 
+  const fetchFundingSources = async () => {
+    try {
+      const response = await axios.get('/api/funding-sources');
+      setFundingSources(response.data);
+    } catch (err) {
+      console.error('Error fetching funding sources:', err);
+    }
+  };
+
+  // useEffect(() => {
+  //   if (open && proposalId) {
+  //     fetchProposalDetails();
+  //     fetchApprovalHistory();
+  //     fetchFundingSources();
+  //   }
+  // }, [open, proposalId]);
 
   useEffect(() => {
     if (open && proposalId) {
+      // Clear old data so we don't see leftover comments from a previous proposal
+      setProposal(null);
+      setApprovalHistory([]);
+  
+      // Now fetch the new data
       fetchProposalDetails();
       fetchApprovalHistory();
       fetchFundingSources();
     }
   }, [open, proposalId]);
+  
 
   const fetchProposalDetails = async () => {
     try {
@@ -54,27 +76,13 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
       const response = await axios.get(`/api/proposals/${proposalId}/history`, {
         params: { currentUserId: user.userId }
       });
-      // const response = await axios.get(`/api/proposals/${proposalId}/history`);
-      // Remove duplicate status changes by keeping only unique combinations of oldStatus and newStatus
-      const uniqueHistory = response.data.filter((item, index, self) =>
-        index === self.findIndex((t) => (
-          t.oldStatus === item.oldStatus && t.newStatus === item.newStatus
-        ))
-      );
-      setApprovalHistory(uniqueHistory);
+  
+      setApprovalHistory(response.data);
     } catch (err) {
       console.error('Error fetching approval history:', err);
     }
   };
-
-  const fetchFundingSources = async () => {
-    try {
-      const response = await axios.get(`/api/funding-sources`); // Replace with your funding sources endpoint
-      setFundingSources(response.data);
-    } catch (err) {
-      console.error('Error fetching funding sources:', err);
-    }
-  };
+  
 
 
   const handleStatusUpdate = async (newStatus) => {
@@ -274,14 +282,20 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
                   rows={3}
                   label="Add Comment"
                   value={comment}
-                  onChange={(e) => setComment(e.target.value)}
+                  onChange={(e) => {
+                    const inputValue = e.target.value;
+                    setComment(inputValue.length <= 500 ? inputValue : inputValue.slice(0, 500));
+                  }}
                   className="mt-4"
+                  inputProps={{ maxLength: 500 }}
+                  helperText={`${comment.length}/500`}
                 />
+
               </Grid>
             </>
           )}
 
-          {approvalHistory.length > 0 && proposal?.status?.toLowerCase() !== 'pending' && (
+          {approvalHistory.length > 0 && (
             <Grid item xs={12}>
               <Divider className="my-4" />
               <Typography variant="h6" className="mb-3">Approval History</Typography>

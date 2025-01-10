@@ -71,6 +71,7 @@ import {
     Select,
     MenuItem
 } from '@mui/material';
+import { TextField } from '@mui/material';
 import { TablePagination } from '@mui/material';
 import { Close as CloseIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import UserEditDialog from './UserEditDialog';   // Make sure the path is correct
@@ -93,7 +94,7 @@ const AdminDashboard = () => {
         message: '',
         severity: 'success'
     });
-    const [filters, setFilters] = useState({ role: '', department: '' });
+    const [filters, setFilters] = useState({ role: '', department: '' ,firstName: ''});
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
@@ -159,6 +160,11 @@ const AdminDashboard = () => {
             filtered = filtered.filter(user => user.roles?.roleName === filters.role);
         }
         // if (filters.department) { ... }
+        if (filters.firstName) {
+            filtered = filtered.filter(user =>
+              user.firstName.toLowerCase().includes(filters.firstName.toLowerCase())
+            );
+            }
 
         setFilteredUsers(filtered);
     };
@@ -322,6 +328,13 @@ const AdminDashboard = () => {
                             ))}
                         </Select>
                     </FormControl> */}
+                     <TextField
+    label="Search by First Name"
+    variant="outlined"
+    name="firstName"
+    value={filters.firstName}
+    onChange={handleFilterChange}
+  />
                 </Box>
 
                 {/* Error Alert */}

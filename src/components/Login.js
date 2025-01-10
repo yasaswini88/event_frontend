@@ -29,62 +29,27 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  
-  
+
+
   const error = useSelector(state => state.auth.error);
   const isLoading = useSelector(state => state.auth.loading);
 
-  // const handleLoginSuccess = async (response) => {
-  //   try {
-  //     dispatch(loginStart());
-  //     const credential = response.credential;
-      
-  //     const backendResponse = await axios.post('/api/google-login', {
-  //       credential: credential
-  //     });
-  
-  //     if (backendResponse.data) {
-  //       const user = backendResponse.data;
-  //       localStorage.setItem('user', JSON.stringify(user));
-  //       dispatch(loginSuccess(user));
-  //       navigate('/proposal');
-  //     }
-  //   } catch (error) {
-  //     console.error('Google Login Error:', error);
-  //     let errorMessage = 'An error occurred during login. Please try again.';
-      
-  //     if (error.response) {
-  //       switch (error.response.status) {
-  //         case 404:
-  //           errorMessage = 'User not found. Please register first.';
-  //           break;
-  //         case 401:
-  //           errorMessage = 'Invalid credentials.';
-  //           break;
-  //         default:
-  //           errorMessage = 'An error occurred during login. Please try again.';
-  //       }
-  //     } else {
-  //       errorMessage = 'Network error. Please check your connection.';
-  //     }
-  //     dispatch(loginFailure(errorMessage));
-  //   }
-  // };
-
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const handleLoginSuccess = async (response) => {
     try {
       dispatch(loginStart());
       const credential = response.credential;
-  
+
       // Call the backend API
       const backendResponse = await axios.post('/api/google-login', {
         credential: credential,
       });
-  
+
       if (backendResponse.data) {
         const user = backendResponse.data;
         console.log('Google Login User:', user);
@@ -93,10 +58,10 @@ const Login = () => {
         dispatch(loginSuccess(user));
 
         console.log('User roleId is:', user.roleId);
-switch (user.roles?.roleId) {
-  case 1: // Administrator
-    window.location.href = '/admin-dashboard';
-    break;
+        switch (user.roles?.roleId) {
+          case 1: // Administrator
+            window.location.href = '/admin-dashboard';
+            break;
           case 3: // Approver
             navigate('/approver-dashboard');
             break;
@@ -107,14 +72,14 @@ switch (user.roles?.roleId) {
             navigate('/proposal');
             break;
         }
-        
-        
-        
+
+
+
       }
     } catch (error) {
       console.error('Google Login Error:', error);
       let errorMessage = 'An error occurred during login. Please try again.';
-  
+
       if (error.response) {
         switch (error.response.status) {
           case 404:
@@ -132,8 +97,8 @@ switch (user.roles?.roleId) {
       dispatch(loginFailure(errorMessage));
     }
   };
-  
-  
+
+
   const handleLoginFailure = (error) => {
     console.log('Login Failed:', error);
     dispatch(loginFailure('Google login failed'));
@@ -142,15 +107,15 @@ switch (user.roles?.roleId) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     dispatch(loginStart());
-  
+
     try {
       const response = await axios.post('/api/login', { email, password });
-  
+
       if (response.data) {
         const user = response.data;
         localStorage.setItem('user', JSON.stringify(user));
         dispatch(loginSuccess(user));
-  
+
         // Redirect based on roleId
         switch (user.roles?.roleId) {
           case 1: // Admin
@@ -170,7 +135,7 @@ switch (user.roles?.roleId) {
       dispatch(loginFailure('Invalid email or password'));
     }
   };
-  
+
 
 
   return (
@@ -183,141 +148,146 @@ switch (user.roles?.roleId) {
           px: 2,
         }}
       > */}
-       <Container
-  maxWidth="sm"
-  sx={{
-    maxHeight: '90vh', // Limit height to viewport
-    overflowY: 'auto', // Add scrolling for overflow
-  }}
->
-  <Paper
-    elevation={4}
-    sx={{
-      p: 4,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      borderRadius: 2,
-    }}
-  >
-            <Box
+      <Container
+        maxWidth="sm"
+        // Only apply scrolling for mobile; desktop remains unchanged
+        sx={{
+          ...(isMobile && {
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+          }),
+        }}
+      >
+
+        <Paper
+          elevation={4}
+          sx={{
+            p: 4,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            borderRadius: 2,
+          }}
+        >
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: '50%',
+              bgcolor: '#6c63ff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mb: 2,
+            }}
+          >
+            <LockIcon sx={{ color: 'white' }} />
+          </Box>
+
+          <Typography
+            component="h1"
+            variant="h5"
+            gutterBottom
+            sx={{ fontWeight: 600, mb: 3 }}
+          >
+            Sign in
+          </Typography>
+
+          <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              label="Email Address"
+              type="email"
+              autoComplete="email"
+              autoFocus
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              label="Password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ mb: 2 }}
+            />
+
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              disabled={isLoading}
               sx={{
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
+                py: 1.5,
+                mb: 1,
                 bgcolor: '#6c63ff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mb: 2,
+                '&:hover': {
+                  bgcolor: '#5848d9',
+                },
               }}
             >
-              <LockIcon sx={{ color: 'white' }} />
-            </Box>
-
-            <Typography
-              component="h1"
-              variant="h5"
-              gutterBottom
-              sx={{ fontWeight: 600, mb: 3 }}
-            >
-              Sign in
-            </Typography>
-
-            <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                label="Email Address"
-                type="email"
-                autoComplete="email"
-                autoFocus
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                sx={{ mb: 2 }}
-              />
-
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                label="Password"
-                type={showPassword ? 'text' : 'password'}
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => setShowPassword(!showPassword)}
-                        edge="end"
-                      >
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ mb: 2 }}
-              />
-
-              {error && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                  {error}
-                </Alert>
+              {isLoading ? (
+                <CircularProgress size={24} sx={{ color: 'white' }} />
+              ) : (
+                'Sign In'
               )}
+            </Button>
 
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                disabled={isLoading}
-                sx={{
-                  py: 1.5,
-                  mb: 1,
-                  bgcolor: '#6c63ff',
-                  '&:hover': {
-                    bgcolor: '#5848d9',
-                  },
-                }}
-              >
-                {isLoading ? (
-                  <CircularProgress size={24} sx={{ color: 'white' }} />
-                ) : (
-                  'Sign In'
-                )}
-              </Button>
-
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: 1,
-                }}
-              >
-              </Box>
-            </Box>
-
-            <Typography
-              component="h2"
-              variant="h6"
-              gutterBottom
-              sx={{ fontWeight: 600, mt: 1 }}
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 1,
+              }}
             >
-              Or
-            </Typography>
+            </Box>
+          </Box>
 
-            <GoogleLogin
-              onSuccess={handleLoginSuccess}
-              onFailure={handleLoginFailure}
-              cookiePolicy={'single_host_origin'}
-            />
-          </Paper>
-        </Container>
-      
+          <Typography
+            component="h2"
+            variant="h6"
+            gutterBottom
+            sx={{ fontWeight: 600, mt: 1 }}
+          >
+            Or
+          </Typography>
+
+          <GoogleLogin
+            onSuccess={handleLoginSuccess}
+            onFailure={handleLoginFailure}
+            cookiePolicy={'single_host_origin'}
+          />
+        </Paper>
+      </Container>
+
     </GoogleOAuthProvider>
   );
 };

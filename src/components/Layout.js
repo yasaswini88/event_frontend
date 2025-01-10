@@ -40,16 +40,18 @@ const Layout = ({ open, onClose }) => {
             icon: <ApproversIcon />,
             path: '/admin/approvers'
         },
-        // {
-        //     text: 'Purchasers',
-        //     icon: <PurchasersIcon />,
-        //     path: '/admin/purchasers'
-        // },
+        {
+            text: 'Set Budgets',
+            icon: <SettingsIcon />,
+            path: '/admin/budgets'
+        },
         {
             text: 'Options',
             icon: <SettingsIcon />,
             onClick: () => setOptionsDialogOpen(true)
         }
+
+       
     ];
 
     const handleClose = () => {

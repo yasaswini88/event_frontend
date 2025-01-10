@@ -126,7 +126,10 @@ const ProposalsList = () => {
     const handleOpenDialog = async (proposal = null) => {
         try {
             if (proposal) {
-                const response = await axios.get(`/api/proposals/${proposal.proposalId}`);
+                const loggedUser = JSON.parse(localStorage.getItem('user'));
+                const response = await axios.get(`/api/proposals/${proposal.proposalId}`, {
+                         params: { currentUserId: loggedUser.userId }
+                          });
                 setEditingProposal(response.data);
             } else {
                 setEditingProposal(null);
@@ -253,7 +256,7 @@ const ProposalsList = () => {
 
     return (
         <Box sx={{ p: 3, minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-            <Box sx={{ maxWidth: 1200, margin: '0 auto' }}>
+            <Box sx={{ maxWidth: '100%', margin: '0 auto' }}>
                 {/* Header Section */}
                 <Box
                     sx={{
@@ -323,13 +326,11 @@ const ProposalsList = () => {
                         mb: 4,
                         boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
                         overflowX: 'auto',
-                        maxWidth: '100%',
+                        width: '100%',
                     }}
                 >
                     <Table
-                        sx={{
-                            minWidth: 1500,
-                        }}
+
                     >
                         <TableHead>
                             <TableRow sx={{ backgroundColor: '#1a237e' }}>
@@ -530,12 +531,7 @@ const ProposalsList = () => {
                                                 >
                                                     <EditIcon />
                                                 </IconButton>
-                                                {/* <Button
-                                                    variant="outlined"
-                                                    onClick={() => handleOpenHistoryDialog(proposal.proposalId)}
-                                                >
-                                                    View Comments
-                                                </Button> */}
+                                              
 
                                                 <Button
                                                     variant="outlined"
@@ -621,7 +617,8 @@ const ProposalsList = () => {
                     open={snackbar.open}
                     autoHideDuration={6000}
                     onClose={handleCloseSnackbar}
-                    anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                    // anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                 >
                     <Alert
                         onClose={handleCloseSnackbar}

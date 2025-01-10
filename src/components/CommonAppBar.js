@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import { Logout as LogoutIcon } from '@mui/icons-material';
 import Layout from './Layout'; // Import the Layout component
+import MenuIcon from '@mui/icons-material/Menu';
 
 const CommonAppBar = ({ showLogout = true }) => {
   const navigate = useNavigate();
@@ -55,15 +56,26 @@ const CommonAppBar = ({ showLogout = true }) => {
         }}
       >
         <Toolbar sx={{ justifyContent: 'space-between' }}>
-          <Box
-            sx={{ display: 'flex', alignItems: 'center', cursor: isAdmin ? 'pointer' : 'default' }}
-            onClick={toggleDrawer}
-          >
-            <img
-              src="https://www.odu.edu/sites/default/files/styles/wysiwyg_300w/public/images/1599596551953.jpg"
-              alt="Crown Logo"
-              style={{ height: 40, marginRight: 16 }}
-            />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {isAdmin && (
+              <IconButton onClick={toggleDrawer}>
+                <MenuIcon sx={{ color: '#1a237e' }} />
+              </IconButton>
+            )}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                cursor: isAdmin ? 'pointer' : 'default',
+              }}
+              onClick={toggleDrawer}
+            >
+              <img
+                src="https://www.odu.edu/sites/default/files/styles/wysiwyg_300w/public/images/1599596551953.jpg"
+                alt="Crown Logo"
+                style={{ height: 40 }}
+              />
+            </Box>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box
@@ -104,7 +116,7 @@ const CommonAppBar = ({ showLogout = true }) => {
                 >
                   <Box sx={{ p: 2 }}>
                     <Typography sx={{ mb: 2 }}>
-                      Are you sure you want to log out? 
+                      Are you sure you want to log out?
                     </Typography>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                       <Button

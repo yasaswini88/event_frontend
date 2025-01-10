@@ -23,10 +23,18 @@ import ProtectedAdminRoute from './components/ProtectedAdminRoute';
 import AdminDashboard from './components/AdminDashboard';
 import Procurements from './components/Procurements';
 import AdminApprover from './components/AdminApprover';
+import SetBudgets from './components/SetBudgets';
 import './App.css';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import SingleProposalView from './components/SingleProposalView';
+import MenuIcon from '@mui/icons-material/Menu';
+
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+
+
+
 
 
 // Set axios default base URL
@@ -46,182 +54,186 @@ function App() {
 
 
   return (
-    <Router>
-      <div className="App">
-        {/* {shouldShowAppBar && <CommonAppBar showLogout={false} />} */}
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<Begin />} />
-          <Route path="/signup" element={
-            <>
-              <CommonAppBar showLogout={false} />
-              <SignUp />
-            </>
-          } />
-          <Route path="/" element={
-            <>
-              <CommonAppBar showLogout={false} />
-              <Login />
-            </>
-          } />
-          <Route path="/forgot-password" element={
-            <>
-              <CommonAppBar showLogout={false} />
-              <ForgotPassword />
-            </>
-          } />
-          <Route path="/verify-code" element={
-            <>
-              <CommonAppBar showLogout={false} />
-              <VerifyCode />
-            </>
-          } />
-          <Route path="/reset-password" element={
-            <>
-              <CommonAppBar showLogout={false} />
-              <ResetPassword />
-            </>
-          } />
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <Router>
+        <div className="App">
+          {/* {shouldShowAppBar && <CommonAppBar showLogout={false} />} */}
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<Begin />} />
+            <Route path="/signup" element={
+              <>
+                <CommonAppBar showLogout={false} />
+                <SignUp />
+              </>
+            } />
+            <Route path="/" element={
+              <>
+                <CommonAppBar showLogout={false} />
+                <Login />
+              </>
+            } />
+            <Route path="/forgot-password" element={
+              <>
+                <CommonAppBar showLogout={false} />
+                <ForgotPassword />
+              </>
+            } />
+            <Route path="/verify-code" element={
+              <>
+                <CommonAppBar showLogout={false} />
+                <VerifyCode />
+              </>
+            } />
+            <Route path="/reset-password" element={
+              <>
+                <CommonAppBar showLogout={false} />
+                <ResetPassword />
+              </>
+            } />
 
-          {/* Protected Approver routes */}
-          <Route
-            path="/approver-dashboard"
-            element={
-              <ProtectedLayout requiredRoleId={3}>
-                <ApproverDashboard />
-              </ProtectedLayout>
-            }
-          />
-          <Route
-            path="/purchaser-dashboard"
-            element={
-              <ProtectedLayout requiredRoleId={4}>
-                <PurchaserDashboard />
-              </ProtectedLayout>
-            }
-          />
-
-
-          {/* Protected User routes */}
-          {/* <Route 
-            path="/proposal" 
-            element={
-              <ProtectedLayout>
-                <ProposalForm />
-              </ProtectedLayout>
-            } 
-          /> */}
-
-          <Route
-            path="/proposal/:proposalId"
-            element={
-              <ProtectedLayout>
-                <SingleProposalView />
-              </ProtectedLayout>
-            }
-          />
-
-
-          <Route
-            path="/proposal"
-            element={
-              <ProtectedLayout>
-                <ProposalsList />
-              </ProtectedLayout>
-            }
-          />
-          <Route
-            path="/events"
-            element={
-              <ProtectedLayout>
-                <Events />
-              </ProtectedLayout>
-            }
-          />
-          <Route
-            path="/event-dialog"
-            element={
-              <ProtectedLayout>
-                <EventDialog />
-              </ProtectedLayout>
-            }
-          />
-          <Route
-            path="/purchaser-dashboard"
-            element={
-              <ProtectedLayout>
-                <PurchaserDashboard />
-              </ProtectedLayout>
-            }
-          />
-          <Route
-            path="/admin-dashboard"
-            element={
-              <ProtectedLayout requiredRoleId={1}>
-                <AdminDashboard />
-              </ProtectedLayout>
-            }
-          />
-
-          <Route
-            path="/admin/procurements"
-            element={
-              <ProtectedLayout requiredRoleId={1}>
-                <Procurements />
-              </ProtectedLayout>
-            }
-          />
-
-          <Route
-            path="/admin/approvers"
-            element={
-              <ProtectedLayout requiredRoleId={1}>
-                <AdminApprover />
-              </ProtectedLayout>
-            }
-          />
+            {/* Protected Approver routes */}
+            <Route
+              path="/approver-dashboard"
+              element={
+                <ProtectedLayout requiredRoleId={3}>
+                  <ApproverDashboard />
+                </ProtectedLayout>
+              }
+            />
+            <Route
+              path="/purchaser-dashboard"
+              element={
+                <ProtectedLayout requiredRoleId={4}>
+                  <PurchaserDashboard />
+                </ProtectedLayout>
+              }
+            />
 
 
 
-
-          <Route
-            path="*"
-            element={
-              <Navigate
-                to={
-                  user
-                    ? (
-                      user.roleId === 1
-                        ? '/admin-dashboard'
-                        : user.roleId === 3
-                          ? '/approver-dashboard'
-                          : user.roleId === 4
-                            ? '/purchaser-dashboard'
-                            : '/proposal' // e.g. faculty or default route
-                    )
-                    : '/'
-                }
-              />
-            }
-          />
+            <Route
+              path="/proposal/:proposalId"
+              element={
+                <ProtectedLayout>
+                  <SingleProposalView />
+                </ProtectedLayout>
+              }
+            />
 
 
-        </Routes>
-        {/* Add FloatingChatButton after login */}
-        {user && isAuthenticated && (
-          <FloatingChatButton
-            userDetails={user}
-            sx={{
-              position: 'fixed',
-              bottom: isMobile ? '16px' : '24px',
-              right: isMobile ? '16px' : '24px',
-              zIndex: 1000
-            }}
-          />
-        )}
+            <Route
+              path="/proposal"
+              element={
+                <ProtectedLayout>
+                  <ProposalsList />
+                </ProtectedLayout>
+              }
+            />
+            <Route
+              path="/events"
+              element={
+                <ProtectedLayout>
+                  <Events />
+                </ProtectedLayout>
+              }
+            />
+            <Route
+              path="/event-dialog"
+              element={
+                <ProtectedLayout>
+                  <EventDialog />
+                </ProtectedLayout>
+              }
+            />
+            <Route
+              path="/purchaser-dashboard"
+              element={
+                <ProtectedLayout>
+                  <PurchaserDashboard />
+                </ProtectedLayout>
+              }
+            />
+            <Route
+              path="/admin-dashboard"
+              element={
+                <ProtectedLayout requiredRoleId={1}>
+                  <AdminDashboard />
+                </ProtectedLayout>
+              }
+            />
 
-      </div>
-    </Router>
+            <Route
+              path="/admin/procurements"
+              element={
+                <ProtectedLayout requiredRoleId={1}>
+                  <Procurements />
+                </ProtectedLayout>
+              }
+            />
+
+            <Route
+              path="/admin/approvers"
+              element={
+                <ProtectedLayout requiredRoleId={1}>
+                  <AdminApprover />
+                </ProtectedLayout>
+              }
+            />
+
+            <Route
+              path="/admin/budgets"
+              element={
+                <ProtectedLayout requiredRoleId={1}>
+
+                  <SetBudgets />
+                </ProtectedLayout>
+              }
+            />
+
+
+
+
+
+            <Route
+              path="*"
+              element={
+                <Navigate
+                  to={
+                    user
+                      ? (
+                        user.roleId === 1
+                          ? '/admin-dashboard'
+                          : user.roleId === 3
+                            ? '/approver-dashboard'
+                            : user.roleId === 4
+                              ? '/purchaser-dashboard'
+                              : '/proposal' // e.g. faculty or default route
+                      )
+                      : '/'
+                  }
+                />
+              }
+            />
+
+
+          </Routes>
+          {/* Add FloatingChatButton after login */}
+          {user && isAuthenticated && (
+            <FloatingChatButton
+              userDetails={user}
+              sx={{
+                position: 'fixed',
+                bottom: isMobile ? '16px' : '24px',
+                right: isMobile ? '16px' : '24px',
+                zIndex: 1000
+              }}
+            />
+          )}
+
+        </div>
+      </Router>
+    </LocalizationProvider>
   );
 }
 

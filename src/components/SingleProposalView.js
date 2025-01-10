@@ -40,10 +40,16 @@ const SingleProposalView = () => {
 
 
 
+   
+
     // useEffect(() => {
     //     const fetchProposal = async () => {
     //         try {
-    //             const response = await axios.get(`/api/proposals/${proposalId}`);
+    //             const currentUserId = user.userId;
+    //             const response = await axios.get(
+    //                 `/api/proposals/${proposalId}`,
+    //                 { params: { currentUserId } }
+    //             );
     //             setProposal(response.data);
     //         } catch (err) {
     //             if (err.response && err.response.status === 403) {
@@ -56,20 +62,15 @@ const SingleProposalView = () => {
     //         }
     //     };
     //     fetchProposal();
-    // }, [proposalId]);
+    // }, [proposalId, user]);
 
     useEffect(() => {
         const fetchProposal = async () => {
           try {
-            // If user object is { userId: 52, ... }:
             const currentUserId = user.userId;
-      
-            // CORRECT: use backticks around the string
-            const response = await axios.get(
-              `/api/proposals/${proposalId}`,   // note the backticks ``
-              { params: { currentUserId } }     // pass the user ID
-            );
-      
+            const response = await axios.get(`/api/proposals/${proposalId}`, {
+              params: { currentUserId }
+            });
             setProposal(response.data);
           } catch (err) {
             if (err.response && err.response.status === 403) {
@@ -84,7 +85,7 @@ const SingleProposalView = () => {
         fetchProposal();
       }, [proposalId, user]);
       
-    
+
 
     if (loading) {
         return (
@@ -112,7 +113,7 @@ const SingleProposalView = () => {
     if (!proposal) {
         return (
             <Box sx={{ p: 3 }}>
-                <Alert severity="info">No proposal found.</Alert>
+                <Alert severity="info">No Request found.</Alert>
             </Box>
         );
     }
@@ -152,7 +153,7 @@ const SingleProposalView = () => {
                     <CardContent>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                             <Typography variant="h5" component="h1" sx={{ fontWeight: 'bold', color: '#333' }}>
-                                Proposal #{proposal.proposalId}
+                                Request #{proposal.proposalId}
                             </Typography>
                             <Chip
                                 label={proposal.status}
@@ -247,7 +248,7 @@ const SingleProposalView = () => {
                                         }
                                     }}
                                 >
-                                    Review Proposal
+                                    Review Request
                                 </Button>
                             )}
 
