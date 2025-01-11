@@ -19,7 +19,8 @@ import {
     Alert,
     Snackbar,
     Tabs,
-    Tab
+    Tab,
+    TextField
 } from '@mui/material';
 import { TablePagination } from '@mui/material';
 import { Close as CloseIcon, Edit as EditIcon } from '@mui/icons-material';
@@ -50,6 +51,8 @@ const ProposalsList = () => {
     const [openHistoryDialog, setOpenHistoryDialog] = useState(false);
     const [proposalHistory, setProposalHistory] = useState([]);
     const [selectedProposalId, setSelectedProposalId] = useState(null);
+    const [commentText, setCommentText] = useState('');
+
 
 
     useEffect(() => {
@@ -128,8 +131,8 @@ const ProposalsList = () => {
             if (proposal) {
                 const loggedUser = JSON.parse(localStorage.getItem('user'));
                 const response = await axios.get(`/api/proposals/${proposal.proposalId}`, {
-                         params: { currentUserId: loggedUser.userId }
-                          });
+                    params: { currentUserId: loggedUser.userId }
+                });
                 setEditingProposal(response.data);
             } else {
                 setEditingProposal(null);
@@ -241,6 +244,48 @@ const ProposalsList = () => {
             });
         }
     };
+
+    const handleAddComment = async () => {
+        try {
+            if (!commentText.trim()) return;
+
+            // 1) Get currentUser from localStorage:
+            const loggedUser = JSON.parse(localStorage.getItem('user'));
+            const currentUserId = loggedUser.userId;
+
+            // 2) Call the backend endpoint:
+            await axios.put(`/api/proposals/${selectedProposalId}/comment`, null, {
+                params: {
+                    currentUserId: currentUserId,  // "approverId" in your existing code, 
+                    // but we know it actually means the user adding comment
+                    comments: commentText
+                    // optional: fundingSourceId => for faculty, typically null
+                }
+            });
+
+            // 3) Clear the text field after success:
+            setCommentText('');
+
+            // 4) Refresh the history to show the new comment
+            const response = await axios.get(`/api/proposals/${selectedProposalId}/history`);
+            setProposalHistory(response.data);
+
+            setSnackbar({
+                open: true,
+                message: 'Comment added successfully!',
+                severity: 'success'
+            });
+
+        } catch (error) {
+            console.error('Error adding comment:', error);
+            setSnackbar({
+                open: true,
+                message: 'Failed to add comment.',
+                severity: 'error'
+            });
+        }
+    };
+
 
 
     const sortedProposals = sortData(getFilteredProposals(), sortConfig.key, sortConfig.order);
@@ -531,7 +576,7 @@ const ProposalsList = () => {
                                                 >
                                                     <EditIcon />
                                                 </IconButton>
-                                              
+
 
                                                 <Button
                                                     variant="outlined"
@@ -663,6 +708,26 @@ const ProposalsList = () => {
                             </Box>
                         ))
                     )}
+                    <Box sx={{ mt: 2 }}>
+                        <TextField
+                            label="Add a comment"
+                            fullWidth
+                            multiline
+                            minRows={2}
+                            maxRows={4}
+                            value={commentText}
+                            onChange={(e) => setCommentText(e.target.value)}
+                        />
+
+                        <Button
+                            variant="contained"
+                            sx={{ mt: 1 }}
+                            onClick={handleAddComment}
+                            disabled={!commentText.trim()}
+                        >
+                            Post Comment
+                        </Button>
+                    </Box>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setOpenHistoryDialog(false)} variant="outlined">

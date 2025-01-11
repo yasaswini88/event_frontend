@@ -17,6 +17,8 @@ import {
     CircularProgress,
     Snackbar
 } from '@mui/material';
+import moment from 'moment-timezone';
+
 
 import {
     AttachMoney as MoneyIcon,
@@ -295,6 +297,10 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                 return;
             }
 
+            const dateInEST = moment(formData.proposalDate)  
+      .tz('America/New_York')
+      .format('YYYY-MM-DDTHH:mm:ss'); 
+
             const proposalPayload = {
                 ...formData,
                 quantity: parseInt(formData.quantity, 10),
@@ -302,9 +308,10 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                 userId: parseInt(userId, 10),
                 departmentId: formData.departmentId ? parseInt(formData.departmentId, 10) : null,
                 currentApproverId: formData.currentApproverId ? parseInt(formData.currentApproverId, 10) : null,
-                proposalDate: formData.proposalDate
-                    ? new Date(formData.proposalDate).toISOString()
-                    : new Date().toISOString(),
+                // proposalDate: formData.proposalDate
+                //     ? new Date(formData.proposalDate).toISOString()
+                //     : new Date().toISOString(),
+                proposalDate: dateInEST,
                 vendorInfo: formData.vendorInfo || '',
                 status: formData.status || 'Pending',
             };

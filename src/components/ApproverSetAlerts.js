@@ -45,13 +45,16 @@ const ApproverSetAlerts = ({ open, onClose }) => {
     const [alertEnabled, setAlertEnabled] = useState(false);
     const [alertAt50, setAlertAt50] = useState(true);
     const [alertAt80, setAlertAt80] = useState(true);
+    const [monthlyBudget, setMonthlyBudget] = useState(0);
+
 
     const [originalPrefs, setOriginalPrefs] = useState({
         year: currentYear,
         month: currentMonth,
         alertEnabled: false,
         alertAt50: false,
-        alertAt80: false
+        alertAt80: false,
+        monthlyBudget: 0
     });
 
 
@@ -104,6 +107,7 @@ const ApproverSetAlerts = ({ open, onClose }) => {
             setAlertEnabled(data.alertEnabled || false);
             setAlertAt50(data.alertAt50 || false);
             setAlertAt80(data.alertAt80 || false);
+            setMonthlyBudget(data.monthlyBudget || 0);
 
 
             setOriginalPrefs({
@@ -111,7 +115,8 @@ const ApproverSetAlerts = ({ open, onClose }) => {
                 month: month,
                 alertEnabled: data.alertEnabled || false,
                 alertAt50: data.alertAt50 || false,
-                alertAt80: data.alertAt80 || false
+                alertAt80: data.alertAt80 || false,
+                monthlyBudget: data.monthlyBudget || 0
             });
 
 
@@ -129,6 +134,10 @@ const ApproverSetAlerts = ({ open, onClose }) => {
     const validateInput = () => {
         if (year < 2000 || year > 2100) return false;
         if (month < 1 || month > 12) return false;
+        if (monthlyBudget < 0) {
+            return false;
+          }
+          
         return true;
     };
 
@@ -157,6 +166,7 @@ const ApproverSetAlerts = ({ open, onClose }) => {
         // revert states to originalPrefs
         setYear(originalPrefs.year);
         setMonth(originalPrefs.month);
+        setMonthlyBudget(originalPrefs.monthlyBudget);
         setAlertEnabled(originalPrefs.alertEnabled);
         setAlertAt50(originalPrefs.alertAt50);
         setAlertAt80(originalPrefs.alertAt80);
@@ -197,7 +207,8 @@ const ApproverSetAlerts = ({ open, onClose }) => {
                     month: month,
                     alertEnabled: alertEnabled,
                     alertAt50: alertEnabled && alertAt50,
-                    alertAt80: alertEnabled && alertAt80
+                    alertAt80: alertEnabled && alertAt80,
+                    monthlyBudget: monthlyBudget 
                 }
             });
 
@@ -285,6 +296,16 @@ const ApproverSetAlerts = ({ open, onClose }) => {
                                     </MenuItem>
                                 ))}
                             </TextField>
+                            <TextField
+                                fullWidth
+                                type="number"
+                                label="Monthly Budget"
+                                value={monthlyBudget}
+                                onChange={(e) => setMonthlyBudget(parseFloat(e.target.value) || 0)}
+                                inputProps={{ min: 0, step: 100 }}
+                                // sx={{ mt: 2 }}
+                            />
+
                         </Box>
 
                         {/* Alert Settings */}
@@ -342,13 +363,13 @@ const ApproverSetAlerts = ({ open, onClose }) => {
 
                 <Divider />
                 <DialogActions sx={{ p: 2 }}>
-                    <Button
+                    {/* <Button
                         onClick={handleReset}
                         color="secondary"
                         disabled={loading}
                     >
                         Reset
-                    </Button>
+                    </Button> */}
                     <Button
                         onClick={onClose}
                         color="inherit"

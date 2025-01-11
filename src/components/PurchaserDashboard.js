@@ -38,6 +38,8 @@ import {
     DateRangePicker,
     SingleInputDateRangeField
 } from '@mui/x-date-pickers-pro';
+import moment from 'moment-timezone';
+
 
 
 
@@ -68,9 +70,18 @@ const PurchaserDashboard = () => {
     // const [startDate, setStartDate] = useState('');
     // const [endDate, setEndDate] = useState('');
 
+    const [openHistoryDialog, setOpenHistoryDialog] = useState(false);
+    const [proposalHistory, setProposalHistory] = useState([]);
+    const [selectedProposalId, setSelectedProposalId] = useState(null);
+    const [commentText, setCommentText] = useState('');
+
+
     const [dateRange, setDateRange] = useState([null, null]);
 
     const navigate = useNavigate();
+
+    const [orderNotes, setOrderNotes] = useState([]);
+    const [noteText, setNoteText] = useState('');
 
 
 
@@ -217,9 +228,35 @@ const PurchaserDashboard = () => {
 
 
 
+    const getLocalDateTimeString = () => {
+        const date = new Date();
+        const year = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        const HH = String(date.getHours()).padStart(2, '0');
+        const MM = String(date.getMinutes()).padStart(2, '0');
+        const ss = String(date.getSeconds()).padStart(2, '0');
+        return `${year}-${mm}-${dd}T${HH}:${MM}:${ss}`;
+    };
+
+    
     const handleCreatePurchaseOrder = async (proposalId) => {
         try {
-            const response = await axios.post(`/api/purchase-orders/create/${proposalId}`);
+            const loggedUser = JSON.parse(localStorage.getItem('user')) || {};
+        const createdBy = `${loggedUser.firstName} ${loggedUser.lastName}` || 'Anonymous';
+        const createdTime = moment().tz("America/New_York").format("YYYY-MM-DDTHH:mm:ss");
+
+
+        const response = await axios.post(
+            `/api/purchase-orders/create/${proposalId}`,
+            null,
+            {
+                params: {
+                    createdBy,
+                    createdTime
+                }
+            }
+        );
 
             // Update the local state immediately
             setPurchaseOrders(prevOrders =>
@@ -284,13 +321,27 @@ const PurchaserDashboard = () => {
                 return;
             }
 
-            await axios.put(`/api/purchase-orders/${selectedOrder.orderId}/delivery-status`, null, {
+             // 1) Grab user from local storage
+        const loggedUser = JSON.parse(localStorage.getItem('user')) || {};
+        const updatedBy = `${loggedUser.firstName} ${loggedUser.lastName}` || 'Anonymous';
+        // 2) use local system time => in ISO
+        const updatedTime = moment().tz("America/New_York").format("YYYY-MM-DDTHH:mm:ss");
+
+
+        await axios.put(
+            `/api/purchase-orders/${selectedOrder.orderId}/delivery-status`,
+            null,
+            {
                 params: {
                     newStatus: newDeliveryStatus,
-                    expectedDeliveryDate: expectedDeliveryDate,
-                    purchaseOrderNumber: trackingNumber
+                    expectedDeliveryDate,
+                    purchaseOrderNumber: trackingNumber,
+                    updatedBy,       // pass the user
+                    updatedTime      // pass the local time
                 }
-            });
+            }
+        );
+
             setSnackbar({
                 open: true,
                 message: 'Delivery status updated successfully',
@@ -308,13 +359,32 @@ const PurchaserDashboard = () => {
         }
     };
 
+
+    const fetchOrderNotes = async (orderId) => {
+        try {
+            const response = await axios.get(`/api/purchase-orders/${orderId}/notes`);
+            setOrderNotes(response.data); // store the notes in state
+        } catch (err) {
+            console.error('Error fetching order notes:', err);
+            setSnackbar({
+                open: true,
+                message: 'Error fetching delivery notes.',
+                severity: 'error'
+            });
+        }
+    };
+
+
     const handleOpenDialog = (order) => {
         setSelectedOrder(order);
         setExpectedDeliveryDate(order.expectedDeliveryDate || '');
         setNewDeliveryStatus(order.deliveryStatus || '');
         setTrackingNumber(order.purchaseOrderNumber !== 'Not Generated' ? order.purchaseOrderNumber : '');
+        fetchOrderNotes(order.orderId);
         setOpenDialog(true);
     };
+
+
 
     const handleCloseDialog = () => {
         setOpenDialog(false);
@@ -326,6 +396,54 @@ const PurchaserDashboard = () => {
     const handleCloseSnackbar = () => {
         setSnackbar(prev => ({ ...prev, open: false }));
     };
+
+
+    const handleAddNote = async () => {
+        if (!noteText.trim()) return;  // don't submit empty note
+
+        try {
+            
+            const loggedUser = JSON.parse(localStorage.getItem('user')) || {};
+           
+            const createdBy = `${loggedUser.firstName} ${loggedUser.lastName}` || 'Anonymous';
+
+            const createdDate = moment()
+            .tz("America/New_York")
+            .format("YYYY-MM-DDTHH:mm:ss");
+
+        
+            const response = await axios.post(
+                `/api/purchase-orders/${selectedOrder.orderId}/notes`,
+                null,  // no request body, just query params
+                {
+                    params: {
+                        noteText: noteText,
+                        createdBy: createdBy,
+                        createdDate : createdDate,
+                    }
+                }
+            );
+
+            // The response will be the newly created PurchaseOrderNoteDTO
+            setOrderNotes((prevNotes) => [...prevNotes, response.data]);
+            setNoteText(''); // clear the input
+
+            setSnackbar({
+                open: true,
+                message: 'Note added successfully.',
+                severity: 'success'
+            });
+        } catch (err) {
+            console.error('Error adding note:', err);
+            setSnackbar({
+                open: true,
+                message: 'Error adding note.',
+                severity: 'error'
+            });
+        }
+    };
+
+
 
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString('en-US', {
@@ -361,6 +479,78 @@ const PurchaserDashboard = () => {
             });
         }
     };
+
+    const handleOpenHistoryDialog = async (proposalId) => {
+        try {
+            setSelectedProposalId(proposalId);  // which proposal are we viewing?
+
+            // 1) Fetch approval history from the backend:
+            const response = await axios.get(`/api/proposals/${proposalId}/history`);
+            // 2) Store it in state:
+            setProposalHistory(response.data);
+
+            // 3) Reset any existing comment text:
+            setCommentText('');
+
+            // 4) Open the dialog:
+            setOpenHistoryDialog(true);
+        } catch (err) {
+            console.error('Error fetching proposal history:', err);
+            setSnackbar({
+                open: true,
+                message: 'Error fetching proposal history',
+                severity: 'error'
+            });
+        }
+    };
+
+
+    const handleAddComment = async () => {
+        try {
+            if (!commentText.trim()) return;
+
+            // 1) Get currentUser from localStorage:
+            const loggedUser = JSON.parse(localStorage.getItem('user'));
+            const currentUserId = loggedUser.userId;
+//             const actionDate = moment()
+//   .tz("America/New_York")
+//   .format("YYYY-MM-DDTHH:mm:ss");
+
+            // 2) Call the backend endpoint:
+            await axios.put(`/api/proposals/${selectedProposalId}/comment`, null, {
+                params: {
+                    currentUserId: currentUserId,
+                    comments: commentText,
+                    // optional: fundingSourceId => for purchaser, typically null or pass some if needed
+                    // actionDate: actionDate
+
+                }
+            });
+
+            // 3) Clear the text field after success:
+            setCommentText('');
+
+            // 4) Refresh the history to show the new comment
+            const response = await axios.get(`/api/proposals/${selectedProposalId}/history`);
+            setProposalHistory(response.data);
+
+            setSnackbar({
+                open: true,
+                message: 'Comment added successfully!',
+                severity: 'success'
+            });
+
+        } catch (error) {
+            console.error('Error adding comment:', error);
+            setSnackbar({
+                open: true,
+                message: 'Failed to add comment.',
+                severity: 'error'
+            });
+        }
+    };
+
+
 
 
     return (
@@ -496,21 +686,7 @@ const PurchaserDashboard = () => {
                             >
                                 Department {sortConfig.key === 'department' && (sortConfig.order === 'asc' ? '↑' : '↓')}
                             </TableCell>
-                            {/* <TableCell
-                                sx={{ color: 'white', cursor: 'pointer' }}
-                                onClick={() => handleSort('quantity')}
-                            >
-                                Quantity {sortConfig.key === 'quantity' && (sortConfig.order === 'asc' ? '↑' : '↓')}
-                            </TableCell> */}
-                            {/* <TableCell
-                                sx={{ color: 'white', cursor: 'pointer' }}
-                                onClick={() => handleSort('finalCost')}
-                            >
-                                Cost {sortConfig.key === 'finalCost' && (sortConfig.order === 'asc' ? '↑' : '↓')}
-                            </TableCell> */}
-                            {/* NEW: Description column */}
-                            {/* <TableCell sx={{ color: 'white' }}>Description</TableCell> */}
-
+                           
                             {/* NEW: Requester */}
                             <TableCell sx={{ color: 'white' }}>Requester</TableCell>
 
@@ -540,14 +716,7 @@ const PurchaserDashboard = () => {
                                 </TableCell>
 
                                 <TableCell>{item.department}</TableCell>
-                                {/* <TableCell>{item.quantity}</TableCell>
-                                <TableCell>${item.finalCost.toFixed(2)}</TableCell> */}
-
-                                {/* NEW: Show description */}
-                                {/* <TableCell>{item.description}</TableCell> */}
-
-                                {/* NEW: Show the requester's name */}
-                                {/* <TableCell>{item.requesterName}</TableCell> */}
+                               
 
                                 <TableCell>
                                     {item.requesterName ? (
@@ -637,6 +806,21 @@ const PurchaserDashboard = () => {
                                                 Update Delivery
                                             </Button>
                                         )}
+                                        <Button
+                                            variant="outlined"
+                                            size="small"
+                                            onClick={() => handleOpenHistoryDialog(item.proposalId)}
+                                            sx={{
+                                                backgroundColor: '#386641',
+                                                color: '#fff',
+                                                borderColor: 'transparent',
+                                                '&:hover': {
+                                                    backgroundColor: '#95d5b2'
+                                                }
+                                            }}
+                                        >
+                                            View Comments
+                                        </Button>
                                     </Box>
                                 </TableCell>
                             </TableRow>
@@ -713,6 +897,72 @@ const PurchaserDashboard = () => {
                             fullWidth
                         />
 
+                        {/* NEW SECTION: DELIVERY NOTES */}
+                        <Box sx={{ mt: 4 }}>
+                            <Typography variant="subtitle1" gutterBottom>
+                                Delivery Notes
+                            </Typography>
+
+                            {/* List existing notes */}
+                            <Box
+                                sx={{
+                                    maxHeight: 200,
+                                    overflowY: 'auto',
+                                    border: '1px solid #ccc',
+                                    borderRadius: 1,
+                                    p: 1,
+                                    mb: 2
+                                }}
+                            >
+                                {orderNotes && orderNotes.length > 0 ? (
+                                    orderNotes.map((note) => (
+                                        <Box
+                                            key={note.noteId}
+                                            sx={{
+                                                mb: 1,
+                                                p: 1,
+                                                border: '1px solid #eee',
+                                                borderRadius: 1,
+                                                backgroundColor: '#fafafa'
+                                            }}
+                                        >
+                                            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                                {note.createdBy || 'Unknown User'} on{" "}
+                                                {new Date(note.createdDate).toLocaleString()}
+                                            </Typography>
+
+                                            <Typography variant="body2">
+                                                {note.noteText}
+                                            </Typography>
+                                        </Box>
+                                    ))
+                                ) : (
+                                    <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
+                                        No notes yet.
+                                    </Typography>
+                                )}
+                            </Box>
+
+                            {/* Add new note */}
+                            <TextField
+                                label="Add a new note"
+                                value={noteText}
+                                onChange={(e) => setNoteText(e.target.value)}
+                                multiline
+                                minRows={2}
+                                fullWidth
+                            />
+                            <Button
+                                variant="contained"
+                                size="small"
+                                onClick={handleAddNote}
+                                sx={{ mt: 1 }}
+                                disabled={!noteText.trim()}
+                            >
+                                Add Note
+                            </Button>
+                        </Box>
+
                     </Box>
                 </DialogContent>
                 <DialogActions>
@@ -723,6 +973,70 @@ const PurchaserDashboard = () => {
                         disabled={!newDeliveryStatus || !expectedDeliveryDate}
                     >
                         Update
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+
+            <Dialog
+                open={openHistoryDialog}
+                onClose={() => setOpenHistoryDialog(false)}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>Proposal History (Comments)</DialogTitle>
+                <DialogContent>
+                    {proposalHistory.length === 0 ? (
+                        <Typography>No history found.</Typography>
+                    ) : (
+                        proposalHistory.map((entry, index) => (
+                            <Box
+                                key={index}
+                                sx={{
+                                    mb: 2,
+                                    p: 2,
+                                    border: '1px solid #eee',
+                                    borderRadius: 1
+                                }}
+                            >
+                                <Typography variant="body2">
+                                    <strong>Old Status:</strong> {entry.oldStatus} &nbsp;
+                                    <strong>New Status:</strong> {entry.newStatus}
+                                </Typography>
+                                {entry.comments && (
+                                    <Typography variant="body2" sx={{ mt: 1 }}>
+                                        <strong>Comment:</strong> {entry.comments}
+                                    </Typography>
+                                )}
+                            </Box>
+                        ))
+                    )}
+
+                    {/* Add comment text field + button */}
+                    <Box sx={{ mt: 2 }}>
+                        <TextField
+                            label="Add a comment"
+                            fullWidth
+                            multiline
+                            minRows={2}
+                            maxRows={4}
+                            value={commentText}
+                            onChange={(e) => setCommentText(e.target.value)}
+                        />
+
+                        <Button
+                            variant="contained"
+                            sx={{ mt: 1 }}
+                            onClick={handleAddComment}
+                            disabled={!commentText.trim()}
+                        >
+                            Post Comment
+                        </Button>
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenHistoryDialog(false)} variant="outlined">
+                        Close
                     </Button>
                 </DialogActions>
             </Dialog>

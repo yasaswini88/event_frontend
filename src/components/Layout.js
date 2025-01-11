@@ -40,11 +40,11 @@ const Layout = ({ open, onClose }) => {
             icon: <ApproversIcon />,
             path: '/admin/approvers'
         },
-        {
-            text: 'Set Budgets',
-            icon: <SettingsIcon />,
-            path: '/admin/budgets'
-        },
+        // {
+        //     text: 'Set Budgets',
+        //     icon: <SettingsIcon />,
+        //     path: '/admin/budgets'
+        // },
         {
             text: 'Options',
             icon: <SettingsIcon />,

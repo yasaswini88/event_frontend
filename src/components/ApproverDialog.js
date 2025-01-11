@@ -10,10 +10,8 @@ import {
   Typography,
   Box,
   Grid,
-  IconButton,
   Divider, FormControl, InputLabel, Select, MenuItem,
 } from '@mui/material';
-import { Close as CloseIcon } from '@mui/icons-material';
 
 const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStatus }) => {
   const [proposal, setProposal] = useState(null);
@@ -122,7 +120,7 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
 
       // Prepare request parameters
       const params = {
-        approverId: user.userId,
+        currentUserId: user.userId,
         comments: comment, // Add comment
       };
 
