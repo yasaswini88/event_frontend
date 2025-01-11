@@ -29,6 +29,7 @@ import { useTheme } from '@mui/material/styles';
 import { useMediaQuery } from '@mui/material';
 import { sortData } from '../utils/utilities';
 import FacultyMetrics from './FacultyMetrics';
+import moment from 'moment-timezone';
 
 const ProposalsList = () => {
     const [proposals, setProposals] = useState([]);
@@ -59,27 +60,7 @@ const ProposalsList = () => {
         fetchProposals();
     }, []);
 
-    // const fetchProposals = async () => {
-    //     try {
-    //         const loggedUser = JSON.parse(localStorage.getItem('user'));
-    //         if (!loggedUser?.userId) {
-    //             setError('User not found');
-    //             return;
-    //         }
 
-    //         // Fetch proposals for the current user
-    //         const response = await axios.get(`/api/proposals/user/${loggedUser.userId}`);
-    //         setProposals(response.data);
-    //     } catch (err) {
-    //         console.error('Error fetching proposals:', err);
-    //         setError('Error fetching proposals');
-    //         setSnackbar({
-    //             open: true,
-    //             message: 'Error fetching proposals',
-    //             severity: 'error'
-    //         });
-    //     }
-    // };
 
     // 1) In fetchProposals()
     const fetchProposals = async () => {
@@ -253,13 +234,17 @@ const ProposalsList = () => {
             const loggedUser = JSON.parse(localStorage.getItem('user'));
             const currentUserId = loggedUser.userId;
 
+            const actionDate = moment()
+                .tz("America/New_York")
+                .format("YYYY-MM-DDTHH:mm:ss");
             // 2) Call the backend endpoint:
             await axios.put(`/api/proposals/${selectedProposalId}/comment`, null, {
                 params: {
                     currentUserId: currentUserId,  // "approverId" in your existing code, 
                     // but we know it actually means the user adding comment
-                    comments: commentText
+                    comments: commentText,
                     // optional: fundingSourceId => for faculty, typically null
+                    actionDate: actionDate,
                 }
             });
 
@@ -298,6 +283,15 @@ const ProposalsList = () => {
             day: 'numeric'
         });
     };
+
+    function formatDateTimeEST(dateTimeString) {
+        if (!dateTimeString) return '';
+        return new Date(dateTimeString).toLocaleString('en-US', {
+            timeZone: 'America/New_York',
+            dateStyle: 'medium',
+            timeStyle: 'short',
+        });
+    }
 
     return (
         <Box sx={{ p: 3, minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
@@ -685,29 +679,52 @@ const ProposalsList = () => {
                     {proposalHistory.length === 0 ? (
                         <Typography>No history found.</Typography>
                     ) : (
-                        proposalHistory.map((entry, index) => (
-                            <Box
-                                key={index}
-                                sx={{
-                                    mb: 2,
-                                    p: 2,
-                                    border: '1px solid #eee',
-                                    borderRadius: 1
-                                }}
-                            >
-                                <Typography variant="body2">
-                                    <strong>Old Status:</strong> {entry.oldStatus} &nbsp;
-                                    <strong>New Status:</strong> {entry.newStatus}
-                                </Typography>
-                                {entry.comments && (
-                                    <Typography variant="body2" sx={{ mt: 1 }}>
-                                        <strong>Comment:</strong> {entry.comments}
-                                    </Typography>
-                                )}
+                        <Box
+                            sx={{
+                                maxHeight: 300,            // scrollable
+                                overflowY: 'auto',
+                                p: 2,
+                                backgroundColor: 'background.paper',
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                borderRadius: 1,
+                            }}
+                        >
+                            {proposalHistory.map((entry, index) => (
+                                <Box
+                                    key={index}
+                                    sx={{
+                                        mb: 3,
+                                        p: 2,
+                                        backgroundColor: 'background.default',
+                                        border: '1px solid',
+                                        borderColor: 'divider',
+                                        borderRadius: 1,
+                                    }}
+                                >
 
-                            </Box>
-                        ))
+                                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                                        Comment by {entry.approverName || 'Unknown'}
+                                    </Typography>
+                                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                        {formatDateTimeEST(entry.actionDate)}
+                                    </Typography>
+                                    {entry.oldStatus !== entry.newStatus && (
+                                        <Typography variant="body2" sx={{ mt: 1 }}>
+                                            Status changed from <strong>{entry.oldStatus}</strong> to{' '}
+                                            <strong>{entry.newStatus}</strong>
+                                        </Typography>
+                                    )}
+                                    {entry.comments && (
+                                        <Typography variant="body2" sx={{ mt: 1 }}>
+                                            {entry.comments}
+                                        </Typography>
+                                    )}
+                                </Box>
+                            ))}
+                        </Box>
                     )}
+
                     <Box sx={{ mt: 2 }}>
                         <TextField
                             label="Add a comment"

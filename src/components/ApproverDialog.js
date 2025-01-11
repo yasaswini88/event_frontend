@@ -12,6 +12,7 @@ import {
   Grid,
   Divider, FormControl, InputLabel, Select, MenuItem,
 } from '@mui/material';
+import moment from 'moment-timezone';
 
 const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStatus }) => {
   const [proposal, setProposal] = useState(null);
@@ -117,11 +118,14 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
   const handleAddComment = async () => {
     try {
       const user = JSON.parse(localStorage.getItem('user'));
-
+      const actionDate = moment()
+  .tz("America/New_York")
+  .format("YYYY-MM-DDTHH:mm:ss");
       // Prepare request parameters
       const params = {
         currentUserId: user.userId,
         comments: comment, // Add comment
+        actionDate: actionDate
       };
 
       // Include funding source only if selected
@@ -141,8 +145,7 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
       setComment('');
       setFundingSourceId('');
 
-      // Close the dialog
-      onClose();
+     
     } catch (err) {
       console.error('Error adding comment:', err);
     }
@@ -152,8 +155,13 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
 
 
   const formatDateTime = (dateTime) => {
-    return new Date(dateTime).toLocaleDateString(); // Returns only the date in 'MM/DD/YYYY' format
+    return new Date(dateTime).toLocaleString('en-US', {
+      timeZone: 'America/New_York',
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
   };
+  
 
 
   const renderStatusUpdateButtons = () => {
@@ -293,27 +301,61 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
             </>
           )}
 
-          {approvalHistory.length > 0 && (
-            <Grid item xs={12}>
-              <Divider className="my-4" />
-              <Typography variant="h6" className="mb-3">Approval History</Typography>
-              {approvalHistory.map((history, index) => (
-                <Box key={index} className="mb-3 p-3 bg-gray-50 rounded">
-                  <Typography variant="body2">
-                    Status changed from {history.oldStatus} to {history.newStatus}
-                  </Typography>
-                  <Typography variant="caption" className="text-gray-600">
-                    {formatDateTime(history.actionDate)}
-                  </Typography>
-                  {history.comments && (
-                    <Typography variant="body2" className="mt-1">
-                      Comment: {history.comments}
-                    </Typography>
-                  )}
-                </Box>
-              ))}
-            </Grid>
+{approvalHistory.length > 0 && (
+  <Grid item xs={12}>
+    <Divider sx={{ my: 2 }} />
+    <Typography variant="h6" sx={{ mb: 2 }}>
+      Approval History
+    </Typography>
+    <Box
+      sx={{
+        maxHeight: 300, // Set max height
+        overflowY: 'auto', // Enable vertical scrolling
+        p: 2,
+        backgroundColor: 'background.paper',
+        border: '1px solid',
+        borderColor: 'divider',
+        borderRadius: 1,
+      }}
+    >
+      {approvalHistory.map((history, index) => (
+        <Box
+          key={index}
+          sx={{
+            mb: 3,
+            p: 2,
+            backgroundColor: 'background.default',
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 1,
+          }}
+        >
+          {/* Approval history item */}
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+              Comment by {history.approverName || 'Unknown'}
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              {formatDateTime(history.actionDate)}
+            </Typography>
+          </Box>
+          {history.oldStatus !== history.newStatus && (
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              Status changed from <strong>{history.oldStatus}</strong> to{' '}
+              <strong>{history.newStatus}</strong>
+            </Typography>
           )}
+          {history.comments && (
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              {history.comments}
+            </Typography>
+          )}
+        </Box>
+      ))}
+    </Box>
+  </Grid>
+)}
+
         </Grid>
       </DialogContent>
 

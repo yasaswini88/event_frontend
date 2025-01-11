@@ -465,7 +465,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                             <TextField
                                 label="Quantity"
                                 type="number"
-                                value={formData.quantity || 1}
+                                value={formData.quantity}
                                 onChange={handleChange('quantity')}
                                 required
                                 fullWidth

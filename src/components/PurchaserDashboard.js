@@ -239,24 +239,24 @@ const PurchaserDashboard = () => {
         return `${year}-${mm}-${dd}T${HH}:${MM}:${ss}`;
     };
 
-    
+
     const handleCreatePurchaseOrder = async (proposalId) => {
         try {
             const loggedUser = JSON.parse(localStorage.getItem('user')) || {};
-        const createdBy = `${loggedUser.firstName} ${loggedUser.lastName}` || 'Anonymous';
-        const createdTime = moment().tz("America/New_York").format("YYYY-MM-DDTHH:mm:ss");
+            const createdBy = `${loggedUser.firstName} ${loggedUser.lastName}` || 'Anonymous';
+            const createdTime = moment().tz("America/New_York").format("YYYY-MM-DDTHH:mm:ss");
 
 
-        const response = await axios.post(
-            `/api/purchase-orders/create/${proposalId}`,
-            null,
-            {
-                params: {
-                    createdBy,
-                    createdTime
+            const response = await axios.post(
+                `/api/purchase-orders/create/${proposalId}`,
+                null,
+                {
+                    params: {
+                        createdBy,
+                        createdTime
+                    }
                 }
-            }
-        );
+            );
 
             // Update the local state immediately
             setPurchaseOrders(prevOrders =>
@@ -321,26 +321,26 @@ const PurchaserDashboard = () => {
                 return;
             }
 
-             // 1) Grab user from local storage
-        const loggedUser = JSON.parse(localStorage.getItem('user')) || {};
-        const updatedBy = `${loggedUser.firstName} ${loggedUser.lastName}` || 'Anonymous';
-        // 2) use local system time => in ISO
-        const updatedTime = moment().tz("America/New_York").format("YYYY-MM-DDTHH:mm:ss");
+            // 1) Grab user from local storage
+            const loggedUser = JSON.parse(localStorage.getItem('user')) || {};
+            const updatedBy = `${loggedUser.firstName} ${loggedUser.lastName}` || 'Anonymous';
+            // 2) use local system time => in ISO
+            const updatedTime = moment().tz("America/New_York").format("YYYY-MM-DDTHH:mm:ss");
 
 
-        await axios.put(
-            `/api/purchase-orders/${selectedOrder.orderId}/delivery-status`,
-            null,
-            {
-                params: {
-                    newStatus: newDeliveryStatus,
-                    expectedDeliveryDate,
-                    purchaseOrderNumber: trackingNumber,
-                    updatedBy,       // pass the user
-                    updatedTime      // pass the local time
+            await axios.put(
+                `/api/purchase-orders/${selectedOrder.orderId}/delivery-status`,
+                null,
+                {
+                    params: {
+                        newStatus: newDeliveryStatus,
+                        expectedDeliveryDate,
+                        purchaseOrderNumber: trackingNumber,
+                        updatedBy,       // pass the user
+                        updatedTime      // pass the local time
+                    }
                 }
-            }
-        );
+            );
 
             setSnackbar({
                 open: true,
@@ -402,16 +402,16 @@ const PurchaserDashboard = () => {
         if (!noteText.trim()) return;  // don't submit empty note
 
         try {
-            
+
             const loggedUser = JSON.parse(localStorage.getItem('user')) || {};
-           
+
             const createdBy = `${loggedUser.firstName} ${loggedUser.lastName}` || 'Anonymous';
 
             const createdDate = moment()
-            .tz("America/New_York")
-            .format("YYYY-MM-DDTHH:mm:ss");
+                .tz("America/New_York")
+                .format("YYYY-MM-DDTHH:mm:ss");
 
-        
+
             const response = await axios.post(
                 `/api/purchase-orders/${selectedOrder.orderId}/notes`,
                 null,  // no request body, just query params
@@ -419,7 +419,7 @@ const PurchaserDashboard = () => {
                     params: {
                         noteText: noteText,
                         createdBy: createdBy,
-                        createdDate : createdDate,
+                        createdDate: createdDate,
                     }
                 }
             );
@@ -463,6 +463,15 @@ const PurchaserDashboard = () => {
 
         return localTime;
     };
+
+    function formatDateTimeEST(dateTimeString) {
+        if (!dateTimeString) return '';
+        return new Date(dateTimeString).toLocaleString('en-US', {
+            timeZone: 'America/New_York',
+            dateStyle: 'medium',
+            timeStyle: 'short',
+        });
+    }
 
     const handleExpectedDeliveryDateChange = (e) => {
         const inputDate = new Date(e.target.value);
@@ -512,9 +521,9 @@ const PurchaserDashboard = () => {
             // 1) Get currentUser from localStorage:
             const loggedUser = JSON.parse(localStorage.getItem('user'));
             const currentUserId = loggedUser.userId;
-//             const actionDate = moment()
-//   .tz("America/New_York")
-//   .format("YYYY-MM-DDTHH:mm:ss");
+            const actionDate = moment()
+                .tz("America/New_York")
+                .format("YYYY-MM-DDTHH:mm:ss");
 
             // 2) Call the backend endpoint:
             await axios.put(`/api/proposals/${selectedProposalId}/comment`, null, {
@@ -522,7 +531,7 @@ const PurchaserDashboard = () => {
                     currentUserId: currentUserId,
                     comments: commentText,
                     // optional: fundingSourceId => for purchaser, typically null or pass some if needed
-                    // actionDate: actionDate
+                    actionDate: actionDate
 
                 }
             });
@@ -686,7 +695,7 @@ const PurchaserDashboard = () => {
                             >
                                 Department {sortConfig.key === 'department' && (sortConfig.order === 'asc' ? '↑' : '↓')}
                             </TableCell>
-                           
+
                             {/* NEW: Requester */}
                             <TableCell sx={{ color: 'white' }}>Requester</TableCell>
 
@@ -716,7 +725,7 @@ const PurchaserDashboard = () => {
                                 </TableCell>
 
                                 <TableCell>{item.department}</TableCell>
-                               
+
 
                                 <TableCell>
                                     {item.requesterName ? (
@@ -989,28 +998,50 @@ const PurchaserDashboard = () => {
                     {proposalHistory.length === 0 ? (
                         <Typography>No history found.</Typography>
                     ) : (
-                        proposalHistory.map((entry, index) => (
-                            <Box
-                                key={index}
-                                sx={{
-                                    mb: 2,
-                                    p: 2,
-                                    border: '1px solid #eee',
-                                    borderRadius: 1
-                                }}
-                            >
-                                <Typography variant="body2">
-                                    <strong>Old Status:</strong> {entry.oldStatus} &nbsp;
-                                    <strong>New Status:</strong> {entry.newStatus}
-                                </Typography>
-                                {entry.comments && (
-                                    <Typography variant="body2" sx={{ mt: 1 }}>
-                                        <strong>Comment:</strong> {entry.comments}
+                        <Box
+                            sx={{
+                                maxHeight: 300,
+                                overflowY: 'auto',
+                                p: 2,
+                                backgroundColor: 'background.paper',
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                borderRadius: 1,
+                            }}
+                        >
+                            {proposalHistory.map((entry, index) => (
+                                <Box
+                                    key={index}
+                                    sx={{
+                                        mb: 3,
+                                        p: 2,
+                                        backgroundColor: 'background.default',
+                                        border: '1px solid',
+                                        borderColor: 'divider',
+                                        borderRadius: 1,
+                                    }}
+                                >
+                                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                                        Comment by {entry.approverName || 'Unknown'}
                                     </Typography>
-                                )}
-                            </Box>
-                        ))
+                                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                        {formatDateTimeEST(entry.actionDate)}
+                                    </Typography>
+                                    {entry.oldStatus !== entry.newStatus && (
+                                        <Typography variant="body2" sx={{ mt: 1 }}>
+                                            Status changed from <strong>{entry.oldStatus}</strong> to <strong>{entry.newStatus}</strong>
+                                        </Typography>
+                                    )}
+                                    {entry.comments && (
+                                        <Typography variant="body2" sx={{ mt: 1 }}>
+                                            {entry.comments}
+                                        </Typography>
+                                    )}
+                                </Box>
+                            ))}
+                        </Box>
                     )}
+
 
                     {/* Add comment text field + button */}
                     <Box sx={{ mt: 2 }}>
