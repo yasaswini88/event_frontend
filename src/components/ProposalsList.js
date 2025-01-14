@@ -20,7 +20,8 @@ import {
     Snackbar,
     Tabs,
     Tab,
-    TextField
+    TextField,
+    Chip
 } from '@mui/material';
 import { TablePagination } from '@mui/material';
 import { Close as CloseIcon, Edit as EditIcon } from '@mui/icons-material';
@@ -703,12 +704,38 @@ const ProposalsList = () => {
                                     }}
                                 >
 
-                                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                                    {/* <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
                                         Comment by {entry.approverName || 'Unknown'}
                                     </Typography>
                                     <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                                         {formatDateTimeEST(entry.actionDate)}
-                                    </Typography>
+                                    </Typography> */}
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                        <Box>
+                                            <Typography
+                                                variant="body2"
+                                                sx={{ fontWeight: 'bold', color: 'primary.main' }}
+                                            >
+                                                Comment by {entry.approverName || 'Unknown'}
+                                            </Typography>
+                                            <Typography
+                                                variant="caption"
+                                                sx={{ color: 'text.secondary' }}
+                                            >
+                                                {formatDateTimeEST(entry.actionDate)}
+                                            </Typography>
+                                        </Box>
+
+                                        {/* Show role on the right (Chip) */}
+                                        {entry.approverRole && (
+                                            <Chip
+                                                label={entry.approverRole}
+                                                color="primary"
+                                                size="small"
+                                                sx={{ alignSelf: 'center' }}
+                                            />
+                                        )}
+                                    </Box>
                                     {entry.oldStatus !== entry.newStatus && (
                                         <Typography variant="body2" sx={{ mt: 1 }}>
                                             Status changed from <strong>{entry.oldStatus}</strong> to{' '}

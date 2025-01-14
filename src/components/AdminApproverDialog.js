@@ -27,9 +27,11 @@ import {
     FormControl,
     InputLabel,
     Select,
-    MenuItem,
+    MenuItem, Chip
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
+import HistoryLogsTabs from './HistoryLogsTabs';
+
 
 const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, status }) => {
     const [proposal, setProposal] = useState(null);
@@ -42,15 +44,12 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, status
     const [editedProposal, setEditedProposal] = useState(null);
     const [fundingSourceLoading, setFundingSourceLoading] = useState(true);
     const [fundingSourceError, setFundingSourceError] = useState(null);
+    const [facultyStats, setFacultyStats] = useState(null);
+    const [facultyHistoryLogs, setFacultyHistoryLogs] = useState(null);
 
 
-    // useEffect(() => {
-    //     if (open && proposalId) {
-    //         fetchProposalDetails();
-    //         fetchApprovalHistory();
-    //         fetchFundingSources();
-    //     }
-    // }, [open, proposalId]);
+
+
 
     useEffect(() => {
         if (open && proposalId) {
@@ -70,24 +69,25 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, status
     }, [open, proposalId]);
 
 
-    // const fetchProposalDetails = async () => {
-    //     try {
-    //         const response = await axios.get(`/api/proposals/${proposalId}`);
-    //         const proposalData = response.data;
-    //         setProposal(proposalData);
-    //         setEditedProposal(proposalData);
-    //         // Set initial status from the existing proposal
-    //         if (proposalData.fundingSourceId) {
-    //             setFundingSourceId(proposalData.fundingSourceId);
-    //         } else {
-    //             setFundingSourceId(52); // Default to 'None' if not set
-    //         }
-    //         setLoading(false);
-    //     } catch (err) {
-    //         setError('Error fetching proposal details');
-    //         setLoading(false);
-    //     }
-    // };
+    const fetchFacultyStats = async (facultyUserId) => {
+        try {
+            // Same endpoint: /api/proposals/faculty-stats/{facultyId}
+            const response = await axios.get(`/api/proposals/faculty-stats/${facultyUserId}`);
+            setFacultyStats(response.data);
+        } catch (error) {
+            console.error('Error fetching faculty stats:', error);
+        }
+    };
+
+    const fetchFacultyHistoryLogs = async (facultyUserId) => {
+        try {
+            const response = await axios.get(`/api/proposals/history-logs/faculty/${facultyUserId}`);
+            setFacultyHistoryLogs(response.data);
+            // shape: { historylogs: [ { "2023": {...} }, { "2024": {...} } ] }
+        } catch (error) {
+            console.error('Error fetching faculty history logs:', error);
+        }
+    };
 
     // In the fetchProposalDetails function, update it to properly set the initial funding source:
     const fetchProposalDetails = async () => {
@@ -124,6 +124,11 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, status
             setLoading(false);
 
             console.log('Current funding source ID:', currentFundingSourceId);
+
+            if (proposalData.userId) {
+                fetchFacultyStats(proposalData.userId);
+                await fetchFacultyHistoryLogs(proposalData.userId);
+            }
 
         } catch (err) {
             console.error('Error fetching proposal details:', err);
@@ -181,29 +186,8 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, status
         }
     };
 
-    // const handleSaveChanges = async () => {
-    //     try {
 
-    //         // Create an updated proposal object with all changes
-    //         const updatedProposal = {
-    //             ...editedProposal,
-    //             fundingSourceId: fundingSourceId,
-    //             status: editedProposal.status
-    //         };
 
-    //         // First update the basic proposal details
-    //         await axios.put(`/api/proposals/${proposalId}`, editedProposal);
-
-    //         // Then update the status if there's a comment
-    //         if (comment.trim()) {
-    //             await handleStatusUpdate(editedProposal.status);
-    //         }
-
-    //         onStatusUpdate(editedProposal);
-    //     } catch (err) {
-    //         console.error('Error saving changes:', err);
-    //     }
-    // };
 
     const handleClose = () => {
         onClose();
@@ -217,6 +201,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, status
         setEditedProposal(null);
         setFundingSourceLoading(true);
         setFundingSourceError(null);
+        setFacultyStats(null);
 
 
     };
@@ -299,7 +284,23 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, status
             </DialogTitle>
 
             <DialogContent sx={{ p: 3 }}>
+                {facultyStats && (
+                    <Box sx={{
+                        backgroundColor: '#fef8e7',
+                        border: '1px solid #ddd',
+                        p: 2,
+                        borderRadius: 2,
+                        mb: 2
+                    }}>
+                        <Typography variant="subtitle2">
+                            {facultyStats.facultyName} has submitted {facultyStats.totalSubmittedCount} proposals
+                            {facultyStats.totalApprovedCount} approved worth {formatCurrency(facultyStats.totalApprovedAmount)}.
+                        </Typography>
+                    </Box>
+                )}
+
                 <Box sx={{ mb: 3, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+
                     <Grid container spacing={2}>
                         <Grid item xs={4}>
                             <Typography variant="subtitle2" color="textSecondary">
@@ -461,16 +462,48 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, status
                             <Divider sx={{ my: 2 }} />
                             <Typography variant="h6" sx={{ mb: 2 }}>Approval History</Typography>
                             {approvalHistory.map((history, index) => (
-                                <Box key={index} sx={{ mb: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                                <Box
+                                    key={index}
+                                    sx={{
+                                        mb: 2,
+                                        p: 2,
+                                        bgcolor: '#f5f5f5',
+                                        borderRadius: 1,
+                                    }}
+                                >
+                                    {/* HEADLINE: "Comment by {Name}" with date and role */}
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                        <Box>
+                                            <Typography
+                                                variant="body2"
+                                                sx={{ fontWeight: 'bold', color: 'primary.main' }}
+                                            >
+                                                Comment by {history.approverName || 'Unknown'}
+                                            </Typography>
+                                            <Typography
+                                                variant="caption"
+                                                sx={{ color: 'text.secondary' }}
+                                            >
+                                                {formatDateTime(history.actionDate)}
+                                            </Typography>
+                                        </Box>
+
+                                        {/* Right side: role Chip */}
+                                        {history.approverRole && (
+                                            <Chip
+                                                label={history.approverRole}
+                                                color="primary"
+                                                size="small"
+                                                sx={{ alignSelf: 'center' }}
+                                            />
+                                        )}
+                                    </Box>
+
+                                    {/* THEN: status changes, comment text, etc. */}
                                     <Typography variant="body2">
                                         Status changed from {history.oldStatus} to {history.newStatus}
                                     </Typography>
-                                    <Typography variant="body2">
-                                        Funding Source: {fundingSources.find(f => f.sourceId === history.fundingSourceId)?.sourceName || 'Unknown'}
-                                    </Typography>
-                                    <Typography variant="caption" color="textSecondary">
-                                        {formatDateTime(history.actionDate)}
-                                    </Typography>
+
                                     {history.comments && (
                                         <Typography variant="body2" sx={{ mt: 1 }}>
                                             Comment: {history.comments}
@@ -481,6 +514,15 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, status
                         </Grid>
                     )}
                 </Grid>
+                {facultyHistoryLogs && (
+                    <Box sx={{ mt: 4 }}>
+                        <Typography variant="h6" sx={{ mb: 2 }}>
+                            History Logs
+                        </Typography>
+                        <HistoryLogsTabs data={facultyHistoryLogs} />
+                    </Box>
+                )}
+
             </DialogContent>
 
             <DialogActions sx={{ p: 2, bgcolor: '#f5f5f5' }}>

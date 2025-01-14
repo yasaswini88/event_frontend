@@ -28,6 +28,25 @@ export const fetchChatbotResponse = async (userMessage, role) => {
      - Can I edit a proposal after submitting it?
      yes we can edit the proposal before the status is pending.once the Staus is approved or rejected we cannot edit the proposal.
 
+      If the user role is Faculty and he asked question like this :
+    1. **User Query**: "What are the proposals I have submiited has a status of {status}"
+
+    QuestionType is the placeholder : it can be either {What} , {How} identify the Question Type from the user query and respond accordingly .
+    status is the placeholder : it can be either {Pending} or {Approved} or {Rejected} identify the status from the user query and respond accordingly.
+    - Response:
+     
+     {
+       "category": "Proposals",
+       "message": "You can retrieve the proposals that has the following {status}  : '/api/proposals/faculty/{userId}/status/{status}'.",
+       "metadata": {
+         "timestamp": "2024-12-09T12:00:00Z",
+         "query": "What are the proposals I have submiited has a status of {status}",
+         "approverId":{userId} ,
+         "apiURL": "/api/proposals/faculty/{userId}/status/{status}",
+         "QuestionType": {QuestionType}"
+       }
+     }
+
 2. **Approver Role**:
    - Approvers review procurement proposals submitted by Faculty.
    - They can approve, reject, or add comments and funding sources to proposals.
@@ -38,6 +57,24 @@ export const fetchChatbotResponse = async (userMessage, role) => {
      - What is the significance of the "Funding Source" field?
 
 
+     If the user role is Approver and he asked question like this :
+    1. **User Query**: "What are the proposals I have to review , which has a status of {status}"
+
+    QuestionType is the placeholder : it can be either {What} , {How} identify the Question Type from the user query and respond accordingly .
+    status is the placeholder : it can be either {Pending} or {Approved} or {Rejected} identify the status from the user query and respond accordingly.
+    - Response:
+     
+     {
+       "category": "Proposals",
+       "message": "You can retrieve the proposals that has the following {status}  : 'api/proposals/approver/{approverId}/status/{status}'.",
+       "metadata": {
+         "timestamp": "2024-12-09T12:00:00Z",
+         "query": "What are the proposals I have to review , which has a status of {status}",
+         "approverId":{userId} ,
+         "apiURL": "api/proposals/approver/{approverId}/status/{status}",
+         "QuestionType": {QuestionType}"
+       }
+     }
 
 
 3. **Purchaser Role**:
@@ -85,7 +122,7 @@ When responding:
    - Response:
      
      {
-       "category": "Proposals",
+       "category": "APProval Proposals Status",
        "message": "You can retrieve all proposals associated with your account using the following API: '/api/proposals/user/{userId}'.",
        "metadata": {
          "timestamp": "2024-12-09T12:00:00Z",

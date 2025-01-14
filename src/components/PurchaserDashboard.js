@@ -21,7 +21,8 @@ import {
     TextField,
     MenuItem,
     Autocomplete,
-    TablePagination
+    TablePagination,
+    Chip
 
 
 } from '@mui/material';
@@ -1009,7 +1010,7 @@ const PurchaserDashboard = () => {
                                 borderRadius: 1,
                             }}
                         >
-                            {proposalHistory.map((entry, index) => (
+                            {/* {proposalHistory.map((entry, index) => (
                                 <Box
                                     key={index}
                                     sx={{
@@ -1038,7 +1039,55 @@ const PurchaserDashboard = () => {
                                         </Typography>
                                     )}
                                 </Box>
+                            ))} */}
+
+                            {proposalHistory.map((entry, index) => (
+                                <Box
+                                    key={index}
+                                    sx={{
+                                        mb: 3,
+                                        p: 2,
+                                        backgroundColor: 'background.default',
+                                        border: '1px solid',
+                                        borderColor: 'divider',
+                                        borderRadius: 1,
+                                    }}
+                                >
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                        <Box>
+                                            <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                                                Comment by {entry.approverName || 'Unknown'}
+                                            </Typography>
+                                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                                {formatDateTimeEST(entry.actionDate)}
+                                            </Typography>
+                                        </Box>
+
+                                        {/* Show role on the right (Chip) */}
+                                        {entry.approverRole && (
+                                            <Chip
+                                                label={entry.approverRole}
+                                                color="primary"
+                                                size="small"
+                                                sx={{ alignSelf: 'center' }}
+                                            />
+                                        )}
+                                    </Box>
+
+                                    {entry.oldStatus !== entry.newStatus && (
+                                        <Typography variant="body2" sx={{ mt: 1 }}>
+                                            Status changed from <strong>{entry.oldStatus}</strong> to{' '}
+                                            <strong>{entry.newStatus}</strong>
+                                        </Typography>
+                                    )}
+                                    {entry.comments && (
+                                        <Typography variant="body2" sx={{ mt: 1 }}>
+                                            {entry.comments}
+                                        </Typography>
+                                    )}
+                                </Box>
                             ))}
+
                         </Box>
                     )}
 

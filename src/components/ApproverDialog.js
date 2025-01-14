@@ -11,8 +11,11 @@ import {
   Box,
   Grid,
   Divider, FormControl, InputLabel, Select, MenuItem,
+  Chip
 } from '@mui/material';
 import moment from 'moment-timezone';
+import HistoryLogsTabs from './HistoryLogsTabs';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 
 const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStatus }) => {
   const [proposal, setProposal] = useState(null);
@@ -23,6 +26,32 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
   const [fundingSources, setFundingSources] = useState([]);
   const [fundingSourceId, setFundingSourceId] = useState('');
 
+  const [facultyStats, setFacultyStats] = useState(null);
+  const [facultyHistoryLogs, setFacultyHistoryLogs] = useState(null);
+
+
+  const fetchFacultyStats = async (facultyUserId) => {
+    try {
+      // GET /api/proposals/faculty-stats/{facultyId}
+      const response = await axios.get(`/api/proposals/faculty-stats/${facultyUserId}`);
+      setFacultyStats(response.data);
+    } catch (error) {
+      console.error('Error fetching faculty stats:', error);
+    }
+  };
+
+  const fetchFacultyHistoryLogs = async (facultyUserId) => {
+    try {
+      // GET /api/proposals/history-logs/faculty/{facultyId}
+      const response = await axios.get(`/api/proposals/history-logs/faculty/${facultyUserId}`);
+      setFacultyHistoryLogs(response.data);
+      // The shape is { historylogs: [ { "2023": { ... } }, { "2024": { ... } }, ... ] }
+    } catch (error) {
+      console.error('Error fetching faculty history logs:', error);
+    }
+  };
+
+
   const fetchFundingSources = async () => {
     try {
       const response = await axios.get('/api/funding-sources');
@@ -32,27 +61,20 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
     }
   };
 
-  // useEffect(() => {
-  //   if (open && proposalId) {
-  //     fetchProposalDetails();
-  //     fetchApprovalHistory();
-  //     fetchFundingSources();
-  //   }
-  // }, [open, proposalId]);
 
   useEffect(() => {
     if (open && proposalId) {
       // Clear old data so we don't see leftover comments from a previous proposal
       setProposal(null);
       setApprovalHistory([]);
-  
+
       // Now fetch the new data
       fetchProposalDetails();
       fetchApprovalHistory();
       fetchFundingSources();
     }
   }, [open, proposalId]);
-  
+
 
   const fetchProposalDetails = async () => {
     try {
@@ -63,9 +85,16 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
       // const response = await axios.get(`/api/proposals/${proposalId}`);
       setProposal(response.data);
       setLoading(false);
+
+      if (response.data.userId) {
+        fetchFacultyStats(response.data.userId);
+        fetchFacultyHistoryLogs(response.data.userId);
+      }
+
     } catch (err) {
       setError('Error fetching proposal details');
       setLoading(false);
+
     }
   };
 
@@ -75,13 +104,13 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
       const response = await axios.get(`/api/proposals/${proposalId}/history`, {
         params: { currentUserId: user.userId }
       });
-  
+
       setApprovalHistory(response.data);
     } catch (err) {
       console.error('Error fetching approval history:', err);
     }
   };
-  
+
 
 
   const handleStatusUpdate = async (newStatus) => {
@@ -119,8 +148,8 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
     try {
       const user = JSON.parse(localStorage.getItem('user'));
       const actionDate = moment()
-  .tz("America/New_York")
-  .format("YYYY-MM-DDTHH:mm:ss");
+        .tz("America/New_York")
+        .format("YYYY-MM-DDTHH:mm:ss");
       // Prepare request parameters
       const params = {
         currentUserId: user.userId,
@@ -145,7 +174,7 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
       setComment('');
       setFundingSourceId('');
 
-     
+
     } catch (err) {
       console.error('Error adding comment:', err);
     }
@@ -161,7 +190,7 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
       timeStyle: 'short',
     });
   };
-  
+
 
 
   const renderStatusUpdateButtons = () => {
@@ -211,13 +240,34 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
       className="rounded-lg"
     >
       <DialogTitle className="flex justify-between items-center bg-gray-50 border-b">
-        <Typography variant="h6">Proposal Details</Typography>
+
         {/* <IconButton onClick={onClose} size="small">
           <CloseIcon />
         </IconButton> */}
       </DialogTitle>
 
       <DialogContent className="p-6">
+
+        {facultyStats && (
+          <Box
+            sx={{
+              backgroundColor: '#fef8e7',
+              border: '1px solid #ddd',
+              p: 2,
+              borderRadius: 2,
+              mb: 2
+            }}
+          >
+            <Typography variant="subtitle2">
+              {facultyStats.facultyName} has submitted {facultyStats.totalSubmittedCount} proposals
+              {facultyStats.totalApprovedCount} approved worth
+              ${facultyStats.totalApprovedAmount}.
+            </Typography>
+          </Box>
+        )}
+
+        <Typography variant="h6">Proposal Details</Typography>
+
         <Grid container spacing={3}>
           <DialogContent>
             <Grid container spacing={3}>
@@ -301,60 +351,91 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
             </>
           )}
 
-{approvalHistory.length > 0 && (
-  <Grid item xs={12}>
-    <Divider sx={{ my: 2 }} />
-    <Typography variant="h6" sx={{ mb: 2 }}>
-      Approval History
-    </Typography>
-    <Box
-      sx={{
-        maxHeight: 300, // Set max height
-        overflowY: 'auto', // Enable vertical scrolling
-        p: 2,
-        backgroundColor: 'background.paper',
-        border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 1,
-      }}
-    >
-      {approvalHistory.map((history, index) => (
-        <Box
-          key={index}
-          sx={{
-            mb: 3,
-            p: 2,
-            backgroundColor: 'background.default',
-            border: '1px solid',
-            borderColor: 'divider',
-            borderRadius: 1,
-          }}
-        >
-          {/* Approval history item */}
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-              Comment by {history.approverName || 'Unknown'}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              {formatDateTime(history.actionDate)}
-            </Typography>
-          </Box>
-          {history.oldStatus !== history.newStatus && (
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              Status changed from <strong>{history.oldStatus}</strong> to{' '}
-              <strong>{history.newStatus}</strong>
-            </Typography>
+          {approvalHistory.length > 0 && (
+            <Grid item xs={12}>
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Approval History
+              </Typography>
+              <Box
+                sx={{
+                  maxHeight: 300, // Set max height
+                  overflowY: 'auto', // Enable vertical scrolling
+                  p: 2,
+                  backgroundColor: 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                }}
+              >
+                {approvalHistory.map((history, index) => (
+                  <Box
+                    key={index}
+                    sx={{
+                      mb: 3,
+                      p: 2,
+                      backgroundColor: 'background.default',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 1,
+                    }}
+                  >
+                    {/* Approval history item */}
+                    {/* <Box sx={{ mb: 2 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                        Comment by {history.approverName || 'Unknown'}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                        {formatDateTime(history.actionDate)}
+                      </Typography>
+                    </Box> */}
+                    <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between' }}>
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                        Comment by {history.approverName || 'Unknown'}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                        {formatDateTime(history.actionDate)}
+                      </Typography>
+                    </Box>
+
+                    {/* Right side: Show the role chip */}
+                    {history.approverRole && (
+                      <Chip
+                        label={history.approverRole}
+                        color="primary"
+                        size="small"
+                        sx={{ alignSelf: 'center' }}
+                      />
+                    )}
+                  </Box>
+                  
+                    {history.oldStatus !== history.newStatus && (
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        Status changed from <strong>{history.oldStatus}</strong> to{' '}
+                        <strong>{history.newStatus}</strong>
+                      </Typography>
+                    )}
+                    {history.comments && (
+                      <Typography variant="body2" sx={{ mt: 1 }}>
+                        {history.comments}
+                      </Typography>
+                    )}
+                  </Box>
+                ))}
+              </Box>
+            </Grid>
           )}
-          {history.comments && (
-            <Typography variant="body2" sx={{ mt: 1 }}>
-              {history.comments}
-            </Typography>
+
+          {facultyHistoryLogs && (
+            <Grid item xs={12} sx={{ mt: 3 }}>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                History Logs
+              </Typography>
+              <HistoryLogsTabs data={facultyHistoryLogs} />
+            </Grid>
           )}
-        </Box>
-      ))}
-    </Box>
-  </Grid>
-)}
+
 
         </Grid>
       </DialogContent>

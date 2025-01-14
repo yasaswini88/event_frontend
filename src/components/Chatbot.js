@@ -9,7 +9,98 @@ import IconButton from '@mui/material/IconButton';
 import axios from 'axios';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import  { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
+
+
+const formatApproverProposals = (dataArray) => {
+  if (!Array.isArray(dataArray) || dataArray.length === 0) {
+    return 'No proposals found or data is unavailable.';
+  }
+  const latestFive = dataArray.slice(-5);
+  let result = 'Here are your Pending proposals (Approver View):\n\n';
+  result += latestFive
+    .map((item, index) => {
+      return (
+        `Proposal ${index + 1}:\n` +
+        `• ID: ${item.proposalId}\n` +
+        `• Item: ${item.itemName}\n` +
+        `• Status: ${item.status}\n` +
+        `• Requester: ${item.requesterName}`
+      );
+    })
+    .join('\n\n');
+  return result;
+};
+
+const formatApproverRejected = (dataArray) => {
+  if (!Array.isArray(dataArray) || dataArray.length === 0) {
+    return 'No rejected proposals found or data is unavailable.';
+  }
+  const latestFive = dataArray.slice(-5);
+  let result = 'Here are your Rejected proposals (Approver View):\n\n';
+  result += latestFive
+    .map((item, index) => {
+      return (
+        `Proposal ${index + 1}:\n` +
+        `• ID: ${item.proposalId}\n` +
+        `• Item: ${item.itemName}\n` +
+        `• Status: ${item.status}\n` +
+        `• Requester: ${item.requesterName}`
+      );
+    })
+    .join('\n\n');
+  return result;
+};
+
+const formatFacultyProposalsByStatus = (dataArray, status) => {
+  if (!Array.isArray(dataArray) || dataArray.length === 0) {
+    return `No ${status} proposals found or data is unavailable.`;
+  }
+  const latestFive = dataArray.slice(-5);
+  let result = `Here are your ${status} proposals (Faculty View):\n\n`;
+  result += latestFive
+    .map((item, index) => {
+      return (
+        `Proposal ${index + 1}:\n` +
+        `• ID: ${item.proposalId}\n` +
+        `• Item: ${item.itemName}\n` +
+        `• Status: ${item.status}\n` +
+        (item.orderStatus ? `• Order Status: ${item.orderStatus}\n` : '')
+      );
+    })
+    .join('\n\n');
+  return result;
+};
+
+const formatFacultyProposals = (dataArray) => {
+  if (!Array.isArray(dataArray) || dataArray.length === 0) {
+    return 'No proposals found or data is unavailable.';
+  }
+  const latestFive = dataArray.slice(-5);
+  let result = 'Here are your proposals (Faculty View):\n\n';
+  result += latestFive
+    .map((item, index) => {
+      return (
+        `Proposal ${index + 1}:\n` +
+        `• ID: ${item.proposalId}\n` +
+        `• Item: ${item.itemName}\n` +
+        `• Status: ${item.status}\n` +
+        (item.orderStatus ? `• Order Status: ${item.orderStatus}\n` : '')
+      );
+    })
+    .join('\n\n');
+  return result;
+};
+
+const genericFormat = (dataArray) => {
+  if (!Array.isArray(dataArray) || dataArray.length === 0) {
+    return 'No data found or data is unavailable.';
+  }
+  const latestFive = dataArray.slice(-5);
+  return latestFive
+    .map((item, idx) => `Item ${idx + 1} => ${JSON.stringify(item, null, 2)}`)
+    .join('\n\n');
+};
 
 const Chatbot = ({ userDetails }) => {
 
@@ -47,58 +138,101 @@ const Chatbot = ({ userDetails }) => {
 
   const handleSendMessage = async () => {
     if (!userMessage) return;
-  
+
     setLoading(true);
     setTyping(true);
     setError(null);
-  
+
     try {
-      const response = await fetchChatbotResponse(userMessage, userDetails.roles.roleName);
-      console.log('Chatbot response:', response);
+      const rawResponse = await fetchChatbotResponse(userMessage, userDetails.roles.roleName);
+      console.log('Chatbot response (raw):', rawResponse);
   
-      const urlMatch = response.match(/"apiURL"\s*:\s*"([^"]+)"/);
-      const url = urlMatch ? urlMatch[1] : null;
+      let chatbotJSON;
+      try {
+        chatbotJSON = JSON.parse(rawResponse);
+      } catch (errParse) {
+        chatbotJSON = null;
+      }
   
-      if (url) {
-        const dynamicUrl = url.replace('{userId}', userId);
-        const apiData = await handleApiCall(dynamicUrl);
+      let url = null;
+      let questionType = null;
   
-        let formattedData = '';
+      if (chatbotJSON && chatbotJSON.metadata) {
+        // Clean up questionType
+        let questionTypeRaw = chatbotJSON.metadata.QuestionType || "";
+        questionType = questionTypeRaw.trim().toLowerCase(); 
   
-        if (Array.isArray(apiData) && apiData.length > 0) {
-          // Get only the last 5
-          const latestFive = apiData.slice(-5);
+        // Clean up url
+        let urlRaw = chatbotJSON.metadata.apiURL || "";
+        url = urlRaw.trim();
+      }
   
-          // Build a nicely formatted string
-          const formattedList = latestFive
-            .map((item, index) => {
-              return (
-                `Proposal ${index + 1}:\n` +
-                `• Item Name: ${item.itemName}\n` +
-                `• Status: ${item.status}`
-              );
-            })
-            .join('\n\n');
-  
-          formattedData =
-            `Here are your latest ${latestFive.length} proposals:\n\n` + 
-            formattedList;
-        } else {
-          formattedData = 'No proposals found or data is unavailable.';
-        }
-  
-        console.log('Formatted data:', formattedData);
-  
-        setChatHistory((prev) => [
-          ...prev,
-          { user: userMessage, bot: formattedData },
-        ]);
+      // 4) If we have no JSON or no URL => just display raw text from bot
+      if (!url) {
+        setChatHistory((prev) => [...prev, { user: userMessage, bot: rawResponse }]);
       } else {
-        // Plain (non-API) chatbot response
-        setChatHistory((prev) => [
-          ...prev,
-          { user: userMessage, bot: response },
-        ]);
+        // Replace placeholders
+        let finalUrl = url.replace('{approverId}', userId).replace('{userId}', userId);
+
+        // Call the API
+        const apiData = await handleApiCall(finalUrl);
+
+        let formattedData = '';
+        // Switch on EXACT url from chatbot
+        switch (url) {
+          case '/api/proposals/approver/{approverId}/status/pending':
+            formattedData = formatApproverProposals(apiData);
+            break;
+
+          case '/api/proposals/approver/{approverId}/status/Rejected':
+            // Now check questionType
+            if (questionType === 'How') {
+              const count = Array.isArray(apiData) ? apiData.length : 0;
+              formattedData = `You have rejected ${count} proposal(s).`;
+            } else {
+              // "What" => show the standard list
+              formattedData = formatApproverRejected(apiData);
+            }
+            break;
+
+          case '/api/proposals/user/{userId}':
+            formattedData = formatFacultyProposals(apiData);
+            break;
+
+          case '/api/proposals/faculty/{userId}/status/Approved':
+            if (questionType === 'How') {
+              const count = Array.isArray(apiData) ? apiData.length : 0;
+              formattedData = `You have ${count} approved proposal(s).`;
+            } else {
+              formattedData = formatFacultyProposalsByStatus(apiData, 'Approved');
+            }
+            break;
+
+          case '/api/proposals/faculty/{userId}/status/Rejected':
+            if (questionType === 'How') {
+              const count = Array.isArray(apiData) ? apiData.length : 0;
+              formattedData = `You have ${count} rejected proposal(s).`;
+            } else {
+              formattedData = formatFacultyProposalsByStatus(apiData, 'Rejected');
+            }
+            break;
+
+          case '/api/proposals/faculty/{userId}/status/Pending':
+            if (questionType === 'How') {
+              const count = Array.isArray(apiData) ? apiData.length : 0;
+              formattedData = `You have ${count} pending proposal(s).`;
+            } else {
+              formattedData = formatFacultyProposalsByStatus(apiData, 'Pending');
+            }
+            break;
+
+          default:
+            formattedData = genericFormat(apiData);
+            break;
+        }
+
+        // 5) Show the final text in chat
+        setChatHistory((prev) => [...prev, { user: userMessage, bot: formattedData }]);
       }
     } catch (err) {
       console.error('Error sending message:', err);
@@ -109,8 +243,8 @@ const Chatbot = ({ userDetails }) => {
       setUserMessage('');
     }
   };
-  
-  
+
+
   return (
     <div
       style={{
@@ -222,7 +356,7 @@ const Chatbot = ({ userDetails }) => {
             <em>Bot is typing...</em>
           </Typography>
         )}
-        <div ref={chatEndRef} /> 
+        <div ref={chatEndRef} />
       </Paper>
 
       {/* Error Message */}
