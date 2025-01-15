@@ -10,6 +10,10 @@ import axios from 'axios';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useState, useRef, useEffect } from 'react';
+import MicIcon from '@mui/icons-material/Mic';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import { convertSpeechToText, convertTextToSpeech } from './speechService';
+import PauseIcon from '@mui/icons-material/Pause';
 
 
 const formatApproverProposals = (dataArray) => {
@@ -113,10 +117,143 @@ const Chatbot = ({ userDetails }) => {
   const [typing, setTyping] = useState(false);
   const [error, setError] = useState(null);
 
+  const beepStart = new Audio('/beep-start.mp3');
+const beepStop = new Audio('/beep-stop.mp3');
+
+
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const chatEndRef = useRef(null);
+
+  const [recording, setRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState(null);
+  const [audioChunks, setAudioChunks] = useState([]);
+  const [transcription,setTranscription] = useState('');
+  const[currentAudio,setCurrentAudio] = useState(null);
+
+ 
+ 
+  const audioBlobToBase64 = async (blob) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const arrayBuffer = reader.result;
+        const base64Audio = btoa(
+          new Uint8Array(arrayBuffer).reduce(
+            (data, byte) => data + String.fromCharCode(byte),
+            ''
+          )
+        );
+        resolve(base64Audio);
+      };
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(blob);
+    });
+  };
+
+
+  const startRecording = async () => {
+    try {
+    
+      beepStart.play().catch(err => {
+        console.warn('Beep Start error:', err);
+      });
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      //recorder.start();
+      console.log('Recorder created:', recorder);
+      recorder.addEventListener('dataavailable', async (event) => {
+        console.log('Recorder created:', recorder);
+        if(!event.data) return;
+        const audioBlob = event.data;
+        console.log('Audio blob:', audioBlob);
+        const base64Audio = await audioBlobToBase64(audioBlob);
+        console.log('Base64 audio:', base64Audio);
+        try{
+          const startTime = performance.now();
+          const response = await axios.post(
+            'https://speech.googleapis.com/v1/speech:recognize?key=AIzaSyCRWbaVwoYMMwQSY-XGkxUwE80xwskZgCM',
+            {
+              config: {
+                encoding: 'WEBM_OPUS',
+                sampleRateHertz: 48000,
+                languageCode: 'en-US',
+              },
+              audio: {
+                content: base64Audio,
+              },
+            }
+          );
+          const endTime = performance.now();
+          console.log('STT response:', response.data);
+          const elapsedTime = ((endTime - startTime));
+          if(response.data.results && response.data.results.length > 0){
+            console.log("transcription",response.data.results[0].alternatives[0].transcript);
+            setTranscription(response.data.results[0].alternatives[0].transcript);
+            setUserMessage(response.data.results[0].alternatives[0].transcript);
+          }else{
+            setTranscription('No transcription found');
+          }
+        }catch(err){
+          console.error('Error in STT:', err);
+        }
+        if (event.data.size > 0) {
+          setAudioChunks((prev) => [...prev, event.data]);
+        }
+      });
+      recorder.start();
+      setMediaRecorder(recorder);
+      setRecording(true);
+      console.log('Recording started...');
+    } catch (err) {
+      console.error('Error accessing mic:', err);
+    }
+  };
+  // 2) Stop Recording & Send to STT
+  const stopRecording = () => {
+    console.log('Stopping recording...'+transcription);
+    if (!mediaRecorder) return;
+
+    beepStop.play().catch(err => {
+      console.warn('Beep Stop error:', err);
+    });
+
+    mediaRecorder.stop();
+    setRecording(false);
+    console.log('Recording stopped.');
+  };
+
+
+  // useEffect(() => {
+  //   if (!recording && audioChunks.length > 0) {
+  //     const blob = new Blob(audioChunks, { type: 'audio/wav' });
+  //     const reader = new FileReader();
+  //     reader.onloadend = async () => {
+  //       // "data:audio/wav;base64,AAA..."
+  //       const base64Data = reader.result.split(',')[1];
+  //       try {
+  //         const recognizedText = await convertSpeechToText(base64Data);
+
+  //         console.log('STT recognized text:', recognizedText);
+  //         console.log('STT recognized text:', recognizedText);
+
+  //         // // Optionally auto-send recognized text as user message
+  //         // setUserMessage(recognizedText);
+  //         // handleSendMessage(recognizedText);
+  //         setUserMessage(recognizedText);
+
+  //       } catch (err) {
+  //         console.error('Speech-to-text error:', err);
+  //       }
+  //       setAudioChunks([]); // reset
+  //     };
+  //     reader.readAsDataURL(blob);
+  //   }
+  // }, [recording, audioChunks]);
+
+
 
   // Scroll to bottom whenever chatHistory changes
   useEffect(() => {
@@ -136,40 +273,46 @@ const Chatbot = ({ userDetails }) => {
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!userMessage) return;
+  const handleSendMessage = async (msgFromSTT = null) => {
+    // if (!userMessage) return;
+    const message = msgFromSTT || userMessage;
+
+    if (!message) return;
+
+    console.log('User is sending text =>', message);
 
     setLoading(true);
     setTyping(true);
     setError(null);
 
+    
     try {
-      const rawResponse = await fetchChatbotResponse(userMessage, userDetails.roles.roleName);
+      const rawResponse = await fetchChatbotResponse(message, userDetails.roles.roleName);
       console.log('Chatbot response (raw):', rawResponse);
-  
+
       let chatbotJSON;
       try {
         chatbotJSON = JSON.parse(rawResponse);
       } catch (errParse) {
         chatbotJSON = null;
       }
-  
+
       let url = null;
       let questionType = null;
-  
+
       if (chatbotJSON && chatbotJSON.metadata) {
         // Clean up questionType
         let questionTypeRaw = chatbotJSON.metadata.QuestionType || "";
-        questionType = questionTypeRaw.trim().toLowerCase(); 
-  
+        questionType = questionTypeRaw.trim().toLowerCase();
+
         // Clean up url
         let urlRaw = chatbotJSON.metadata.apiURL || "";
         url = urlRaw.trim();
       }
-  
+
       // 4) If we have no JSON or no URL => just display raw text from bot
       if (!url) {
-        setChatHistory((prev) => [...prev, { user: userMessage, bot: rawResponse }]);
+        setChatHistory((prev) => [...prev, { user: message, bot: rawResponse }]);
       } else {
         // Replace placeholders
         let finalUrl = url.replace('{approverId}', userId).replace('{userId}', userId);
@@ -232,7 +375,7 @@ const Chatbot = ({ userDetails }) => {
         }
 
         // 5) Show the final text in chat
-        setChatHistory((prev) => [...prev, { user: userMessage, bot: formattedData }]);
+        setChatHistory((prev) => [...prev, { user: message, bot: formattedData }]);
       }
     } catch (err) {
       console.error('Error sending message:', err);
@@ -243,6 +386,32 @@ const Chatbot = ({ userDetails }) => {
       setUserMessage('');
     }
   };
+
+
+  const speakBotMessage = async (text) => {
+    try {
+      if(currentAudio){
+        currentAudio.pause();
+        setCurrentAudio(null);
+        return;
+      }
+      const ttsResponse = await convertTextToSpeech(text);
+      if (ttsResponse.audioContent) {
+        const base64Audio = ttsResponse.audioContent;
+        const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
+        setCurrentAudio(audio);
+        audio.play();
+        audio.onended = () => {
+          setCurrentAudio(null);
+        };
+      } else if (ttsResponse.error) {
+        console.error('TTS error:', ttsResponse.error);
+      }
+    } catch (err) {
+      console.error('Error in speakBotMessage:', err);
+    }
+  };
+
 
 
   return (
@@ -335,7 +504,7 @@ const Chatbot = ({ userDetails }) => {
               >
                 <SmartToyIcon sx={{ color: '#555' }} />
 
-                <Typography variant="body1" sx={{
+                {/* <Typography variant="body1" sx={{
                   maxWidth: isMobile ? '90%' : '75%',
 
                   padding: 1.5,
@@ -344,8 +513,32 @@ const Chatbot = ({ userDetails }) => {
                   color: '#000',
                   textAlign: 'left',
                   whiteSpace: 'pre-line',
-                }} >{chat.bot}</Typography>
-
+                }} >{chat.bot}</Typography> */}
+                <Box
+                  sx={{
+                    maxWidth: isMobile ? '90%' : '75%',
+                    padding: 1.5,
+                    borderRadius: 3,
+                    backgroundColor: '#e0e0e0',
+                    color: '#000',
+                    textAlign: 'left',
+                    whiteSpace: 'pre-line',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  }}
+                >
+                  <Typography variant="body1" sx={{ flexGrow: 1 }}>
+                    {chat.bot}
+                  </Typography>
+                  <IconButton
+                    size="small"
+                    onClick={() => speakBotMessage(chat.bot)}
+                  >
+                    {currentAudio ? <PauseIcon /> : <VolumeUpIcon />}
+                   
+                  </IconButton>
+                </Box>
               </Box>
             )}
           </Box>
@@ -369,6 +562,16 @@ const Chatbot = ({ userDetails }) => {
         gap={isMobile ? 1 : 2} // Reduce gap on smaller screens
       >
 
+        <IconButton
+          color="primary"
+          onClick={() => {
+            if (!recording) startRecording();
+            else stopRecording();
+          }}
+        >
+          <MicIcon />
+        </IconButton>
+
         <TextField
           label="Type your message"
           variant="outlined"
@@ -389,7 +592,8 @@ const Chatbot = ({ userDetails }) => {
         />
         <IconButton
           color="primary"
-          onClick={handleSendMessage}
+          // onClick={handleSendMessage}
+          onClick={() => handleSendMessage()}
           disabled={loading || !userMessage}
           sx={{
             '&:hover': {
