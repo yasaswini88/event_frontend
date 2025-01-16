@@ -40,9 +40,10 @@ import {
     SingleInputDateRangeField
 } from '@mui/x-date-pickers-pro';
 import moment from 'moment-timezone';
-
-
-
+import OrderTimeline from './OrderTimeline';
+import DeliveryTimeline from './DeliveryTimeline';
+import InfoIcon from '@mui/icons-material/Info';
+import CommentIcon from '@mui/icons-material/Comment';
 
 
 const PurchaserDashboard = () => {
@@ -83,6 +84,11 @@ const PurchaserDashboard = () => {
 
     const [orderNotes, setOrderNotes] = useState([]);
     const [noteText, setNoteText] = useState('');
+
+
+
+    const [openOrderTimelineDialog, setOpenOrderTimelineDialog] = useState(false);
+    const [openDeliveryTimelineDialog, setOpenDeliveryTimelineDialog] = useState(false);
 
 
 
@@ -674,7 +680,18 @@ const PurchaserDashboard = () => {
 
 
             </Box>
-            <TableContainer component={Paper} sx={{ mb: 4, boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
+            <TableContainer
+    component={Paper}
+    sx={{
+        mb: 4,
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+        overflowX: 'auto', // Keep scrolling
+        padding: 2, // Add padding for more spacing
+        width: '100%', // Stretch the table
+        // minWidth: '1200px' // Ensure table size is adequate for content
+    }}
+>
+
                 <Table>
                     <TableHead>
                         <TableRow sx={{ backgroundColor: '#1a237e' }}>
@@ -764,7 +781,7 @@ const PurchaserDashboard = () => {
                                 </TableCell>
 
 
-                                <TableCell>
+                                {/* <TableCell>
                                     <Box sx={{
                                         backgroundColor: item.orderStatus === 'ORDERED' ? '#e8f5e9' : '#fff3e0',
                                         color: item.orderStatus === 'ORDERED' ? '#2e7d32' : '#e65100',
@@ -774,8 +791,44 @@ const PurchaserDashboard = () => {
                                     }}>
                                         {item.orderStatus}
                                     </Box>
+                                </TableCell> */}
+                                <TableCell align="center">
+                                    <Box
+                                        sx={{
+                                            display: 'flex',
+                                            flexDirection: 'row', // Change this to 'row' for horizontal layout
+                                            alignItems: 'center',
+                                            justifyContent: 'center', // Optional: center-align horizontally
+                                            gap: 1, // Add spacing between the elements
+                                        }}
+                                    >
+                                        <Box
+                                            sx={{
+                                                backgroundColor: item.orderStatus === 'ORDERED' ? '#e8f5e9' : '#fff3e0',
+                                                color: item.orderStatus === 'ORDERED' ? '#2e7d32' : '#e65100',
+                                                p: 1,
+                                                borderRadius: 1,
+                                                textAlign: 'center',
+                                                minWidth: 80, // Ensures consistent width for the status box
+                                            }}
+                                        >
+                                            {item.orderStatus}
+                                        </Box>
+                                        <IconButton
+                                            onClick={() => {
+                                                setSelectedOrderStatus(item.orderStatus);
+                                                setOpenOrderTimelineDialog(true);
+                                            }}
+                                        >
+                                            <InfoIcon />
+                                        </IconButton>
+                                    </Box>
                                 </TableCell>
-                                <TableCell>
+
+
+
+                                {/* <TableCell>
+
                                     <Box sx={{
                                         backgroundColor:
                                             item.deliveryStatus === 'Delivered' ? '#e8f5e9' :
@@ -791,7 +844,51 @@ const PurchaserDashboard = () => {
                                     }}>
                                         {item.deliveryStatus || 'Not Started'}
                                     </Box>
+                                </TableCell> */}
+                                <TableCell align="center">
+                                    <Box
+                                        sx={{
+                                            display: 'flex',
+                                            flexDirection: 'row', // Change this to 'row' for horizontal layout
+                                            alignItems: 'center',
+                                            justifyContent: 'center', // Optional: center-align horizontally
+                                            gap: 1, // Add some space between the buttons
+                                        }}
+                                    >
+                                        <Box
+                                            sx={{
+                                                backgroundColor:
+                                                    item.deliveryStatus === 'Delivered'
+                                                        ? '#e8f5e9'
+                                                        : item.deliveryStatus === 'Shipped'
+                                                            ? '#e3f2fd'
+                                                            : '#fff3e0',
+                                                color:
+                                                    item.deliveryStatus === 'Delivered'
+                                                        ? '#2e7d32'
+                                                        : item.deliveryStatus === 'Shipped'
+                                                            ? '#1565c0'
+                                                            : '#e65100',
+                                                p: 1,
+                                                borderRadius: 1,
+                                                textAlign: 'center',
+                                                minWidth: 80, // Optional: Ensures a consistent width for the label box
+                                            }}
+                                        >
+                                            {item.deliveryStatus}
+                                        </Box>
+                                        <IconButton
+                                            onClick={() => {
+                                                setSelectedDeliveryStatus(item.deliveryStatus);
+                                                setOpenDeliveryTimelineDialog(true);
+                                            }}
+                                        >
+                                            <InfoIcon />
+                                        </IconButton>
+                                    </Box>
                                 </TableCell>
+
+
                                 <TableCell>{item.purchaseOrderNumber || 'Not Generated'}</TableCell>
                                 <TableCell>{item.expectedDeliveryDate ? formatDate(item.expectedDeliveryDate) : '-'}</TableCell>
                                 <TableCell>
@@ -816,21 +913,21 @@ const PurchaserDashboard = () => {
                                                 Update Delivery
                                             </Button>
                                         )}
-                                        <Button
-                                            variant="outlined"
-                                            size="small"
+                                        <IconButton
                                             onClick={() => handleOpenHistoryDialog(item.proposalId)}
                                             sx={{
                                                 backgroundColor: '#386641',
                                                 color: '#fff',
-                                                borderColor: 'transparent',
                                                 '&:hover': {
                                                     backgroundColor: '#95d5b2'
-                                                }
+                                                },
+                                                borderRadius: '4px',
+                                                padding: '8px' // Adjust as needed for spacing
                                             }}
                                         >
-                                            View Comments
-                                        </Button>
+                                            <CommentIcon />
+                                        </IconButton>
+
                                     </Box>
                                 </TableCell>
                             </TableRow>
@@ -1120,6 +1217,42 @@ const PurchaserDashboard = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            <Dialog
+                open={openOrderTimelineDialog}
+                onClose={() => setOpenOrderTimelineDialog(false)}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>Order Status Timeline</DialogTitle>
+                <DialogContent>
+                    <OrderTimeline orderStatus={selectedOrderStatus} />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenOrderTimelineDialog(false)} variant="outlined">
+                        Close
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+
+            <Dialog
+                open={openDeliveryTimelineDialog}
+                onClose={() => setOpenDeliveryTimelineDialog(false)}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>Delivery Status Timeline</DialogTitle>
+                <DialogContent>
+                    <DeliveryTimeline deliveryStatus={selectedDeliveryStatus} />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenDeliveryTimelineDialog(false)} variant="outlined">
+                        Close
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
 
 
             <Snackbar

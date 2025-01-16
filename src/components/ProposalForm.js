@@ -27,7 +27,7 @@ import {
     Business as BusinessIcon,
     Person as PersonIcon,
     LocalShipping as VendorIcon
-  } from '@mui/icons-material';
+} from '@mui/icons-material';
 
 const PROPOSAL_STATUS = ['Pending', 'Approved', 'Rejected'];
 const PROCUREMENT_CATEGORIES = ['Equipment', 'Supplies', 'Services', 'Food', 'Software', 'Other'];
@@ -59,6 +59,12 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
     const [departments, setDepartments] = useState([]); // Added state for departments
     const [selectedDepartment, setSelectedDepartment] = useState(null); // Added state for selected department
     const [formData, setFormData] = useState(initialFormState);
+    // after you've defined or updated `formData`:
+    const isReadOnly =
+        formData.status?.toLowerCase() === 'approved' ||
+        formData.status?.toLowerCase() === 'rejected';
+
+
     const [users, setUsers] = useState([]);
 
     const [snackbar, setSnackbar] = useState({
@@ -67,6 +73,29 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
         severity: 'success'
     });
     const [loggedInUser, setLoggedInUser] = useState(''); // Added state for logged-in user
+    const [versions, setVersions] = useState([]);           // array of version objects from backend
+    const [selectedVersion, setSelectedVersion] = useState(null);  // which version the user selected from dropdown
+
+    useEffect(() => {
+        if (initialData?.proposalId) {
+            // e.g. /api/proposals/2602/versions
+            axios
+                .get(`/api/proposals/${initialData.proposalId}/versions`)
+                .then((res) => {
+                    // This returns an array of ProposalHistory objects
+                    // e.g. [ { id: 1, versionNumber: 2, itemName: "...", ... }, { id:2, versionNumber:1, ... } ]
+                    const sorted = res.data.sort(
+                        (a, b) => b.versionNumber - a.versionNumber
+                    );
+                    setVersions(sorted);
+                    // We'll store them in descending order so version 2 appears first, then version 1
+                })
+                .catch((err) => {
+                    console.error("Error fetching versions:", err);
+                    // you can show a message, etc.
+                });
+        }
+    }, [initialData]);
 
 
     useEffect(() => {
@@ -297,9 +326,9 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                 return;
             }
 
-            const dateInEST = moment(formData.proposalDate)  
-      .tz('America/New_York')
-      .format('YYYY-MM-DDTHH:mm:ss'); 
+            const dateInEST = moment(formData.proposalDate)
+                .tz('America/New_York')
+                .format('YYYY-MM-DDTHH:mm:ss');
 
             const proposalPayload = {
                 ...formData,
@@ -362,6 +391,44 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
     };
 
 
+    const handleVersionChange = (selectedVerNumber) => {
+        // 1) Find the matching version from the versions array
+        if (selectedVerNumber === 'ORIGINAL') {
+            // Overwrite formData with the original initialData
+            setFormData(prev => ({
+                ...prev,
+                ...initialData, // itemName, category, etc. from the “live” proposal
+            }));
+            setSelectedVersion(null);
+            return;
+        }
+
+        const found = versions.find(v => v.versionNumber === selectedVerNumber);
+        if (!found) return;
+
+        setSelectedVersion(found);
+
+        // 2) Overwrite the current formData with the old version’s data
+        //    This is read-only or to show the user how the old version looked
+        setFormData(prev => ({
+            ...prev,
+            itemName: found.itemName,
+            category: found.category,
+            description: found.description,
+            quantity: found.quantity,
+            estimatedCost: found.estimatedCost,
+            vendorInfo: found.vendorInfo,
+            businessPurpose: found.businessPurpose,
+            status: found.status,
+            proposalDate: found.proposalDate
+                ? moment(found.proposalDate).toDate().toISOString()
+                : new Date().toISOString(),
+            currentApproverId: found.currentApproverId,
+            departmentId: found.departmentId,
+        }));
+    };
+
+
 
     const handleCloseSnackbar = () => {
         setSnackbar(prev => ({ ...prev, open: false }));
@@ -370,7 +437,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
     return (
         <Box sx={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
 
-            <Box sx={{ paddingTop: 10, textAlign: 'center' }}>
+            {/* <Box sx={{ paddingTop: 10, textAlign: 'center' }}>
                 <Typography
                     variant="h5"
                     gutterBottom
@@ -380,7 +447,55 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                         ? `Edit Procurement Proposal`
                         : `New Procurement Proposal`}
                 </Typography>
+            </Box> */}
+
+<Box
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    mb: 4,
+                    mt: 2,
+                    px: 2,
+                    backgroundColor: '#fff',
+                    borderRadius: 1,
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                    py: 2,
+                }}
+            >
+                <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#333' }}>
+                    {formData.proposalId ? 'Edit Procurement Proposal' : 'New Procurement Proposal'}
+                </Typography>
+
+                {/* === Only show this if we have versions loaded === */}
+                {formData.proposalId && versions.length > 0 && (
+                    <TextField
+                        select
+                        label="Select Version"
+                        value={selectedVersion?.versionNumber || ''}
+                        onChange={(e) => handleVersionChange(e.target.value)}
+                        size="small"
+                        sx={{ 
+                            width: 200,
+                            ml: 2,
+                            '& .MuiOutlinedInput-root': {
+                                backgroundColor: '#fff',
+                            },
+                            '& .MuiSelect-select': {
+                                py: 1,
+                            }
+                        }}
+                    >
+                        <MenuItem value="ORIGINAL">Original</MenuItem>
+                        {versions.map((ver) => (
+                            <MenuItem key={ver.id} value={ver.versionNumber}>
+                                Version {ver.versionNumber}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                )}
             </Box>
+
 
             <Card
                 sx={{
@@ -412,7 +527,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                                         </InputAdornment>
                                     ),
                                 }}
-                            
+
                             />
 
                             <TextField
@@ -437,7 +552,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                                 ))}
                             </TextField>
 
-                           
+
                             <TextField
                                 label="Description"
                                 value={formData.description || ''}
@@ -458,7 +573,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                                     ),
                                 }}
                                 error={(formData.description?.length || 0) > 1000} // Show error state if it exceeds limit
-                                
+
                             />
 
 
@@ -548,18 +663,18 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                                 getOptionLabel={(option) => `${option.email} (${option.firstName} ${option.lastName})`}
                                 onChange={handleCurrentApproverChange}
                                 renderInput={(params) => (
-                                    <TextField {...params} label="Select Current Approver" required 
-                                    InputProps={{
-                                        ...params.InputProps,
-                                        startAdornment: (
-                                            <>
-                                                <InputAdornment position="start">
-                                                    <PersonIcon />
-                                                </InputAdornment>
-                                                {params.InputProps.startAdornment}
-                                            </>
-                                        ),
-                                    }}
+                                    <TextField {...params} label="Select Current Approver" required
+                                        InputProps={{
+                                            ...params.InputProps,
+                                            startAdornment: (
+                                                <>
+                                                    <InputAdornment position="start">
+                                                        <PersonIcon />
+                                                    </InputAdornment>
+                                                    {params.InputProps.startAdornment}
+                                                </>
+                                            ),
+                                        }}
                                     />
                                 )}
                             />
@@ -578,7 +693,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                             />
 
 
-                            <Box
+                            {/* <Box
                                 sx={{
                                     display: 'flex',
                                     gap: 2,
@@ -624,7 +739,56 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                                         ? 'Update Proposal'
                                         : 'Submit Proposal'}
                                 </Button>
+                            </Box> */}
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    gap: 2,
+                                    justifyContent: 'flex-end',
+                                    marginTop: 2,
+                                }}
+                            >
+                                {/* “Close” goes to the proposals list or just closes the dialog */}
+                                <Button
+                                    onClick={() => navigate('/proposals')}
+                                    color="primary"
+                                >
+                                    {isReadOnly ? 'Close' : 'Cancel'}
+                                </Button>
+
+                                {!isReadOnly && (
+                                    <Button
+                                        type="submit"
+                                        variant="contained"
+                                        sx={{
+                                            backgroundColor: '#1a237e',
+                                            color: '#fff',
+                                            padding: '10px 20px',
+                                            fontSize: '16px',
+                                            '&:hover': {
+                                                backgroundColor: '#0d1b5e',
+                                            },
+                                            '&:disabled': {
+                                                backgroundColor: '#b0bec5',
+                                                color: '#fff',
+                                            },
+                                        }}
+                                    >
+                                        {loading
+                                            ? (
+                                                <>
+                                                    <CircularProgress size={20} sx={{ mr: 1 }} />
+                                                    {formData.proposalId ? 'Updating...' : 'Submitting...'}
+                                                </>
+                                            )
+                                            : formData.proposalId
+                                                ? 'Update Proposal'
+                                                : 'Submit Proposal'
+                                        }
+                                    </Button>
+                                )}
                             </Box>
+
                         </Box>
                     </form>
                 </CardContent>

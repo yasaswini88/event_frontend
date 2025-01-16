@@ -16,6 +16,7 @@ import {
 import moment from 'moment-timezone';
 import HistoryLogsTabs from './HistoryLogsTabs';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import ApproverDialogProposalVersionDetails from './ApproverDialogProposalVersionDetails'; 
 
 const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStatus }) => {
   const [proposal, setProposal] = useState(null);
@@ -28,6 +29,9 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
 
   const [facultyStats, setFacultyStats] = useState(null);
   const [facultyHistoryLogs, setFacultyHistoryLogs] = useState(null);
+ 
+const [versions, setVersions] = useState([]);              // all older versions
+const [selectedVersionId, setSelectedVersionId] = useState('ORIGINAL');
 
 
   const fetchFacultyStats = async (facultyUserId) => {
@@ -72,6 +76,7 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
       fetchProposalDetails();
       fetchApprovalHistory();
       fetchFundingSources();
+      fetchProposalVersions(proposalId);
     }
   }, [open, proposalId]);
 
@@ -181,6 +186,22 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
   };
 
 
+  const fetchProposalVersions = async (id) => {
+    try {
+      // GET /api/proposals/<proposalId>/versions
+      const response = await axios.get(`/api/proposals/${id}/versions`);
+      // Sort versions in descending order (latest version first)
+      const sorted = response.data.sort((a, b) => b.versionNumber - a.versionNumber);
+      setVersions(sorted);
+  
+      // Automatically select the latest version
+      if (sorted.length > 0) {
+        setSelectedVersionId(sorted[0].id); // Select the latest version by default
+      }
+    } catch (err) {
+      console.error('Error fetching proposal versions:', err);
+    }
+  };
 
 
   const formatDateTime = (dateTime) => {
@@ -231,6 +252,14 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
   if (error) return null;
   if (!proposal) return null;
 
+  // const versionToShow =
+  //   selectedVersionId === 'ORIGINAL'
+  //     ? proposal
+  //     : versions.find((v) => v.id === selectedVersionId);
+
+  const versionToShow = versions.find((v) => v.id === selectedVersionId) || null;
+
+
   return (
     <Dialog
       open={open}
@@ -247,6 +276,53 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
       </DialogTitle>
 
       <DialogContent className="p-6">
+
+     
+{versions.length > 0 && (
+  <Box sx={{ 
+    mb: 4,
+    mt: 2,
+    p: 2,
+    backgroundColor: '#fff',
+    borderRadius: 1,
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  }}>
+    <Typography variant="h6" sx={{ color: '#333' }}>
+      Version Snapshot
+    </Typography>
+    <TextField
+      select
+      size="small"
+      label="Select Version to View"
+      value={selectedVersionId}
+      onChange={(e) => setSelectedVersionId(e.target.value)}
+      sx={{ 
+        minWidth: 200,
+        '& .MuiOutlinedInput-root': {
+          backgroundColor: '#fff',
+        },
+        '& .MuiInputLabel-root': {
+          color: '#666',
+        },
+        '& .MuiSelect-select': {
+          py: 1,
+        }
+      }}
+    >
+      {versions.map((ver) => (
+        <MenuItem key={ver.id} value={ver.id}>
+          Version {ver.versionNumber}
+        </MenuItem>
+      ))}
+    </TextField>
+  </Box>
+)}
+
+<ApproverDialogProposalVersionDetails data={versionToShow} />
+
 
         {facultyStats && (
           <Box

@@ -31,6 +31,12 @@ import { useMediaQuery } from '@mui/material';
 import { sortData } from '../utils/utilities';
 import FacultyMetrics from './FacultyMetrics';
 import moment from 'moment-timezone';
+import OrderTimeline from './OrderTimeline';
+import DeliveryTimeline from './DeliveryTimeline';
+import InfoIcon from '@mui/icons-material/Info';
+import CommentIcon from '@mui/icons-material/Comment';
+
+
 
 const ProposalsList = () => {
     const [proposals, setProposals] = useState([]);
@@ -54,6 +60,14 @@ const ProposalsList = () => {
     const [proposalHistory, setProposalHistory] = useState([]);
     const [selectedProposalId, setSelectedProposalId] = useState(null);
     const [commentText, setCommentText] = useState('');
+    //     const isReadOnly =
+    //   formData.status?.toLowerCase() === 'approved' ||
+    //   formData.status?.toLowerCase() === 'rejected';
+
+    const [openOrderTimelineDialog, setOpenOrderTimelineDialog] = useState(false);
+    const [openDeliveryTimelineDialog, setOpenDeliveryTimelineDialog] = useState(false);
+    const [selectedOrderStatus, setSelectedOrderStatus] = useState(null);
+    const [selectedDeliveryStatus, setSelectedDeliveryStatus] = useState(null);
 
 
 
@@ -499,7 +513,7 @@ const ProposalsList = () => {
                                         </TableCell>
 
                                         {/* ============ ORDER STATUS (Color-coded) ============ */}
-                                        <TableCell align="center">
+                                        {/* <TableCell align="center">
                                             <Box
                                                 sx={{
                                                     backgroundColor:
@@ -521,10 +535,10 @@ const ProposalsList = () => {
                                             >
                                                 {proposal.orderStatus || '—'}
                                             </Box>
-                                        </TableCell>
+                                        </TableCell> */}
 
                                         {/* ============ DELIVERY STATUS (Color-coded) ============ */}
-                                        <TableCell align="center">
+                                        {/* <TableCell align="center">
                                             <Box
                                                 sx={{
                                                     backgroundColor:
@@ -550,43 +564,148 @@ const ProposalsList = () => {
                                             >
                                                 {proposal.deliveryStatus || '—'}
                                             </Box>
+                                        </TableCell> */}
+
+
+                                        {/* <TableCell align="center">
+                                            <OrderTimeline orderStatus={proposal.orderStatus} />
                                         </TableCell>
 
-                                        {/* ============ ACTIONS ============ */}
+                                       
+                                        <TableCell align="center">
+                                            <DeliveryTimeline deliveryStatus={proposal.deliveryStatus} />
+                                        </TableCell> */}
+
+
+                                        <TableCell align="center">
+                                            <Box
+                                                sx={{
+                                                    display: 'flex',
+                                                    flexDirection: 'row', // Change to row layout for horizontal alignment
+                                                    alignItems: 'center', // Align items vertically centered
+                                                    justifyContent: 'center', // Center-align horizontally in the cell
+                                                    gap: 1, // Add spacing between the elements
+                                                }}
+                                            >
+                                                <Box
+                                                    sx={{
+                                                        backgroundColor:
+                                                            proposal.orderStatus?.toUpperCase() === 'ORDERED'
+                                                                ? '#e8f5e9'
+                                                                : proposal.orderStatus?.toUpperCase() === 'PENDING'
+                                                                    ? '#fff3e0'
+                                                                    : '#f5f5f5',
+                                                        color:
+                                                            proposal.orderStatus?.toUpperCase() === 'ORDERED'
+                                                                ? '#2e7d32'
+                                                                : proposal.orderStatus?.toUpperCase() === 'PENDING'
+                                                                    ? '#e65100'
+                                                                    : '#333',
+                                                        padding: '8px',
+                                                        borderRadius: 1,
+                                                        textAlign: 'center',
+                                                        minWidth: 80, // Optional: Set a consistent width for the status box
+                                                    }}
+                                                >
+                                                    {proposal.orderStatus || '—'}
+                                                </Box>
+                                                <IconButton
+                                                    onClick={() => {
+                                                        setSelectedOrderStatus(proposal.orderStatus);
+                                                        setOpenOrderTimelineDialog(true);
+                                                    }}
+                                                >
+                                                    <InfoIcon />
+                                                </IconButton>
+                                            </Box>
+                                        </TableCell>
+
+
+                                        <TableCell align="center">
+                                            <Box
+                                                sx={{
+                                                    display: 'flex',
+                                                    flexDirection: 'row', // Change layout to horizontal
+                                                    alignItems: 'center', // Vertically align items
+                                                    justifyContent: 'center', // Center align content horizontally
+                                                    gap: 1, // Add spacing between the elements
+                                                }}
+                                            >
+                                                <Box
+                                                    sx={{
+                                                        backgroundColor:
+                                                            proposal.deliveryStatus === 'Delivered'
+                                                                ? '#e8f5e9'
+                                                                : proposal.deliveryStatus === 'Shipped'
+                                                                    ? '#e3f2fd'
+                                                                    : proposal.deliveryStatus === 'Processing'
+                                                                        ? '#fffde7'
+                                                                        : '#fff3e0',
+                                                        color:
+                                                            proposal.deliveryStatus === 'Delivered'
+                                                                ? '#2e7d32'
+                                                                : proposal.deliveryStatus === 'Shipped'
+                                                                    ? '#1565c0'
+                                                                    : proposal.deliveryStatus === 'Processing'
+                                                                        ? '#f57f17'
+                                                                        : '#e65100',
+                                                        padding: '8px',
+                                                        borderRadius: 1,
+                                                        textAlign: 'center',
+                                                        minWidth: 80, // Optional: Consistent box width
+                                                    }}
+                                                >
+                                                    {proposal.deliveryStatus || '—'}
+                                                </Box>
+                                                <IconButton
+                                                    onClick={() => {
+                                                        setSelectedDeliveryStatus(proposal.deliveryStatus);
+                                                        setOpenDeliveryTimelineDialog(true);
+                                                    }}
+                                                >
+                                                    <InfoIcon />
+                                                </IconButton>
+                                            </Box>
+                                        </TableCell>
+
+
+
+
+
                                         <TableCell align="center">
                                             <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
                                                 {/* Only enable editing if status is still PENDING */}
                                                 <IconButton
                                                     color="primary"
                                                     onClick={() => handleOpenDialog(proposal)}
-                                                    disabled={
-                                                        proposal.status?.toLowerCase() !== 'pending'
-                                                    }
-                                                    sx={{
-                                                        opacity:
-                                                            proposal.status?.toLowerCase() !== 'pending'
-                                                                ? 0.5
-                                                                : 1,
-                                                    }}
+                                                // disabled={
+                                                //     proposal.status?.toLowerCase() !== 'pending'
+                                                // }
+                                                // sx={{
+                                                //     opacity:
+                                                //         proposal.status?.toLowerCase() !== 'pending'
+                                                //             ? 0.5
+                                                //             : 1,
+                                                // }}
                                                 >
                                                     <EditIcon />
                                                 </IconButton>
 
 
-                                                <Button
-                                                    variant="outlined"
-                                                    onClick={() => handleOpenHistoryDialog(proposal.proposalId)}
-                                                    sx={{
-                                                        backgroundColor: proposal.hasHistory ? '#386641' : '#85182a',
-                                                        color: '#fff',         // so text is visible on both green/red
-                                                        borderColor: 'transparent',
-                                                        '&:hover': {
-                                                            backgroundColor: proposal.hasHistory ? '#95d5b2' : '#f7a399'
-                                                        }
-                                                    }}
-                                                >
-                                                    View Comments
-                                                </Button>
+                                                <IconButton
+    onClick={() => handleOpenHistoryDialog(proposal.proposalId)}
+    sx={{
+        backgroundColor: proposal.hasHistory ? '#386641' : '#85182a',
+        color: '#fff',
+        borderColor: 'transparent',
+        '&:hover': {
+            backgroundColor: proposal.hasHistory ? '#95d5b2' : '#f7a399'
+        },
+        padding: '8px', // Optional: adjust padding for better spacing
+    }}
+>
+    <CommentIcon />
+</IconButton>
 
 
                                             </Box>
@@ -779,6 +898,43 @@ const ProposalsList = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            {/* Dialog for Order Timeline */}
+            <Dialog
+                open={openOrderTimelineDialog}
+                onClose={() => setOpenOrderTimelineDialog(false)}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>Order Status Timeline</DialogTitle>
+                <DialogContent>
+                    <OrderTimeline orderStatus={selectedOrderStatus} />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenOrderTimelineDialog(false)} variant="outlined">
+                        Close
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Dialog for Delivery Timeline */}
+            <Dialog
+                open={openDeliveryTimelineDialog}
+                onClose={() => setOpenDeliveryTimelineDialog(false)}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>Delivery Status Timeline</DialogTitle>
+                <DialogContent>
+                    <DeliveryTimeline deliveryStatus={selectedDeliveryStatus} />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenDeliveryTimelineDialog(false)} variant="outlined">
+                        Close
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
 
         </Box>
     );

@@ -44,6 +44,8 @@ const Procurements = () => {
     const [proposalToDelete, setProposalToDelete] = useState(null);
     const [sortConfig, setSortConfig] = useState({ key: 'proposalId', order: 'desc' });
 
+    
+
     const [tabValue, setTabValue] = useState(0);
 
     const [snackbar, setSnackbar] = useState({

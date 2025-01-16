@@ -31,6 +31,7 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import HistoryLogsTabs from './HistoryLogsTabs';
+import ApproverDialogProposalVersionDetails from './ApproverDialogProposalVersionDetails';
 
 
 const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, status }) => {
@@ -46,6 +47,9 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, status
     const [fundingSourceError, setFundingSourceError] = useState(null);
     const [facultyStats, setFacultyStats] = useState(null);
     const [facultyHistoryLogs, setFacultyHistoryLogs] = useState(null);
+    const [versions, setVersions] = useState([]); // Store all historical versions
+    const [selectedVersionId, setSelectedVersionId] = useState(null); // Track selected version
+
 
 
 
@@ -60,6 +64,7 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, status
                     // Then load proposal details and history
                     await fetchProposalDetails();
                     // await fetchApprovalHistory();
+                    await fetchProposalVersions(proposalId);
                 } catch (err) {
                     console.error('Error loading dialog data:', err);
                 }
@@ -186,6 +191,36 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, status
         }
     };
 
+    // const fetchProposalVersions = async (id) => {
+    //     try {
+    //       const response = await axios.get(`/api/proposals/${id}/versions`);
+    //       const sorted = response.data.sort((a, b) => b.versionNumber - a.versionNumber); // Latest version first
+    //       setVersions(sorted);
+
+    //       // Automatically select the latest version
+    //       if (sorted.length > 0) {
+    //         setSelectedVersionId(sorted[0].id);
+    //       }
+    //     } catch (err) {
+    //       console.error('Error fetching proposal versions:', err);
+    //     }
+    //   };
+
+    const fetchProposalVersions = async (id) => {
+        try {
+            const response = await axios.get(`/api/proposals/${id}/versions`);
+            const sorted = response.data.sort((a, b) => b.versionNumber - a.versionNumber);
+            setVersions(sorted);
+            if (sorted.length > 0) {
+                setSelectedVersionId(sorted[0].id); // Automatically select the latest version
+            }
+        } catch (err) {
+            console.error('Error fetching proposal versions:', err);
+        }
+    };
+
+
+
 
 
 
@@ -263,6 +298,13 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, status
 
     if (loading || !editedProposal) return null;
 
+    // const versionToShow = versions.find((v) => v.id === selectedVersionId) || null;
+
+    const versionToShow = selectedVersionId === 'ORIGINAL'
+        ? proposal
+        : versions.find((v) => v.id === selectedVersionId) || null;
+
+
     return (
         <Dialog
             open={open}
@@ -284,6 +326,126 @@ const AdminApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, status
             </DialogTitle>
 
             <DialogContent sx={{ p: 3 }}>
+
+
+                {/* {versions.length > 0 && (
+  <Box sx={{ 
+    mb: 4,
+    mt: 2,
+    p: 2,
+    backgroundColor: '#fff',
+    borderRadius: 1,
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  }}>
+    <Typography variant="h6" sx={{ color: '#333' }}>
+      Version Snapshot
+    </Typography>
+    <TextField
+      select
+      size="small"
+      label="Select Version to View"
+      value={selectedVersionId}
+      onChange={(e) => setSelectedVersionId(e.target.value)}
+      sx={{ 
+        minWidth: 200,
+        '& .MuiOutlinedInput-root': {
+          backgroundColor: '#fff',
+        },
+        '& .MuiInputLabel-root': {
+          color: '#666',
+        },
+        '& .MuiSelect-select': {
+          py: 1,
+        }
+      }}
+    >
+      {versions.map((ver) => (
+        <MenuItem key={ver.id} value={ver.id}>
+          Version {ver.versionNumber}
+        </MenuItem>
+      ))}
+    </TextField>
+  </Box>
+)}
+
+<ApproverDialogProposalVersionDetails data={versionToShow} /> */}
+
+                {versions.length > 0 && (
+                    <>
+                        <Box sx={{
+                            mb: 4,
+                            mt: 2,
+                            p: 2,
+                            backgroundColor: '#f8f9fa',
+                            borderRadius: 1,
+                            border: '1px solid #e0e0e0',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 2,
+                            position: 'relative',
+                            zIndex: 1000
+                        }}>
+                            <Typography variant="subtitle1" sx={{
+                                fontWeight: 500,
+                                color: '#333',
+                                minWidth: '120px'
+                            }}>
+                                Version:
+                            </Typography>
+                            <TextField
+                                select
+                                size="small"
+                                fullWidth
+                                label="Select Version"
+                                value={selectedVersionId}
+                                onChange={(e) => setSelectedVersionId(e.target.value)}
+                                sx={{
+                                    maxWidth: 250,
+                                    '& .MuiOutlinedInput-root': {
+                                        backgroundColor: '#fff',
+                                        '& fieldset': {
+                                            borderColor: '#e0e0e0'
+                                        }
+                                    },
+                                    '& .MuiSelect-select': {
+                                        py: 1.5
+                                    }
+                                }}
+                                SelectProps={{
+                                    MenuProps: {
+                                        anchorOrigin: {
+                                            vertical: 'bottom',
+                                            horizontal: 'left'
+                                        },
+                                        transformOrigin: {
+                                            vertical: 'top',
+                                            horizontal: 'left'
+                                        },
+                                        PaperProps: {
+                                            sx: {
+                                                mt: 1,
+                                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                            }
+                                        }
+                                    }
+                                }}
+                            >
+                                <MenuItem value="ORIGINAL">Original (Current)</MenuItem>
+                                {versions.map((ver) => (
+                                    <MenuItem key={ver.id} value={ver.id}>
+                                        Version {ver.versionNumber}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                        </Box>
+                        <Box sx={{ mb: 3 }}>
+                            <ApproverDialogProposalVersionDetails data={versionToShow} />
+                        </Box>
+                    </>
+                )}
                 {facultyStats && (
                     <Box sx={{
                         backgroundColor: '#fef8e7',
