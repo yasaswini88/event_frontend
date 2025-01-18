@@ -202,13 +202,11 @@ function App() {
                   to={
                     user
                       ? (
-                        user.roleId === 1
-                          ? '/admin-dashboard'
-                          : user.roleId === 3
-                            ? '/approver-dashboard'
-                            : user.roleId === 4
-                              ? '/purchaser-dashboard'
-                              : '/proposal' // e.g. faculty or default route
+                          
+                          user.roles.some(r => r.roleId === 1) ? '/admin-dashboard'
+                        : user.roles.some(r => r.roleId === 3) ? '/approver-dashboard'
+                        : user.roles.some(r => r.roleId === 4) ? '/purchaser-dashboard'
+                        : '/proposal'
                       )
                       : '/'
                   }

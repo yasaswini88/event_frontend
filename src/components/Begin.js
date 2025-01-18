@@ -19,35 +19,81 @@ const Begin = () => {
     setShowLoginForm(true); // Change this from navigate()
   };
 
+  // useEffect(() => {
+  //   const userData = localStorage.getItem('user');
+
+  //   if (userData) {
+  //     try {
+  //       const user = JSON.parse(userData);
+
+  //       // Redirect based on roleId
+  //       switch (user.roles?.roleId) {
+  //         case 1: // Admin
+  //           navigate('/admin-dashboard');
+  //           break;
+  //         case 3: // Approver
+  //           navigate('/approver-dashboard');
+  //           break;
+  //         case 4: // Purchaser
+  //           navigate('/purchaser-dashboard');
+  //           break;
+  //         default: // Faculty or others
+  //           navigate('/proposal');
+  //       }
+  //     } catch (error) {
+  //       console.error('Error parsing user data:', error);
+  //       navigate('/'); // Fallback to home page
+  //     }
+  //   } else {
+  //     navigate('/'); // Redirect to the main page if no user data
+  //   }
+  // }, [navigate]);
+
   useEffect(() => {
     const userData = localStorage.getItem('user');
-
-    if (userData) {
-      try {
-        const user = JSON.parse(userData);
-
-        // Redirect based on roleId
-        switch (user.roles?.roleId) {
-          case 1: // Admin
+    if (!userData) {
+      // No user, so stay or go to "/"
+      navigate('/');
+      return;
+    }
+  
+    try {
+      const user = JSON.parse(userData);
+  
+      // If user has no roles, treat them as faculty or default
+      if (!user.roles || user.roles.length === 0) {
+        navigate('/proposal');
+      }
+      // If exactly 1 role, push them to that dashboard
+      else if (user.roles.length === 1) {
+        const singleRoleId = user.roles[0].roleId;
+        switch (singleRoleId) {
+          case 1:
             navigate('/admin-dashboard');
             break;
-          case 3: // Approver
+          case 3:
             navigate('/approver-dashboard');
             break;
-          case 4: // Purchaser
+          case 4:
             navigate('/purchaser-dashboard');
             break;
-          default: // Faculty or others
-            navigate('/proposal');
+          default:
+            navigate('/proposal'); // fallback
         }
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        navigate('/'); // Fallback to home page
       }
-    } else {
-      navigate('/'); // Redirect to the main page if no user data
+      // If user.roles.length > 1, do nothing here
+      // so they can pick from your new role selection approach
+      else {
+        console.log('User has multiple roles, let them choose in the login flow or top nav');
+        // Optionally navigate somewhere or do nothing
+      }
+    } catch (err) {
+      console.error('Error parsing user data:', err);
+      navigate('/');
     }
   }, [navigate]);
+
+  
 
   return (
     <Box sx={{ position: 'relative', height: '100vh', overflow: 'hidden' }}>

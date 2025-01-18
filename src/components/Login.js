@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
-import useEffect from 'react';
+import { useEffect } from 'react';
 import {
   Box,
   Container,
@@ -23,6 +23,7 @@ import {
   LockOutlined as LockIcon,
 } from '@mui/icons-material';
 import { loginStart, loginSuccess, loginFailure } from '../redux/authSlice';
+import RoleSelectionDialog from './RoleSelectionDialog';
 
 
 const Login = () => {
@@ -39,6 +40,7 @@ const Login = () => {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [showRoleSelection, setShowRoleSelection] = useState(false);
 
   const handleLoginSuccess = async (response) => {
     try {
@@ -58,20 +60,25 @@ const Login = () => {
         dispatch(loginSuccess(user));
 
         console.log('User roleId is:', user.roleId);
-        switch (user.roles?.roleId) {
-          case 1: // Administrator
-            window.location.href = '/admin-dashboard';
-            break;
-          case 3: // Approver
-            navigate('/approver-dashboard');
-            break;
-          case 4: // Purchaser
-            navigate('/purchaser-dashboard');
-            break;
-          default:
-            navigate('/proposal');
-            break;
+        // If user has zero roles => default to /proposal
+        if (!user.roles || user.roles.length === 0) {
+          navigate('/proposal');
         }
+        // If exactly 1 role => direct
+        else if (user.roles.length === 1) {
+          const singleRoleId = user.roles[0].roleId;
+          switch (singleRoleId) {
+            case 1: navigate('/admin-dashboard'); break;
+            case 3: navigate('/approver-dashboard'); break;
+            case 4: navigate('/purchaser-dashboard'); break;
+            default: navigate('/proposal');
+          }
+        }
+        // If multiple => show the role selection
+        else {
+          setShowRoleSelection(true);
+        }
+
 
 
 
@@ -117,24 +124,63 @@ const Login = () => {
         dispatch(loginSuccess(user));
 
         // Redirect based on roleId
-        switch (user.roles?.roleId) {
-          case 1: // Admin
-            navigate('/admin-dashboard');
-            break;
-          case 3: // Approver
-            navigate('/approver-dashboard');
-            break;
-          case 4: // Purchaser
-            navigate('/purchaser-dashboard');
-            break;
-          default: // Faculty or others
-            navigate('/proposal');
+        // If user has zero roles => default to /proposal
+        if (!user.roles || user.roles.length === 0) {
+          navigate('/proposal');
         }
+        // If exactly 1 role => direct
+        else if (user.roles.length === 1) {
+          const singleRoleId = user.roles[0].roleId;
+          switch (singleRoleId) {
+            case 1: navigate('/admin-dashboard'); break;
+            case 3: navigate('/approver-dashboard'); break;
+            case 4: navigate('/purchaser-dashboard'); break;
+            default: navigate('/proposal');
+          }
+        }
+        // If multiple => show the role selection
+        else {
+          setShowRoleSelection(true);
+        }
+
       }
     } catch (error) {
       dispatch(loginFailure('Invalid email or password'));
     }
   };
+
+  const handleRoleSelect = (roleId) => {
+    setShowRoleSelection(false);
+
+    // Convert roleId to an integer
+    const chosenRoleId = parseInt(roleId, 10);
+
+
+    localStorage.setItem('chosenRoleId', chosenRoleId);
+
+    // Navigate
+    switch (chosenRoleId) {
+      case 1:
+        navigate('/admin-dashboard');
+        break;
+      case 3:
+        navigate('/approver-dashboard');
+        break;
+      case 4:
+        navigate('/purchaser-dashboard');
+        break;
+      default:
+        navigate('/proposal');
+    }
+  };
+
+  const user = useSelector(state => state.auth.user);
+
+  useEffect(() => {
+    if (user && user.roles?.length > 1) {
+      setShowRoleSelection(true);
+    }
+  }, [user]);
 
 
 
@@ -286,7 +332,17 @@ const Login = () => {
             cookiePolicy={'single_host_origin'}
           />
         </Paper>
+
       </Container>
+
+      {showRoleSelection && (
+        <RoleSelectionDialog
+          open={showRoleSelection}
+          onClose={() => setShowRoleSelection(false)}
+          roles={Array.from(user.roles || [])}
+          onRoleSelect={handleRoleSelect}
+        />
+      )}
 
     </GoogleOAuthProvider>
   );

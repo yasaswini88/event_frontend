@@ -40,7 +40,7 @@ const SingleProposalView = () => {
 
 
 
-   
+
 
     // useEffect(() => {
     //     const fetchProposal = async () => {
@@ -66,25 +66,30 @@ const SingleProposalView = () => {
 
     useEffect(() => {
         const fetchProposal = async () => {
-          try {
-            const currentUserId = user.userId;
-            const response = await axios.get(`/api/proposals/${proposalId}`, {
-              params: { currentUserId }
-            });
-            setProposal(response.data);
-          } catch (err) {
-            if (err.response && err.response.status === 403) {
-              setError('You do not have permission to view this proposal.');
-            } else {
-              setError('Failed to load proposal details.');
+            try {
+                const currentUserId = user.userId;
+                const response = await axios.get(`/api/proposals/${proposalId}`, {
+                    params: { currentUserId }
+                });
+                setProposal(response.data);
+            } catch (err) {
+                if (err.response && err.response.status === 403) {
+                    setError('You do not have permission to view this proposal.');
+                } else {
+                    setError('Failed to load proposal details.');
+                }
+            } finally {
+                setLoading(false);
             }
-          } finally {
-            setLoading(false);
-          }
         };
         fetchProposal();
-      }, [proposalId, user]);
-      
+    }, [proposalId, user]);
+
+
+    const hasRole = (roleId) => {
+        return Array.isArray(user?.roles) && user.roles.some((role) => role.roleId === roleId);
+    };
+
 
 
     if (loading) {
@@ -232,7 +237,7 @@ const SingleProposalView = () => {
 
                         </Grid>
 
-                        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                        {/* <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
 
                             {user?.roles?.roleId === 3 && ( // Show button only if user is Approver
                                 <Button
@@ -252,7 +257,29 @@ const SingleProposalView = () => {
                                 </Button>
                             )}
 
+                        </Box> */}
+
+                        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                            {hasRole(3) && ( // Conditional rendering for Approver role
+                                <Button
+                                    variant="contained"
+                                    onClick={() => {
+                                        setSelectedProposalId(proposal.proposalId);
+                                        setDialogOpen(true);
+                                    }}
+                                    sx={{
+                                        backgroundColor: '#1a237e',
+                                        '&:hover': {
+                                            backgroundColor: '#0d1b5e',
+                                        },
+                                    }}
+                                >
+                                    Review Request
+                                </Button>
+                            )}
                         </Box>
+
+
                     </CardContent>
                 </Card>
             </Box>

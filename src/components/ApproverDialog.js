@@ -16,7 +16,7 @@ import {
 import moment from 'moment-timezone';
 import HistoryLogsTabs from './HistoryLogsTabs';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import ApproverDialogProposalVersionDetails from './ApproverDialogProposalVersionDetails'; 
+import ApproverDialogProposalVersionDetails from './ApproverDialogProposalVersionDetails';
 
 const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStatus }) => {
   const [proposal, setProposal] = useState(null);
@@ -29,9 +29,20 @@ const ApproverDialog = ({ open, onClose, proposalId, onStatusUpdate, currentStat
 
   const [facultyStats, setFacultyStats] = useState(null);
   const [facultyHistoryLogs, setFacultyHistoryLogs] = useState(null);
- 
-const [versions, setVersions] = useState([]);              // all older versions
-const [selectedVersionId, setSelectedVersionId] = useState('ORIGINAL');
+
+  const [versions, setVersions] = useState([]);              // all older versions
+  const [selectedVersionId, setSelectedVersionId] = useState('ORIGINAL');
+
+
+  const [attachedDocs, setAttachedDocs] = useState([]);
+
+  const [showMoreDocs, setShowMoreDocs] = useState(false);
+
+
+  const visibleDocs = showMoreDocs
+    ? attachedDocs // show all
+    : attachedDocs.slice(0, 3); // only first 3
+
 
 
   const fetchFacultyStats = async (facultyUserId) => {
@@ -71,14 +82,45 @@ const [selectedVersionId, setSelectedVersionId] = useState('ORIGINAL');
       // Clear old data so we don't see leftover comments from a previous proposal
       setProposal(null);
       setApprovalHistory([]);
+      setAttachedDocs([]);
 
       // Now fetch the new data
       fetchProposalDetails();
       fetchApprovalHistory();
       fetchFundingSources();
       fetchProposalVersions(proposalId);
+
+      fetchAttachedDocs(proposalId);
+
+
     }
   }, [open, proposalId]);
+
+  const fetchAttachedDocs = async (proposalId) => {
+    try {
+      const response = await axios.get(`/api/documents/proposal/${proposalId}`);
+      if (Array.isArray(response.data)) {
+        setAttachedDocs(response.data);
+      } else {
+        setAttachedDocs([]);
+      }
+    } catch (err) {
+      console.error('Error fetching attached docs:', err);
+      setAttachedDocs([]);
+    }
+  };
+
+  const handleDownloadFile = async (docId) => {
+    try {
+      const response = await axios.get(`/api/documents/${docId}/download`);
+      const presignedUrl = response.data;
+      window.open(presignedUrl, '_blank');
+    } catch (err) {
+      console.error('Error downloading file:', err);
+      // Optionally show an error message
+    }
+  };
+
 
 
   const fetchProposalDetails = async () => {
@@ -193,7 +235,7 @@ const [selectedVersionId, setSelectedVersionId] = useState('ORIGINAL');
       // Sort versions in descending order (latest version first)
       const sorted = response.data.sort((a, b) => b.versionNumber - a.versionNumber);
       setVersions(sorted);
-  
+
       // Automatically select the latest version
       if (sorted.length > 0) {
         setSelectedVersionId(sorted[0].id); // Select the latest version by default
@@ -277,51 +319,51 @@ const [selectedVersionId, setSelectedVersionId] = useState('ORIGINAL');
 
       <DialogContent className="p-6">
 
-     
-{versions.length > 0 && (
-  <Box sx={{ 
-    mb: 4,
-    mt: 2,
-    p: 2,
-    backgroundColor: '#fff',
-    borderRadius: 1,
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between'
-  }}>
-    <Typography variant="h6" sx={{ color: '#333' }}>
-      Version Snapshot
-    </Typography>
-    <TextField
-      select
-      size="small"
-      label="Select Version to View"
-      value={selectedVersionId}
-      onChange={(e) => setSelectedVersionId(e.target.value)}
-      sx={{ 
-        minWidth: 200,
-        '& .MuiOutlinedInput-root': {
-          backgroundColor: '#fff',
-        },
-        '& .MuiInputLabel-root': {
-          color: '#666',
-        },
-        '& .MuiSelect-select': {
-          py: 1,
-        }
-      }}
-    >
-      {versions.map((ver) => (
-        <MenuItem key={ver.id} value={ver.id}>
-          Version {ver.versionNumber}
-        </MenuItem>
-      ))}
-    </TextField>
-  </Box>
-)}
 
-<ApproverDialogProposalVersionDetails data={versionToShow} />
+        {versions.length > 0 && (
+          <Box sx={{
+            mb: 4,
+            mt: 2,
+            p: 2,
+            backgroundColor: '#fff',
+            borderRadius: 1,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            <Typography variant="h6" sx={{ color: '#333' }}>
+              Version Snapshot
+            </Typography>
+            <TextField
+              select
+              size="small"
+              label="Select Version to View"
+              value={selectedVersionId}
+              onChange={(e) => setSelectedVersionId(e.target.value)}
+              sx={{
+                minWidth: 200,
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: '#fff',
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#666',
+                },
+                '& .MuiSelect-select': {
+                  py: 1,
+                }
+              }}
+            >
+              {versions.map((ver) => (
+                <MenuItem key={ver.id} value={ver.id}>
+                  Version {ver.versionNumber}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Box>
+        )}
+
+        <ApproverDialogProposalVersionDetails data={versionToShow} />
 
 
         {facultyStats && (
@@ -384,6 +426,43 @@ const [selectedVersionId, setSelectedVersionId] = useState('ORIGINAL');
               <Grid item xs={6}>
                 <Typography variant="subtitle2" className="text-gray-600">Status</Typography>
                 <Typography variant="body1" className="font-medium">{proposal.status}</Typography>
+              </Grid>
+              <Grid item xs={6}>
+                {attachedDocs.length > 0 && (
+                  <Box sx={{ mt: 3, p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                      Attached Documents ({attachedDocs.length})
+                    </Typography>
+
+                    {visibleDocs.map((doc) => (
+                      <Box
+                        key={doc.id}
+                        sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}
+                      >
+                        <Typography sx={{ flex: 1 }}>{doc.fileName}</Typography>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => handleDownloadFile(doc.id)}
+                          sx={{ textTransform: 'none' }}
+                        >
+                          Download
+                        </Button>
+                      </Box>
+                    ))}
+
+                    {/* If there are more than 3 docs, show the “View More” or “View Less” button */}
+                    {attachedDocs.length > 3 && (
+                      <Button
+                        onClick={() => setShowMoreDocs(!showMoreDocs)}
+                        sx={{ mt: 2 }}
+                      >
+                        {showMoreDocs ? 'View Less' : 'View More'}
+                      </Button>
+                    )}
+                  </Box>
+                )}
+
               </Grid>
             </Grid>
           </DialogContent>
@@ -466,26 +545,26 @@ const [selectedVersionId, setSelectedVersionId] = useState('ORIGINAL');
                       </Typography>
                     </Box> */}
                     <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between' }}>
-                    <Box>
-                      <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                        Comment by {history.approverName || 'Unknown'}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                        {formatDateTime(history.actionDate)}
-                      </Typography>
+                      <Box>
+                        <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                          Comment by {history.approverName || 'Unknown'}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                          {formatDateTime(history.actionDate)}
+                        </Typography>
+                      </Box>
+
+                      {/* Right side: Show the role chip */}
+                      {history.approverRole && (
+                        <Chip
+                          label={history.approverRole}
+                          color="primary"
+                          size="small"
+                          sx={{ alignSelf: 'center' }}
+                        />
+                      )}
                     </Box>
 
-                    {/* Right side: Show the role chip */}
-                    {history.approverRole && (
-                      <Chip
-                        label={history.approverRole}
-                        color="primary"
-                        size="small"
-                        sx={{ alignSelf: 'center' }}
-                      />
-                    )}
-                  </Box>
-                  
                     {history.oldStatus !== history.newStatus && (
                       <Typography variant="body2" sx={{ mb: 1 }}>
                         Status changed from <strong>{history.oldStatus}</strong> to{' '}

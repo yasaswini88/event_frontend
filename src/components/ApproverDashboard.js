@@ -31,6 +31,8 @@ import AnalyticsDashboard from './AnalyticsDashboard';
 import ApproverSetAlerts from './ApproverSetAlerts';
 import { sortData } from '../utils/utilities';
 import { useTheme, useMediaQuery } from '@mui/material';
+import { Comment as CommentIcon } from '@mui/icons-material';
+import CommentsDialog from './CommentsDialog';
 
 const StyledChip = styled(Chip)(({ theme, status }) => ({
   borderRadius: '16px',
@@ -68,6 +70,8 @@ const ApproverDashboard = () => {
   const [pagination, setPagination] = useState({ currentPage: 1, itemsPerPage: 6, totalItems: 0 });
   const [sortConfig, setSortConfig] = useState({ key: 'proposalDate', order: 'desc' });
   const [alertsDialogOpen, setAlertsDialogOpen] = useState(false);
+  const [openCommentsDialog, setOpenCommentsDialog] = useState(false);
+  const [commentProposalId, setCommentProposalId] = useState(null);
 
 
 
@@ -82,12 +86,55 @@ const ApproverDashboard = () => {
     filterProposals('pending'); // Filter proposals for the "Pending" status initially
   }, [proposals]);
 
+  // const fetchProposals = async () => {
+  //   try {
+  //     const user = JSON.parse(localStorage.getItem('user'));
+  //     if (user && user.userId) {
+  //       const response = await axios.get(`/api/proposals/approver/${user.userId}`);
+  //       setProposals(response.data);
+  //     } else {
+  //       console.error('User not found in local storage');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching proposals:', error);
+  //   }
+  // };
+
   const fetchProposals = async () => {
     try {
       const user = JSON.parse(localStorage.getItem('user'));
       if (user && user.userId) {
         const response = await axios.get(`/api/proposals/approver/${user.userId}`);
-        setProposals(response.data);
+        const fetchedProposals = response.data;
+
+        // Add a flag for whether each proposal has comments
+        // const withHistoryPromises = fetchedProposals.map(async (proposal) => {
+        //   try {
+        //     const histResp = await axios.get(`/api/proposals/${proposal.proposalId}/history`);
+        //     proposal.hasHistory = histResp.data.length > 0;
+        //   } catch (err) {
+        //     console.error(`Error fetching history for proposal ${proposal.proposalId}`, err);
+        //     proposal.hasHistory = false; // Default to false on error
+        //   }
+        //   return proposal;
+        // });
+
+        // Add a flag for whether each proposal has comments
+        const withHistoryPromises = fetchedProposals.map(async (proposal) => {
+          try {
+            const histResp = await axios.get(`/api/proposals/${proposal.proposalId}/history`);
+            proposal.hasHistory = histResp.data.length > 0;
+          } catch (err) {
+            console.error(`Error fetching history for proposal ${proposal.proposalId}`, err);
+            proposal.hasHistory = false;
+          }
+          return proposal;
+        });
+
+
+        // Wait for all the comment checks to complete
+        const proposalsWithHistory = await Promise.all(withHistoryPromises);
+        setProposals(proposalsWithHistory);
       } else {
         console.error('User not found in local storage');
       }
@@ -95,6 +142,7 @@ const ApproverDashboard = () => {
       console.error('Error fetching proposals:', error);
     }
   };
+
 
   const handleSort = (key) => {
     setSortConfig((prevConfig) => ({
@@ -104,6 +152,10 @@ const ApproverDashboard = () => {
   };
 
 
+  const handleOpenComments = (proposalId) => {
+    setCommentProposalId(proposalId);
+    setOpenCommentsDialog(true);
+  };
 
 
 
@@ -383,6 +435,13 @@ const ApproverDashboard = () => {
                 </TableCell>
                 <TableCell sx={{ color: 'white' }}>Dept. Name</TableCell>
                 <TableCell sx={{ color: 'white' }}>Status</TableCell>
+                <TableCell
+                  onClick={() => handleSort('expectedDueDate')}
+                  sx={{ color: 'white', cursor: 'pointer' }}
+                >
+                  Expected Due Date {sortConfig.key === 'expectedDueDate' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+                </TableCell>
+
                 <TableCell sx={{ color: 'white' }}>Action</TableCell>
               </TableRow>
             </TableHead>
@@ -417,10 +476,28 @@ const ApproverDashboard = () => {
                       size="small"
                     />
                   </TableCell>
+                  <TableCell>{proposal.expectedDueDate ? formatDate(proposal.expectedDueDate) : '—'}</TableCell>
+
                   <TableCell>
                     <IconButton size="small" sx={{ color: 'blue' }} onClick={() => handleViewProposal(proposal.proposalId)}>
                       <VisibilityIcon />
                     </IconButton>
+                    <IconButton
+                      onClick={() => handleOpenComments(proposal.proposalId)}
+                      sx={{
+                        backgroundColor: proposal.hasHistory ? '#386641' : '#85182a',
+                        color: '#fff',
+                        borderColor: 'transparent',
+                        '&:hover': {
+                          backgroundColor: proposal.hasHistory ? '#95d5b2' : '#f7a399'
+                        },
+                        padding: '8px', 
+                        marginLeft: '4px', 
+                      }}
+                    >
+                      <CommentIcon />
+                    </IconButton>
+
                     {proposal.status.toLowerCase() === 'pending' && (
                       <>
                         <IconButton size="small" sx={{ color: 'red' }} onClick={() => handleDirectReject(proposal.proposalId)}>
@@ -430,7 +507,9 @@ const ApproverDashboard = () => {
 
                         </IconButton>
                       </>
+
                     )}
+
                   </TableCell>
                 </TableRow>
               ))}
@@ -474,6 +553,12 @@ const ApproverDashboard = () => {
       <ApproverSetAlerts
         open={alertsDialogOpen}
         onClose={() => setAlertsDialogOpen(false)}
+      />
+
+      <CommentsDialog
+        open={openCommentsDialog}
+        onClose={() => setOpenCommentsDialog(false)}
+        proposalId={commentProposalId}
       />
 
 

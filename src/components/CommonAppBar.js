@@ -12,12 +12,51 @@ import {
 import { Logout as LogoutIcon } from '@mui/icons-material';
 import Layout from './Layout'; // Import the Layout component
 import MenuIcon from '@mui/icons-material/Menu';
+import RoleSelectionDialog from './RoleSelectionDialog';
 
 const CommonAppBar = ({ showLogout = true }) => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user'));
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
+
+  const [showRoleSelection, setShowRoleSelection] = useState(false);
+  const roles = user?.roles ? Array.from(user.roles) : [];
+
+  const handleOpenRoleDialog = () => {
+    setShowRoleSelection(true);
+  };
+
+  const handleCloseRoleDialog = () => {
+    setShowRoleSelection(false);
+  };
+
+
+  const handleRoleSelect = (roleId) => {
+    setShowRoleSelection(false);
+  
+    // Convert roleId to an integer
+    const chosenRoleId = parseInt(roleId, 10);
+  
+   
+    localStorage.setItem('chosenRoleId', chosenRoleId);
+  
+    // Navigate
+    switch (chosenRoleId) {
+      case 1:
+        navigate('/admin-dashboard');
+        break;
+      case 3:
+        navigate('/approver-dashboard');
+        break;
+      case 4:
+        navigate('/purchaser-dashboard');
+        break;
+      default:
+        navigate('/proposal');
+    }
+  };
+
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -38,13 +77,17 @@ const CommonAppBar = ({ showLogout = true }) => {
     return `${user.firstName} ${user.lastName}`;
   };
 
-  const isAdmin = user && user.roles?.roleId === 1;
+  const isAdmin = user && user.roles?.some((role) => role.roleId === 1);
+
 
   const toggleDrawer = () => {
     if (isAdmin) {
       setDrawerOpen(!drawerOpen);
     }
   };
+
+
+const hasMultipleRoles = user && user.roles && user.roles.length > 1;
 
   return (
     <>
@@ -90,6 +133,11 @@ const CommonAppBar = ({ showLogout = true }) => {
                 {getUserName()}
               </Typography>
             </Box>
+            {roles.length > 1 && (
+            <Button onClick={handleOpenRoleDialog}>
+              Switch Role
+            </Button>
+          )}
             {showLogout && (
               <>
                 <Button
@@ -146,6 +194,17 @@ const CommonAppBar = ({ showLogout = true }) => {
       {isAdmin && (
         <Layout open={drawerOpen} onClose={() => setDrawerOpen(false)} />
       )}
+
+{showRoleSelection && (
+        <RoleSelectionDialog
+          open={showRoleSelection}
+          onClose={handleCloseRoleDialog}
+          roles={roles}
+          onRoleSelect={handleRoleSelect}
+        />
+      )}
+
+      
     </>
   );
 };

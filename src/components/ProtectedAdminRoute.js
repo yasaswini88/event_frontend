@@ -5,9 +5,12 @@ import ProtectedLayout from './ProtectedLayout';
 const ProtectedAdminRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem('user'));
 
-  if (!user || user.roles?.roleId !== 1) {
-    return <Navigate to="/" />;
-  }
+  // if (!user || user.roles?.roleId !== 1) {
+  //   return <Navigate to="/" />;
+  // }
+   if (!user || !user.roles.some(r => r.roleId === 1)) {
+      return <Navigate to="/" />;
+    }
 
   return <ProtectedLayout requiredRoleId={1}>{children}</ProtectedLayout>;
 };

@@ -35,6 +35,8 @@ import OrderTimeline from './OrderTimeline';
 import DeliveryTimeline from './DeliveryTimeline';
 import InfoIcon from '@mui/icons-material/Info';
 import CommentIcon from '@mui/icons-material/Comment';
+import CommentsDialog from './CommentsDialog';
+
 
 
 
@@ -56,11 +58,9 @@ const ProposalsList = () => {
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const [sortConfig, setSortConfig] = useState({ key: 'proposalId', order: 'desc' });
     const [tabValue, setTabValue] = useState(0);
-    const [openHistoryDialog, setOpenHistoryDialog] = useState(false);
-    const [proposalHistory, setProposalHistory] = useState([]);
     const [selectedProposalId, setSelectedProposalId] = useState(null);
-    const [commentText, setCommentText] = useState('');
-    //     const isReadOnly =
+    const [openCommentsDialog, setOpenCommentsDialog] = useState(false);
+    const [currentProposalId, setCurrentProposalId] = useState(null);
     //   formData.status?.toLowerCase() === 'approved' ||
     //   formData.status?.toLowerCase() === 'rejected';
 
@@ -218,73 +218,11 @@ const ProposalsList = () => {
         }
     };
 
-    const handleOpenHistoryDialog = async (proposalId) => {
-        try {
-            setSelectedProposalId(proposalId);
-            // Fetch approval history
-            const response = await axios.get(`/api/proposals/${proposalId}/history`);
-
-            // IMPORTANT: if you currently have code filtering out
-            // repeated oldStatus==newStatus, remove that if you want 
-            // to see "comment-only" entries (PENDING -> PENDING).
-
-            setProposalHistory(response.data);
-            setOpenHistoryDialog(true);
-
-        } catch (err) {
-            console.error('Error fetching approval history:', err);
-            setSnackbar({
-                open: true,
-                message: 'No comments found for this proposal',
-                severity: 'error',
-            });
-        }
+    const handleOpenCommentsDialog = (proposalId) => {
+        setCurrentProposalId(proposalId);
+        setOpenCommentsDialog(true);
     };
 
-    const handleAddComment = async () => {
-        try {
-            if (!commentText.trim()) return;
-
-            // 1) Get currentUser from localStorage:
-            const loggedUser = JSON.parse(localStorage.getItem('user'));
-            const currentUserId = loggedUser.userId;
-
-            const actionDate = moment()
-                .tz("America/New_York")
-                .format("YYYY-MM-DDTHH:mm:ss");
-            // 2) Call the backend endpoint:
-            await axios.put(`/api/proposals/${selectedProposalId}/comment`, null, {
-                params: {
-                    currentUserId: currentUserId,  // "approverId" in your existing code, 
-                    // but we know it actually means the user adding comment
-                    comments: commentText,
-                    // optional: fundingSourceId => for faculty, typically null
-                    actionDate: actionDate,
-                }
-            });
-
-            // 3) Clear the text field after success:
-            setCommentText('');
-
-            // 4) Refresh the history to show the new comment
-            const response = await axios.get(`/api/proposals/${selectedProposalId}/history`);
-            setProposalHistory(response.data);
-
-            setSnackbar({
-                open: true,
-                message: 'Comment added successfully!',
-                severity: 'success'
-            });
-
-        } catch (error) {
-            console.error('Error adding comment:', error);
-            setSnackbar({
-                open: true,
-                message: 'Failed to add comment.',
-                severity: 'error'
-            });
-        }
-    };
 
 
 
@@ -308,6 +246,12 @@ const ProposalsList = () => {
         });
     }
 
+    function formatLocalDate(dateOnlyString) {
+        return moment(dateOnlyString, 'YYYY-MM-DD')
+          .format('MMM D, YYYY');
+      }
+
+      
     return (
         <Box sx={{ p: 3, minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
             <Box sx={{ maxWidth: '100%', margin: '0 auto' }}>
@@ -406,12 +350,12 @@ const ProposalsList = () => {
                                 >
                                     Category
                                 </TableCell>
-                                <TableCell
+                                {/* <TableCell
                                     sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center', cursor: 'pointer' }}
                                     onClick={() => handleSort('description')}
                                 >
                                     Description
-                                </TableCell>
+                                </TableCell> */}
                                 <TableCell
                                     sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center', cursor: 'pointer' }}
                                     onClick={() => handleSort('quantity')}
@@ -441,6 +385,13 @@ const ProposalsList = () => {
                                 <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>
                                     Delivery Status
                                 </TableCell>
+                                <TableCell
+                                    sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center', cursor: 'pointer' }}
+                                    onClick={() => handleSort('expectedDueDate')}
+                                >
+                                    Expected Due Date
+                                </TableCell>
+
                                 <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>
                                     Actions
                                 </TableCell>
@@ -455,7 +406,7 @@ const ProposalsList = () => {
                                         <TableCell align="center">{proposal.proposalId}</TableCell>
                                         <TableCell align="center">{proposal.itemName}</TableCell>
                                         <TableCell align="center">{proposal.category}</TableCell>
-                                        <TableCell align="center">{proposal.description}</TableCell>
+                                        {/* <TableCell align="center">{proposal.description}</TableCell> */}
                                         <TableCell align="center">{proposal.quantity}</TableCell>
                                         <TableCell align="center">
                                             {proposal.estimatedCost
@@ -668,6 +619,14 @@ const ProposalsList = () => {
                                             </Box>
                                         </TableCell>
 
+                                        <TableCell align="center">
+  {proposal.expectedDueDate 
+    ? formatLocalDate(proposal.expectedDueDate)
+    : '—'}
+</TableCell>
+
+
+
 
 
 
@@ -693,19 +652,19 @@ const ProposalsList = () => {
 
 
                                                 <IconButton
-    onClick={() => handleOpenHistoryDialog(proposal.proposalId)}
-    sx={{
-        backgroundColor: proposal.hasHistory ? '#386641' : '#85182a',
-        color: '#fff',
-        borderColor: 'transparent',
-        '&:hover': {
-            backgroundColor: proposal.hasHistory ? '#95d5b2' : '#f7a399'
-        },
-        padding: '8px', // Optional: adjust padding for better spacing
-    }}
->
-    <CommentIcon />
-</IconButton>
+                                                    onClick={() => handleOpenCommentsDialog(proposal.proposalId)}
+                                                    sx={{
+                                                        backgroundColor: proposal.hasHistory ? '#386641' : '#85182a',
+                                                        color: '#fff',
+                                                        borderColor: 'transparent',
+                                                        '&:hover': {
+                                                            backgroundColor: proposal.hasHistory ? '#95d5b2' : '#f7a399'
+                                                        },
+                                                        padding: '8px', // Optional: adjust padding for better spacing
+                                                    }}
+                                                >
+                                                    <CommentIcon />
+                                                </IconButton>
 
 
                                             </Box>
@@ -788,116 +747,7 @@ const ProposalsList = () => {
                     </Alert>
                 </Snackbar>
             </Box>
-            <Dialog
-                open={openHistoryDialog}
-                onClose={() => setOpenHistoryDialog(false)}
-                maxWidth="sm"
-                fullWidth
-            >
-                <DialogTitle>Proposal History (Comments)</DialogTitle>
-                <DialogContent>
-                    {proposalHistory.length === 0 ? (
-                        <Typography>No history found.</Typography>
-                    ) : (
-                        <Box
-                            sx={{
-                                maxHeight: 300,            // scrollable
-                                overflowY: 'auto',
-                                p: 2,
-                                backgroundColor: 'background.paper',
-                                border: '1px solid',
-                                borderColor: 'divider',
-                                borderRadius: 1,
-                            }}
-                        >
-                            {proposalHistory.map((entry, index) => (
-                                <Box
-                                    key={index}
-                                    sx={{
-                                        mb: 3,
-                                        p: 2,
-                                        backgroundColor: 'background.default',
-                                        border: '1px solid',
-                                        borderColor: 'divider',
-                                        borderRadius: 1,
-                                    }}
-                                >
 
-                                    {/* <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                                        Comment by {entry.approverName || 'Unknown'}
-                                    </Typography>
-                                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                        {formatDateTimeEST(entry.actionDate)}
-                                    </Typography> */}
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                        <Box>
-                                            <Typography
-                                                variant="body2"
-                                                sx={{ fontWeight: 'bold', color: 'primary.main' }}
-                                            >
-                                                Comment by {entry.approverName || 'Unknown'}
-                                            </Typography>
-                                            <Typography
-                                                variant="caption"
-                                                sx={{ color: 'text.secondary' }}
-                                            >
-                                                {formatDateTimeEST(entry.actionDate)}
-                                            </Typography>
-                                        </Box>
-
-                                        {/* Show role on the right (Chip) */}
-                                        {entry.approverRole && (
-                                            <Chip
-                                                label={entry.approverRole}
-                                                color="primary"
-                                                size="small"
-                                                sx={{ alignSelf: 'center' }}
-                                            />
-                                        )}
-                                    </Box>
-                                    {entry.oldStatus !== entry.newStatus && (
-                                        <Typography variant="body2" sx={{ mt: 1 }}>
-                                            Status changed from <strong>{entry.oldStatus}</strong> to{' '}
-                                            <strong>{entry.newStatus}</strong>
-                                        </Typography>
-                                    )}
-                                    {entry.comments && (
-                                        <Typography variant="body2" sx={{ mt: 1 }}>
-                                            {entry.comments}
-                                        </Typography>
-                                    )}
-                                </Box>
-                            ))}
-                        </Box>
-                    )}
-
-                    <Box sx={{ mt: 2 }}>
-                        <TextField
-                            label="Add a comment"
-                            fullWidth
-                            multiline
-                            minRows={2}
-                            maxRows={4}
-                            value={commentText}
-                            onChange={(e) => setCommentText(e.target.value)}
-                        />
-
-                        <Button
-                            variant="contained"
-                            sx={{ mt: 1 }}
-                            onClick={handleAddComment}
-                            disabled={!commentText.trim()}
-                        >
-                            Post Comment
-                        </Button>
-                    </Box>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpenHistoryDialog(false)} variant="outlined">
-                        Close
-                    </Button>
-                </DialogActions>
-            </Dialog>
 
             {/* Dialog for Order Timeline */}
             <Dialog
@@ -934,6 +784,14 @@ const ProposalsList = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            <CommentsDialog
+                open={openCommentsDialog}
+                onClose={() => setOpenCommentsDialog(false)}
+                proposalId={currentProposalId}
+                setSnackbar={setSnackbar}    // Pass if you want success/error snackbars
+            />
+
 
 
         </Box>

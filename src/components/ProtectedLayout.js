@@ -13,23 +13,22 @@ const ProtectedLayout = ({ children, requiredRoleId = null }) => {
       return;
     }
   
-    if (requiredRoleId && user.roles?.roleId !== requiredRoleId) {
-      // Redirect based on role if they're accessing the wrong area
-      switch (user.roles?.roleId) {
-        case 1:
-          navigate('/admin-dashboard');
-          break;
-        case 3:
-          navigate('/approver-dashboard');
-          break;
-        case 4:
-          navigate('/purchaser-dashboard');
-          break;
-        default:
-          navigate('/proposal');
+    if (requiredRoleId && !user.roles.some(r => r.roleId === requiredRoleId)) {
+      // The user does NOT have the required role => let's redirect
+      // But we also want to see if the user *does* have some other role
+      if (user.roles.some(r => r.roleId === 1)) {
+        navigate('/admin-dashboard');
+      } else if (user.roles.some(r => r.roleId === 3)) {
+        navigate('/approver-dashboard');
+      } else if (user.roles.some(r => r.roleId === 4)) {
+        navigate('/purchaser-dashboard');
+      } else {
+        // If none match (like faculty?), go to /proposal
+        navigate('/proposal');
       }
     }
   }, [navigate, requiredRoleId, user]);
+  
   
 
   if (!user) return null;

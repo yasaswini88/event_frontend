@@ -156,9 +156,17 @@ const AdminDashboard = () => {
     const filterUsers = () => {
         let filtered = [...users];
 
+        // if (filters.role) {
+        //     filtered = filtered.filter(user => user.roles?.roleName === filters.role);
+        // }
         if (filters.role) {
-            filtered = filtered.filter(user => user.roles?.roleName === filters.role);
-        }
+            filtered = filtered.filter(user =>
+              Array.isArray(user.roles)
+                ? user.roles.some(r => r.roleName === filters.role)
+                : user.roles?.roleName === filters.role
+            );
+          }
+          
         // if (filters.department) { ... }
         if (filters.firstName) {
             filtered = filtered.filter(user =>
@@ -205,11 +213,9 @@ const AdminDashboard = () => {
             // Flatten or adapt the user if needed
             setSelectedUser({
                 ...response.data,
-                roles: {
-                    roleId: response.data.roles?.roleId || '',
-                    roleName: response.data.roles?.roleName || ''
-                }
-            });
+                roles: response.data.roles || []
+              });
+              
             setEditDialogOpen(true);
         } catch (err) {
             console.error('Error fetching user details:', err);
@@ -381,18 +387,33 @@ const AdminDashboard = () => {
                                         <TableCell>{user.email}</TableCell>
                                         <TableCell>{user.phoneNumber}</TableCell>
                                         <TableCell>
-                                            <Box
-                                                sx={{
-                                                    backgroundColor: user.roles?.roleName === 'Admin' ? '#e8f5e9' : '#fff3e0',
-                                                    color: user.roles?.roleName === 'Admin' ? '#2e7d32' : '#e65100',
-                                                    p: 1,
-                                                    borderRadius: 1,
-                                                    textAlign: 'center',
-                                                }}
-                                            >
-                                                {user.roles?.roleName}
-                                            </Box>
-                                        </TableCell>
+  {Array.isArray(user.roles) && user.roles.length > 0 ? (
+    user.roles.map((r) => (
+      <Box
+        key={r.roleId}
+        sx={{
+          backgroundColor: r.roleName === 'Admin' ? '#e8f5e9' : '#fff3e0',
+          color: r.roleName === 'Admin' ? '#2e7d32' : '#e65100',
+          p: 1,
+          borderRadius: 1,
+          textAlign: 'center',
+          mb: 0.5, // small spacing if multiple
+        }}
+      >
+        {r.roleName}
+      </Box>
+    ))
+  ) : (
+    <Box>No Roles</Box>
+  )}
+</TableCell>
+
+{/* <TableCell>
+  {Array.isArray(user.roles) && user.roles.length > 0
+    ? user.roles.map((r) => r.roleName).join(', ')
+    : 'No Roles'}
+</TableCell> */}
+
 
                                         <TableCell>
                                             <Box sx={{ display: 'flex', gap: 1 }}>

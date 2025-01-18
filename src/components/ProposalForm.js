@@ -42,6 +42,7 @@ const initialFormState = {
     businessPurpose: '',
     status: 'Pending',
     proposalDate: new Date().toString(),
+    expectedDueDate: null,
 
     userId: null,
     departmentId: null,
@@ -76,6 +77,65 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
     const [versions, setVersions] = useState([]);           // array of version objects from backend
     const [selectedVersion, setSelectedVersion] = useState(null);  // which version the user selected from dropdown
 
+    const [selectedFile, setSelectedFile] = useState(null);
+
+    const [attachedFiles, setAttachedFiles] = useState([]);
+
+    const [showMoreDocs, setShowMoreDocs] = useState(false);
+
+
+    const visibleFiles = showMoreDocs
+        ? attachedFiles
+        : attachedFiles.slice(0, 3);
+
+
+
+
+    const handleFileChange = (event) => {
+        setSelectedFile(event.target.files[0]);
+    };
+
+    const fetchAttachedFiles = async (proposalId) => {
+        try {
+            const res = await axios.get(`/api/documents/proposal/${proposalId}`);
+            // We expect res.data to be an array of objects, e.g. [ { id: 1, ...}, {...} ]
+            // BUT if there's an error or the server returns something else, we might have an object or null
+
+            if (Array.isArray(res.data)) {
+                setAttachedFiles(res.data);
+            } else {
+                // fallback if somehow we got something else
+                setAttachedFiles([]);
+            }
+        } catch (err) {
+            console.error("Error fetching attached files:", err);
+
+            // If an error occurs, set an empty array
+            setAttachedFiles([]);
+        }
+    };
+
+
+
+    const handleDownloadFile = async (docId) => {
+        try {
+            // 1) Get the presigned URL
+            const response = await axios.get(`/api/documents/${docId}/download`);
+            const presignedUrl = response.data; // server returns the URL as a string
+
+            // 2) Open in new tab or use window.location
+            window.open(presignedUrl, '_blank');
+        } catch (err) {
+            console.error('Error downloading file:', err);
+            setSnackbar({
+                open: true,
+                message: 'Error downloading file',
+                severity: 'error'
+            });
+        }
+    };
+
+
     useEffect(() => {
         if (initialData?.proposalId) {
             // e.g. /api/proposals/2602/versions
@@ -94,8 +154,12 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                     console.error("Error fetching versions:", err);
                     // you can show a message, etc.
                 });
+            fetchAttachedFiles(initialData.proposalId);
         }
     }, [initialData]);
+
+    console.log("Fetched versions:", versions);
+
 
 
     useEffect(() => {
@@ -103,7 +167,11 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
             try {
                 // Fetch approvers
                 const usersResponse = await axios.get('/api/users');
-                const approversList = usersResponse.data.filter(user => user.roles?.roleId === 3);
+                // const approversList = usersResponse.data.filter(user => user.roles?.roleId === 3);
+                const approversList = usersResponse.data.filter(user =>
+                    user.roles.some(role => role.roleId === 3)
+                );
+
                 setApprovers(approversList);
 
                 // Fetch departments
@@ -128,6 +196,9 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
             setFormData({
                 ...initialData, // Populate form data with initialData
                 proposalDate: initialData.proposalDate, // Ensure date format remains consistent
+                expectedDueDate: initialData.expectedDueDate
+                    ? moment(initialData.expectedDueDate).format('YYYY-MM-DD') // Format for date input
+                    : null,
             });
 
             // Map the approver and department IDs to their respective objects
@@ -305,6 +376,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // 1) Validate form
         if (!validateForm()) {
             return;
         }
@@ -313,6 +385,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
         setError('');
 
         try {
+            // 2) Check for a logged-in user
             const loggedUser = JSON.parse(localStorage.getItem('user'));
             const userId = loggedUser ? loggedUser.userId : null;
 
@@ -326,10 +399,12 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                 return;
             }
 
+            // 3) Convert the 'proposalDate' to EST string, e.g. 2023-08-25T14:10:00
             const dateInEST = moment(formData.proposalDate)
                 .tz('America/New_York')
                 .format('YYYY-MM-DDTHH:mm:ss');
 
+            // 4) Build the JSON payload for the proposal
             const proposalPayload = {
                 ...formData,
                 quantity: parseInt(formData.quantity, 10),
@@ -337,23 +412,27 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                 userId: parseInt(userId, 10),
                 departmentId: formData.departmentId ? parseInt(formData.departmentId, 10) : null,
                 currentApproverId: formData.currentApproverId ? parseInt(formData.currentApproverId, 10) : null,
-                // proposalDate: formData.proposalDate
-                //     ? new Date(formData.proposalDate).toISOString()
-                //     : new Date().toISOString(),
                 proposalDate: dateInEST,
+                expectedDueDate: formData.expectedDueDate,
                 vendorInfo: formData.vendorInfo || '',
                 status: formData.status || 'Pending',
             };
 
+            // 5) Either POST or PUT based on whether we have proposalId
             let response;
             if (proposalPayload.proposalId) {
-                response = await axios.put(`/api/proposals/${proposalPayload.proposalId}`, proposalPayload);
+                // Update existing
+                response = await axios.put(
+                    `/api/proposals/${proposalPayload.proposalId}`,
+                    proposalPayload
+                );
                 setSnackbar({
                     open: true,
                     message: 'Proposal updated successfully!',
                     severity: 'success',
                 });
             } else {
+                // Create new
                 response = await axios.post('/api/proposals', proposalPayload);
                 setSnackbar({
                     open: true,
@@ -362,22 +441,39 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                 });
             }
 
-            if (response?.data) {
-                resetForm();
-                onSubmitSuccess(response.data); // Send the updated proposal to the parent
-            } else {
-                throw new Error('No response data received');
+            // 6) Check if the server responded
+            if (!response || !response.data) {
+                throw new Error('No response data received from proposal creation.');
             }
-        } catch (err) {
-            console.error('Error saving proposal:', err);
-            let errorMessage = 'Error saving proposal. Please try again.';
 
+            // The newly created or updated proposal
+            const savedProposal = response.data;
+            const newProposalId = savedProposal.proposalId;
+
+            // 7) If user attached a file, do a second API call to /api/documents/upload
+            if (selectedFile) {
+                // We already have userId from above
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+
+                await axios.post(
+                    `/api/documents/upload?proposalId=${newProposalId}&userId=${userId}`,
+                    formData,
+                    { headers: { 'Content-Type': 'multipart/form-data' } }
+                );
+            }
+
+            // 8) Done! Clear the form & notify parent
+            resetForm();
+            onSubmitSuccess(savedProposal);
+
+        } catch (err) {
+            console.error('Error saving proposal or uploading file:', err);
+
+            // Decide how to display the error message
+            let errorMessage = 'Error saving proposal or file. Please try again.';
             if (err.response?.data?.message) {
                 errorMessage = err.response.data.message;
-            } else if (err.response?.status === 400) {
-                errorMessage = 'Invalid proposal data. Please check all fields.';
-            } else if (err.response?.status === 500) {
-                errorMessage = 'Server error. Please try again later.';
             }
 
             setSnackbar({
@@ -391,6 +487,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
     };
 
 
+
     const handleVersionChange = (selectedVerNumber) => {
         // 1) Find the matching version from the versions array
         if (selectedVerNumber === 'ORIGINAL') {
@@ -398,6 +495,9 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
             setFormData(prev => ({
                 ...prev,
                 ...initialData, // itemName, category, etc. from the “live” proposal
+                expectedDueDate: initialData.expectedDueDate
+                    ? moment(initialData.expectedDueDate).format('YYYY-MM-DD') // Format for date input
+                    : null,
             }));
             setSelectedVersion(null);
             return;
@@ -423,6 +523,9 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
             proposalDate: found.proposalDate
                 ? moment(found.proposalDate).toDate().toISOString()
                 : new Date().toISOString(),
+            expectedDueDate: found.expectedDueDate
+                ? moment(found.expectedDueDate).format('YYYY-MM-DD') // Format for date input
+                : null,
             currentApproverId: found.currentApproverId,
             departmentId: found.departmentId,
         }));
@@ -433,6 +536,12 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
     const handleCloseSnackbar = () => {
         setSnackbar(prev => ({ ...prev, open: false }));
     };
+
+    function formatLocalDate(dateOnlyString) {
+        return moment(dateOnlyString, 'YYYY-MM-DD')
+            .format('MMM D, YYYY');
+    }
+
 
     return (
         <Box sx={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
@@ -449,7 +558,7 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                 </Typography>
             </Box> */}
 
-<Box
+            <Box
                 sx={{
                     display: 'flex',
                     alignItems: 'center',
@@ -468,32 +577,42 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                 </Typography>
 
                 {/* === Only show this if we have versions loaded === */}
-                {formData.proposalId && versions.length > 0 && (
-                    <TextField
-                        select
-                        label="Select Version"
-                        value={selectedVersion?.versionNumber || ''}
-                        onChange={(e) => handleVersionChange(e.target.value)}
-                        size="small"
-                        sx={{ 
-                            width: 200,
-                            ml: 2,
-                            '& .MuiOutlinedInput-root': {
-                                backgroundColor: '#fff',
-                            },
-                            '& .MuiSelect-select': {
-                                py: 1,
-                            }
-                        }}
-                    >
-                        <MenuItem value="ORIGINAL">Original</MenuItem>
-                        {versions.map((ver) => (
-                            <MenuItem key={ver.id} value={ver.versionNumber}>
-                                Version {ver.versionNumber}
-                            </MenuItem>
-                        ))}
-                    </TextField>
-                )}
+                {formData.proposalId &&
+                    Array.isArray(attachedFiles) &&
+                    attachedFiles.length > 0 && (
+                        <Box sx={{ mt: 3, p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                                Previously Attached Files ({attachedFiles.length})
+                            </Typography>
+
+                            {visibleFiles.map((doc) => (
+                                <Box
+                                    key={doc.id}
+                                    sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}
+                                >
+                                    <Typography sx={{ flex: 1 }}>{doc.fileName}</Typography>
+                                    <Button
+                                        variant="outlined"
+                                        size="small"
+                                        onClick={() => handleDownloadFile(doc.id)}
+                                        sx={{ textTransform: 'none' }}
+                                    >
+                                        Download
+                                    </Button>
+                                </Box>
+                            ))}
+
+                            {attachedFiles.length > 3 && (
+                                <Button
+                                    onClick={() => setShowMoreDocs(!showMoreDocs)}
+                                    sx={{ mt: 2 }}
+                                >
+                                    {showMoreDocs ? 'View Less' : 'View More'}
+                                </Button>
+                            )}
+                        </Box>
+                    )}
+
             </Box>
 
 
@@ -691,6 +810,49 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                                     <TextField {...params} label="Select Department" required />
                                 )}
                             />
+                            <TextField
+                                label="Expected Due Date"
+                                type="date"
+                                value={formData.expectedDueDate || ''}
+                                onChange={(e) =>
+                                    setFormData((prev) => ({ ...prev, expectedDueDate: e.target.value }))
+                                }
+                                fullWidth
+                                InputLabelProps={{
+                                    shrink: true, // Ensures the label doesn't overlap with the date picker
+                                }}
+                                required
+                            />
+
+                            <label>Attach Optional Document:</label>
+                            <input
+                                type="file"
+                                onChange={handleFileChange}
+                                accept="application/pdf,image/*"
+                            />
+
+                            {formData.proposalId && Array.isArray(attachedFiles) && attachedFiles.length > 0 && (
+                                <Box sx={{ mt: 3 }}>
+                                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                                        Previously Attached Files
+                                    </Typography>
+
+                                    {attachedFiles.map((doc) => (
+                                        <Box key={doc.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                                            <Typography>{doc.fileName}</Typography>
+                                            <Button
+                                                variant="outlined"
+                                                size="small"
+                                                onClick={() => handleDownloadFile(doc.id)}
+                                            >
+                                                Download
+                                            </Button>
+                                        </Box>
+                                    ))}
+                                </Box>
+                            )}
+
+
 
 
                             {/* <Box
@@ -756,6 +918,8 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                                     {isReadOnly ? 'Close' : 'Cancel'}
                                 </Button>
 
+
+
                                 {!isReadOnly && (
                                     <Button
                                         type="submit"
@@ -774,6 +938,8 @@ const ProposalForm = ({ initialData, onSubmitSuccess }) => {
                                             },
                                         }}
                                     >
+
+
                                         {loading
                                             ? (
                                                 <>
